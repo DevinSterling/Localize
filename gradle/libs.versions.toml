@@ -1,16 +1,18 @@
 # Shared plugins/dependencies between projects
 
 [versions]
-module-plugin = '1.8.15'
-javafx-plugin = '0.1.0'
+module-plugin-dep = '1.8.15'
+javafx-plugin-dep = '0.1.0'
+jreleaser-plugin-dep = '1.17.0'
+javafx-dep = '17'
 junit-dep = '5.9.2'
 slf4j-dep = '2.0.13'
 icu4j-dep = '76.1'
-javafx-dep = '17'
 
 [plugins]
-javamodularity = { id = 'org.javamodularity.moduleplugin', version.ref = 'module-plugin' }
-javafx-plugin = { id = 'org.openjfx.javafxplugin', version.ref = 'javafx-plugin' }
+javamodularity = { id = 'org.javamodularity.moduleplugin', version.ref = 'module-plugin-dep' }
+javafx-plugin = { id = 'org.openjfx.javafxplugin', version.ref = 'javafx-plugin-dep' }
+jreleaser = { id = 'org.jreleaser', version.ref = 'jreleaser-plugin-dep' }
 
 [libraries]
 junit-api = { module = 'org.junit.jupiter:junit-jupiter-api', version.ref = 'junit-dep' }

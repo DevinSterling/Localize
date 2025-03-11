@@ -1,14 +1,14 @@
 plugins {
-    `maven-publish`
+    alias(libs.plugins.jreleaser)
     alias(libs.plugins.javamodularity)
 }
 
-subprojects {
+allprojects {
     group = "com.devinsterling.localize"
-    version = "1.0"
+    version = "1.0.0"
+}
 
-    val junitVersion by extra("5.10.2")
-
+subprojects {
     repositories {
         mavenCentral()
     }
@@ -36,24 +36,46 @@ subprojects {
 
     if (project.name != "examples") afterEvaluate {
         apply {
-            plugin("maven-publish")
+            plugin(rootProject.libs.plugins.jreleaser.get().pluginId)
         }
 
-        publishing {
-            publications {
-                create<MavenPublication>("maven") {
-                    from(components["java"])
+        val gradleProject = project
 
-                    pom {
-                        url.set("https://github.com/devinsterling/localize")
-                        name.set(project.ext["name"] as String)
-                        description.set(project.description)
-                        licenses {
-                            license {
-                                name.set("Apache-2.0")
-                                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                                distribution.set("repo")
-                            }
+        jreleaser {
+            project {
+                authors = listOf("Devin Sterling")
+                name = gradleProject.ext["name"] as String
+                description = gradleProject.description
+                license = "Apache-2.0"
+                inceptionYear = "2025"
+
+                links {
+                    homepage = "https://github.com/DevinsterLing/Localize"
+                    license = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                    bugTracker = "https://github.com/DevinsterLing/Localize/issues"
+                }
+            }
+
+            signing {
+                active = org.jreleaser.model.Active.ALWAYS
+                armored = true
+            }
+
+            release {
+                github {
+                    commitAuthor {
+                        name = "Devin Sterling"
+                    }
+                }
+            }
+
+            deploy {
+                maven {
+                    mavenCentral {
+                        create("sonatype") {
+                            stagingRepository("target/staging-deploy")
+                            active = org.jreleaser.model.Active.ALWAYS
+                            url = "https://central.sonatype.com/api/v1/publisher"
                         }
                     }
                 }

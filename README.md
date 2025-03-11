@@ -89,11 +89,11 @@ clickButton.setOnAction(_ -> clickCount.set(clickCount.get() + 1));
 
 // Binding
 clickButton.textProperty().bind(localize.getBinding("MyApp.clickMe"));
-label.textProperty().bind(localize.get("MyApp.label")
+label.textProperty().bind(localize.get("MyApp.clickMessage")
                                   .arg("click_count", clickCount)
                                   .arg("name", textField.textProperty())
                                   .binding());
 ```
 ___
-### License
+## License
 Apache 2.0 [license](LICENSE)
