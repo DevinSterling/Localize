@@ -29,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /// - `sample/message.properties`
 /// - `sample/message_en_US.properties`
 /// - `sample/message_zh_CN.properties`
-/// - `sample/message_jpn.properties`
+/// - `sample/message_ja.properties`
 ///
 /// Here is a look inside the contents of `message_en_US.properties`:
 /// ```properties
@@ -117,8 +117,8 @@ public abstract class Localize {
         return of(Locale.getDefault());
     }
 
-    /// Identical functionality as [#of(Locale, LocalizeConfig)] with the
-    /// initial locale set as [Locale#getDefault()] and default configuration.
+    /// Identical functionality as [#of(Locale, LocalizeConfig)] with a given
+    /// [Locale] and default configuration.
     ///
     /// @param locale Initial locale.
     /// @return       **Thread-safe** Localize instance.

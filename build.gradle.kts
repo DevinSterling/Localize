@@ -6,7 +6,7 @@ plugins {
 
 allprojects {
     group = "com.devinsterling"
-    version = "1.0.0"
+    version = "1.0.1-SNAPSHOT"
 }
 
 description = "A Java localization library"
@@ -97,6 +97,7 @@ jreleaser {
         description = rootProject.description
         license = "Apache-2.0"
         inceptionYear = "2025"
+        tags = listOf("Localization", "i18n", "JavaFX")
 
         links {
             homepage = repository

@@ -75,8 +75,8 @@ public abstract class LocalizeFX extends Localize {
         return of(Locale.getDefault());
     }
 
-    /// Identical functionality as [#of(Locale, LocalizeConfig)] with the
-    /// initial locale set as [Locale#getDefault()] and default configuration.
+    /// Identical functionality as [#of(Locale, LocalizeConfig)] with a given
+    /// [Locale] and default configuration.
     ///
     /// @param locale Initial locale.
     /// @return       **Thread-safe** LocalizeFX instance.
