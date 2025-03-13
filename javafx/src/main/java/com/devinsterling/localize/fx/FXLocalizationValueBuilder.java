@@ -38,7 +38,8 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
     /// The binding is automatically updated when any of the
     /// passed observable arguments or the locale changes.
     ///
-    /// @return The observable formatted localized value.
+    /// @return The observable formatted localized value,
+    ///         **intended for the fx application thread only**.
     public StringBinding binding() {
         // Effectively final variables to prevent implicit reference to this class
         String key = getKey();
@@ -54,6 +55,8 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         );
     }
 
+    /// @return An array containing provided `locale` + all
+    ///         extracted observables from `arguments`.
     private static Observable[] getObservables(Observable locale, Map<String, Object> arguments) {
         // Set to avoid duplicate observables
         Set<Observable> observables = new HashSet<>(arguments.size());
@@ -68,6 +71,8 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         return observables.toArray(new Observable[0]);
     }
 
+    /// @return A map where all entries with an ObservableValue
+    ///         are swapped with the value contained within them.
     private static Map<String, Object> swapObservables(Map<String, Object> arguments) {
         Map<String, Object> normalizedMap = new HashMap<>(arguments);
 

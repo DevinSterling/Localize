@@ -72,7 +72,6 @@
 /// to automatically reflect changes in the UI.
 module com.devinsterling.localize {
     requires com.ibm.icu;
-    requires org.slf4j;
 
     exports com.devinsterling.localize;
 }

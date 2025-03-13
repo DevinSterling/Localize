@@ -24,8 +24,9 @@ public class LocalizeFXTest {
         localeProperty.set(Locale.JAPANESE);
         assertEquals(Locale.JAPANESE, localeProperty.get());
 
-        localeProperty.set(null);
-        assertEquals(Locale.getDefault(), localeProperty.get());
+        assertThrows(NullPointerException.class, () -> localeProperty.set(null));
+
+        assertEquals(Locale.JAPANESE, localeProperty.get());
 
         assertEquals(Locale.ENGLISH, LocalizeFX.of(Locale.ENGLISH).localeProperty().get());
     }

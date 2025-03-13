@@ -6,7 +6,7 @@ plugins {
 
 application {
     mainModule = "com.devinsterling.localize.examples"
-    mainClass = "com.devinsterling.localize.examples.ClickCount"
+    mainClass = "com.devinsterling.localize.examples.Start"
 }
 
 javafx {
@@ -15,8 +15,8 @@ javafx {
 }
 
 dependencies {
-    implementation(project(":base"))
-    implementation(project(":javafx"))
+    implementation(project(":Localize"))
+    implementation(project(":LocalizeFX"))
 }
 
 tasks {

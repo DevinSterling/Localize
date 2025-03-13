@@ -12,10 +12,10 @@ import java.util.MissingResourceException;
 ///
 /// @since 1.0
 public class LocalizeConfig {
-    private boolean isThrowWhenNoValueFound = false;
-    private boolean isIgnoreProcessingExceptions = false;
-    private boolean isIgnoreMissingResourceBundles = false;
-    private String defaultMissingValue = "";
+    private volatile boolean isThrowWhenNoValueFound = false;
+    private volatile boolean isIgnoreProcessingExceptions = false;
+    private volatile boolean isIgnoreMissingResourceBundles = false;
+    private volatile String defaultMissingValue = "";
 
     /// Instantiate a configuration instance
     /// with all values set to their defaults.

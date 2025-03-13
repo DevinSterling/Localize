@@ -31,7 +31,7 @@ public class LocalizationRequest {
     ///
     /// Numbered arguments keys are numbers in string form.
     ///
-    /// @return Arguments to format with.
+    /// @return Immutable arguments map to format with.
     public Map<String, Object> getArguments() {
         return arguments;
     }

@@ -31,14 +31,14 @@ public class ClickCount extends Application {
         Button changeLocale = new Button();
         Button resetButton = new Button();
         Label label = new Label();
-        TextField textField = new TextField();
+        TextField textField = new TextField("Snowball");
 
         // Binding
         clickButton.textProperty().bind(localize.getBinding("MyApp.clickMe"));
         changeLocale.textProperty().bind(localize.getBinding("MyApp.changeLocale"));
         resetButton.textProperty().bind(localize.getBinding("MyApp.reset"));
         textField.promptTextProperty().bind(localize.getBinding("MyApp.prompt"));
-        label.textProperty().bind(localize.get("MyApp.label")
+        label.textProperty().bind(localize.get("MyApp.clickMessage")
                                           .arg("click_count", clickCount)
                                           .arg("name", textField.textProperty())
                                           .binding());
@@ -60,10 +60,10 @@ public class ClickCount extends Application {
 
         buttons.setSpacing(5);
         content.setSpacing(5);
-        content.setMaxWidth(250);
+        content.setMaxWidth(300);
         content.setMaxHeight(VBox.USE_PREF_SIZE);
 
-        stage.setScene(new Scene(container, 400, 250));
+        stage.setScene(new Scene(container, 400, 150));
         stage.show();
     }
 }

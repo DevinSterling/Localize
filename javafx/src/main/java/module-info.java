@@ -15,20 +15,20 @@
 /// DoubleProperty clickCount = new SimpleDoubleProperty();
 /// Label clickDetails = new Label();
 /// Button clickButton = new Button();
-/// TextField textField = new TextField("John Doe");
+/// TextField textField = new TextField("Snowball");
 ///
 /// clickButton.setOnAction(_ -> clickCount.set(clickCount.get() + 1));
 ///
 /// // Binding
 /// clickButton.textProperty().bind(localize.getBinding("MyApp.clickMe"));
-/// label.textProperty().bind(localize.get("MyApp.label")
+/// label.textProperty().bind(localize.get("MyApp.clickMessage")
 ///                                   .arg("click_count", clickCount)
 ///                                   .arg("name", textField.textProperty())
 ///                                   .binding());
 /// ```
 module com.devinsterling.localize.fx {
     requires transitive com.devinsterling.localize;
-    requires javafx.base;
+    requires javafx.graphics;
 
     exports com.devinsterling.localize.fx;
 }

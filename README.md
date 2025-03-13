@@ -1,12 +1,15 @@
 # Localize
 A simple localization library.
 
+[![Maven Central Version](https://img.shields.io/maven-central/v/com.devinsterling/localize-base?style=flat-square)](https://central.sonatype.com/artifact/com.devinsterling/localize-base)
+[![Base Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-base/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-base)
+
 ___
 
 Localize is a Java localization library that simplifies internationalizing applications. 
 It’s built to be straightforward to set up and use.
 
-1. Create a `Localize` instance: 
+1. Create a thread-safe `Localize` instance: 
    ```java
    Localize localize = Localize.of(Locale.ENGLISH);
    ```
@@ -40,8 +43,9 @@ localize.getConfig().setDefaultMissingValue("Missing value");
 ## Plurals and Arguments
 
 Localize uses [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/) under the hood, 
-though this can be changed by providing a custom [LocalizationRequestProvider](base/src/main/java/com/devinsterling/localize/LocalizationRequestProcessor.java).
-With the default provider, Localize supports both named and numbered arguments along with pluralization.
+though this can be changed by providing a custom 
+[LocalizationRequestProcessor](base/src/main/java/com/devinsterling/localize/LocalizationRequestProcessor.java).
+With the default processor, Localize supports both named and numbered arguments along with pluralization.
 
 Here is a look inside the contents of a sample properties file:
 ```properties
@@ -68,8 +72,11 @@ other{# times}}.
           .arg(55) // Argument 1
           .value(); // Returns "John Doe clicked this button 55 times."
   ```
+## LocalizeFX — JavaFX Integration
+
+[![JavaFX Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-javafx/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-javafx)
 ___
-## JavaFX Integration
+
 Through an integration module, Localize integrates with JavaFX observables to automatically 
 reflect changes in UI components when the locale or observable arguments change without manual intervention.
 
@@ -83,7 +90,7 @@ localize.putBundleProvider("ProviderKey", locale -> ResourceBundle.getBundle("me
 DoubleProperty clickCount = new SimpleDoubleProperty();
 Label clickDetails = new Label();
 Button clickButton = new Button();
-TextField textField = new TextField("John Doe");
+TextField textField = new TextField("Snowball");
 
 clickButton.setOnAction(_ -> clickCount.set(clickCount.get() + 1));
 
@@ -94,6 +101,32 @@ label.textProperty().bind(localize.get("MyApp.clickMessage")
                                   .arg("name", textField.textProperty())
                                   .binding());
 ```
+
 ___
+
+## Usage with Maven and Gradle
+- Dependency for base functionality:
+  ```maven
+  <dependency>
+    <groupId>com.devinsterling</groupId>
+    <artifactId>localize-base</artifactId>
+    <version>1.0.0</version>
+  </dependency>
+  ```
+  ```gradle
+  implementation("com.devinsterling:localize-base:1.0.0")
+  ```
+- Dependency for base functionality *and* JavaFX integration:
+  ```maven
+  <dependency>
+    <groupId>com.devinsterling</groupId>
+    <artifactId>localize-javafx</artifactId>
+    <version>1.0.0</version>
+  </dependency>
+  ```
+  ```gradle
+  implementation("com.devinsterling:localize-javafx:1.0.0")
+  ```
+
 ## License
 Apache 2.0 [license](LICENSE)

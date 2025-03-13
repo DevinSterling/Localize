@@ -1,25 +1,32 @@
 plugins {
+    `maven-publish`
     alias(libs.plugins.jreleaser)
     alias(libs.plugins.javamodularity)
 }
 
 allprojects {
-    group = "com.devinsterling.localize"
+    group = "com.devinsterling"
     version = "1.0.0"
 }
+
+description = "A Java localization library"
+
+val author = "Devin Sterling"
+val gitHubId = "DevinSterling"
+val repository = "https://github.com/${gitHubId}/${name}"
 
 subprojects {
     repositories {
         mavenCentral()
     }
 
-    apply {
-        plugin(rootProject.libs.plugins.javamodularity.get().pluginId)
-    }
+    apply(plugin = rootProject.libs.plugins.javamodularity.get().pluginId)
 
     java {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        withJavadocJar()
+        withSourcesJar()
     }
 
     tasks {
@@ -34,50 +41,104 @@ subprojects {
         }
     }
 
+    // Upload artifact to MavenCentral
     if (project.name != "examples") afterEvaluate {
-        apply {
-            plugin(rootProject.libs.plugins.jreleaser.get().pluginId)
-        }
+        apply(plugin = "maven-publish")
 
-        val gradleProject = project
+        publishing {
+            publications {
+                create<MavenPublication>("maven") {
+                    from(components["java"])
 
-        jreleaser {
-            project {
-                authors = listOf("Devin Sterling")
-                name = gradleProject.ext["name"] as String
-                description = gradleProject.description
-                license = "Apache-2.0"
-                inceptionYear = "2025"
+                    artifactId = "localize-${project.projectDir.name}"
 
-                links {
-                    homepage = "https://github.com/DevinsterLing/Localize"
-                    license = "https://www.apache.org/licenses/LICENSE-2.0.txt"
-                    bugTracker = "https://github.com/DevinsterLing/Localize/issues"
-                }
-            }
+                    pom {
+                        name = project.name
+                        description = project.description
+                        url = rootProject.jreleaser.project.links.homepage
+                        inceptionYear = rootProject.jreleaser.project.inceptionYear
 
-            signing {
-                active = org.jreleaser.model.Active.ALWAYS
-                armored = true
-            }
+                        developers {
+                            developer {
+                                id = gitHubId
+                                name = author
+                            }
+                        }
 
-            release {
-                github {
-                    commitAuthor {
-                        name = "Devin Sterling"
-                    }
-                }
-            }
+                        licenses {
+                            license {
+                                name.set(rootProject.jreleaser.project.license)
+                                url.set(rootProject.jreleaser.project.links.license)
+                            }
+                        }
 
-            deploy {
-                maven {
-                    mavenCentral {
-                        create("sonatype") {
-                            stagingRepository("target/staging-deploy")
-                            active = org.jreleaser.model.Active.ALWAYS
-                            url = "https://central.sonatype.com/api/v1/publisher"
+                        scm {
+                            url = repository
+                            connection = "scm:git:${repository}.git"
+                            developerConnection = "scm:git:ssh://github.com/${gitHubId}/${repository}.git"
                         }
                     }
+                }
+            }
+
+            repositories {
+                maven {
+                    url = uri(layout.buildDirectory.dir("staging-deploy"))
+                }
+            }
+        }
+    }
+}
+
+jreleaser {
+    project {
+        authors = listOf(author)
+        name = rootProject.name
+        description = rootProject.description
+        license = "Apache-2.0"
+        inceptionYear = "2025"
+
+        links {
+            homepage = repository
+            bugTracker = "${repository}/issues"
+            license = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+    }
+
+    signing {
+        active = org.jreleaser.model.Active.ALWAYS
+        armored = true
+        verify = true
+    }
+
+    release {
+        github {
+            repoOwner = gitHubId
+            repoUrl = repository
+            branch = "master"
+        }
+    }
+
+    distributions {
+        subprojects.filter { it.name != "examples" }.forEach { subproject ->
+            create(subproject.name) {
+                artifact {
+                    path.set(subproject.tasks.named<Jar>("jar").get().archiveFile.get().asFile)
+                }
+            }
+        }
+    }
+
+    deploy {
+        maven {
+            mavenCentral {
+                create("sonatype") {
+                    active = org.jreleaser.model.Active.ALWAYS
+                    url = "https://central.sonatype.com/api/v1/publisher"
+                    subprojects.filter { it.name != "examples" }.forEach {
+                        stagingRepositories.add("${it.layout.buildDirectory.get()}/staging-deploy")
+                    }
+                    applyMavenCentralRules = true
                 }
             }
         }

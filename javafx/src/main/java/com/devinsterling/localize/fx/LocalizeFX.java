@@ -9,19 +9,15 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /// JavaFX [Localize] class.
 ///
-/// It is recommended to create a [LocalizeFX] instance
-/// through the static factory methods listed here:
+/// It is recommended to create a thread-safe [LocalizeFX]
+/// instance through the static factory methods listed here:
 /// - [#of()]
 /// - [#of(Locale)]
 /// - [#of(Locale, LocalizeConfig)]
-///
-/// **The default implementation is not thread-safe**.
 ///
 /// This class provides an observable string binding
 /// to reflect changes automatically whenever the
@@ -48,23 +44,22 @@ import java.util.function.Supplier;
 /// @since 1.0
 public abstract class LocalizeFX extends Localize {
 
-    /// Creates a [LocalizeFX] instance with the default backing map.
-    protected LocalizeFX() {}
-
-    /// Create a [LocalizeFX] instance with the desired backing map.
+    /// Create a [LocalizeFX] instance with the desired configuration.
     ///
-    /// @param supplier The backing map that stores resource bundle entries.
-    protected LocalizeFX(Supplier<Map<String, BundleEntry>> supplier) {
-        super(supplier);
+    /// @param config The configuration.
+    protected LocalizeFX(LocalizeConfig config) {
+        super(config);
     }
 
     /// Locale associated with this [Localize] instance.
     /// Each time the locale is changed, all providers are refreshed.
     ///
-    /// Attempts to set this property to `null` directly will be transformed
-    /// into [Locale#getDefault()].
+    /// When not on the FX application thread, it is recommended to
+    /// use [#getLocale()] and [#setLocale(Locale)] instead.
     ///
-    /// @return Observable locale property.
+    /// @return **Non-thread-safe** observable locale property.
+    /// @see #setLocale(Locale)
+    /// @see #getLocale()
     /// @see #refresh()
     public abstract ObjectProperty<Locale> localeProperty();
 
@@ -75,7 +70,7 @@ public abstract class LocalizeFX extends Localize {
     /// Identical functionality as [#of(Locale, LocalizeConfig)] with the
     /// initial locale set as [Locale#getDefault()] and default configuration.
     ///
-    /// @return Created Localize instance.
+    /// @return **Thread-safe** LocalizeFX instance.
     public static LocalizeFX of() {
         return of(Locale.getDefault());
     }
@@ -84,7 +79,7 @@ public abstract class LocalizeFX extends Localize {
     /// initial locale set as [Locale#getDefault()] and default configuration.
     ///
     /// @param locale Initial locale.
-    /// @return       Created Localize instance.
+    /// @return       **Thread-safe** LocalizeFX instance.
     public static LocalizeFX of(Locale locale) {
         return of(locale, new LocalizeConfig());
     }
@@ -92,14 +87,11 @@ public abstract class LocalizeFX extends Localize {
     /// Create a new [LocalizeFX] instance with a given
     /// [LocalizeFX] and [LocalizeConfig].
     ///
-    /// The created instance **is not thread-safe**.
-    ///
     /// @param locale Initial locale.
     /// @param config Initial Configuration.
-    /// @return       Created Localize instance.
+    /// @return       **Thread-safe** LocalizeFX instance.
     public static LocalizeFX of(Locale locale, LocalizeConfig config) {
-        Objects.requireNonNull(locale, "locale must not be null");
-        Objects.requireNonNull(config, "config must not be null");
+        assertLocale(locale);
         return new LocalizeFXImpl(locale, config);
     }
 
@@ -157,54 +149,69 @@ public abstract class LocalizeFX extends Localize {
         return getBinding(key.getKey());
     }
 
-    private static final class LocalizeFXImpl extends LocalizeFX {
-        private final LocaleProperty locale;
+    private static void assertLocale(Locale locale) {
+        Objects.requireNonNull(locale, "locale must not be null");
+    }
+
+    private static class LocalizeFXImpl extends LocalizeFX {
+        private final LocaleProperty localeProperty;
+        private volatile Locale locale;
 
         private LocalizeFXImpl(Locale locale, LocalizeConfig config) {
-            this.locale = new LocaleProperty(locale);
-            setConfig(config);
+            super(config);
+            this.locale = locale;
+            this.localeProperty = new LocaleProperty(locale);
         }
 
         @Override protected void notifyListeners() {
-            locale.forceFireValueChanged();
+            if (FXThread.isUIThread()) {
+                localeProperty.forceFireValueChanged();
+            } else {
+                FXThread.onUIThread(localeProperty::forceFireValueChanged);
+            }
         }
 
         @Override public ObjectProperty<Locale> localeProperty() {
-            return locale;
+            return localeProperty;
         }
 
         @Override public void setLocale(Locale locale) {
-            Objects.requireNonNull(locale, "locale must not be null");
-            this.locale.set(locale);
+            if (FXThread.isUIThread()) {
+                // Assertion/refreshing is handled within this method
+                localeProperty.set(locale);
+            } else if (!this.locale.equals(locale)) {
+                assertLocale(locale);
+                this.locale = locale;
+                refresh(locale);
+                FXThread.onUIThread(() -> localeProperty.setWithoutRefresh(locale));
+            }
         }
 
         @Override public Locale getLocale() {
-            // Locale must not be null
-            if (locale.get() == null) {
-                setLocale(Locale.getDefault());
+            return FXThread.isUIThread() ? localeProperty.get() : locale;
+        }
+
+        private class LocaleProperty extends SimpleObjectProperty<Locale> {
+            private LocaleProperty(Locale locale) {
+                super(locale);
             }
-            return locale.get();
-        }
-    }
 
-    private final class LocaleProperty extends SimpleObjectProperty<Locale> {
+            @Override public void set(Locale locale) {
+                if (get().equals(locale)) return;
 
-        public LocaleProperty(Locale locale) {
-            super(locale);
-        }
-
-        @Override protected void invalidated() {
-            if (get() != null) {
-                refresh(get());
+                assertLocale(locale);
+                LocalizeFXImpl.this.locale = locale;
+                refresh(locale); // Eagerly refresh
+                super.set(locale);
             }
-        }
 
-        @Override public void set(Locale locale) {
-            super.set(locale == null ? Locale.getDefault() : locale);
-        }
+            private void setWithoutRefresh(Locale locale) {
+                super.set(locale);
+            }
 
-        public void forceFireValueChanged() {
-            fireValueChangedEvent();
+            private void forceFireValueChanged() {
+                fireValueChangedEvent();
+            }
         }
     }
 }

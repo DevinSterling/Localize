@@ -67,6 +67,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @throws IllegalStateException If numbered arguments were added prior.
     /// @throws NullPointerException If the given map or keys contained are `null`.
     public B args(Map<String, Object> args) {
+        checkIsNamedArgs();
         for (Map.Entry<String, Object> entry : args.entrySet()) {
             arg(entry.getKey(), entry.getValue());
         }
@@ -155,16 +156,20 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
 
     private void checkIsNumberedArgs() {
         if (isNamedArgs) {
-            throw new IllegalStateException("");
+            throwMixedArgsException();
         }
         isNumberedArgs = true;
     }
 
     private void checkIsNamedArgs() {
         if (isNumberedArgs) {
-            throw new IllegalStateException("");
+            throwMixedArgsException();
         }
         isNamedArgs = true;
+    }
+
+    private void throwMixedArgsException() {
+        throw new IllegalStateException("Mixing Named and numbered arguments is not supported");
     }
 
     /// Callback to fetch the value of a requested string
