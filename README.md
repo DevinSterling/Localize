@@ -53,7 +53,7 @@ MyApp.clickMessage = {name} clicked this button {click_count, plural,\
 =0{zero times}\
 =1{one time}\
 other{# times}}.
-MyApp.NumberArgs = {0} clicked this button {1, plural,\
+MyApp.numberedArguments = {0} clicked this button {1, plural,\
 =0{zero times}\
 =1{one time}\
 other{# times}}.
@@ -67,7 +67,7 @@ other{# times}}.
   ```
 - Numbered Arguments:
   ```java
-  localize.get("MyApp.NumberArgs")
+  localize.get("MyApp.numberedArguments")
           .arg("John Doe") // Argument 0
           .arg(55) // Argument 1
           .value(); // Returns "John Doe clicked this button 55 times."
@@ -99,6 +99,7 @@ clickButton.textProperty().bind(localize.getBinding("MyApp.clickMe"));
 label.textProperty().bind(localize.get("MyApp.clickMessage")
                                   .arg("click_count", clickCount)
                                   .arg("name", textField.textProperty())
+                                  .defaultValue("N/A")
                                   .binding());
 ```
 
@@ -106,26 +107,26 @@ ___
 
 ## Usage with Maven and Gradle
 - Dependency for base functionality:
-  ```maven
+  ```xml
   <dependency>
     <groupId>com.devinsterling</groupId>
     <artifactId>localize-base</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
   </dependency>
   ```
-  ```gradle
-  implementation("com.devinsterling:localize-base:1.0.0")
+  ```kts
+  implementation("com.devinsterling:localize-base:1.1.0")
   ```
 - Dependency for base functionality *and* JavaFX integration:
-  ```maven
+  ```xml
   <dependency>
     <groupId>com.devinsterling</groupId>
     <artifactId>localize-javafx</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
   </dependency>
   ```
-  ```gradle
-  implementation("com.devinsterling:localize-javafx:1.0.0")
+  ```kts
+  implementation("com.devinsterling:localize-javafx:1.1.0")
   ```
 
 ## License

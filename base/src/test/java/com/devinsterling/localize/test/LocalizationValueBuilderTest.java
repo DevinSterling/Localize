@@ -62,6 +62,18 @@ public class LocalizationValueBuilderTest {
         assertEquals("ApplesとOrangesとStrawberries", supplier.get());
     }
 
+    @Test public void testDefaultValue() {
+        String defaultValue = "default";
+        Localize localize = getLocalizeInstance();
+
+        // By default, if a key is not found, an empty string is returned
+        assertEquals("", localize.get("doesn't exist").value());
+        // The key doesn't exist, so the default value specified is returned
+        assertEquals(defaultValue, localize.get("doesn't exist").defaultValue(defaultValue).value());
+        // The key exists, so the default value is not returned
+        assertEquals("hi", localize.get(TEST_KEY_GREET).defaultValue(defaultValue).value());
+    }
+
     @Test public void testExceptions() {
         Localize localize = Localize.of();
 

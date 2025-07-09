@@ -3,22 +3,30 @@ package com.devinsterling.localize;
 import java.util.Map;
 import java.util.Objects;
 
-/// Request instance to format an associated localized value with.
+/// A Request to format an associated localized value with.
 ///
 /// @since 1.0
 public class LocalizationRequest {
     private final String key;
+    private final String defaultValue;
     private final Map<String, Object> arguments;
 
     /// Instantiate a request to get a formatted localized value.
     ///
     /// @param key       Key associated with the requested value.
     /// @param arguments Positional or Named arguments to format with.
+    /// @deprecated      Prefer [Builder#of(String)] instead.
+    @Deprecated(since = "1.1")
     public LocalizationRequest(String key, Map<String, Object> arguments) {
+        this(key, null, arguments);
+    }
+
+    private LocalizationRequest(String key, String defaultValue, Map<String, Object> arguments) {
         Objects.requireNonNull(key, "key must not be null");
         Objects.requireNonNull(arguments, "arguments must not be null");
 
         this.key = key;
+        this.defaultValue = defaultValue;
         this.arguments = arguments;
     }
 
@@ -27,13 +35,25 @@ public class LocalizationRequest {
         return key;
     }
 
+    /// {@return Key associated with the requested value.}
+    /// @since 1.1
+    public String getDefaultValue() {
+        return defaultValue;
+    }
+
     /// Named or numbered arguments to format with.
     ///
-    /// Numbered arguments keys are numbers in string form.
+    /// **Note**: Numbered arguments keys are numbers in string form, such as `"1"`, `"2"`, etc.
     ///
     /// @return Immutable arguments map to format with.
     public Map<String, Object> getArguments() {
         return arguments;
+    }
+
+    /// {@return `true` if there is a non-null default value set.}
+    /// @since 1.1
+    public boolean hasDefaultValue() {
+        return defaultValue != null;
     }
 
     /// Check if any named or numbered arguments were provided.
@@ -41,5 +61,54 @@ public class LocalizationRequest {
     /// @return True if this request has arguments.
     public boolean hasArguments() {
         return !arguments.isEmpty();
+    }
+
+    /// Builder to build a [LocalizationRequest] for retrieval of a formatted localized value.
+    ///
+    /// @see Builder#of(String) to instantiate a builder instance.
+    /// @since 1.1
+    public static class Builder {
+        private final String key;
+        private String defaultValue;
+        private Map<String, Object> arguments = Map.of();
+
+        private Builder(String key) {
+            this.key = key;
+        }
+
+        /// Set the default value to return if the key is not found.
+        ///
+        /// @param defaultValue Default value.
+        /// @return This builder instance.
+        public Builder defaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
+        /// Set the position or named arguments to format with.
+        ///
+        /// **Note**: Numbered arguments keys are numbers in string form, such as `"1"`, `"2"`, etc.
+        ///
+        /// @param arguments Positional or Named arguments.
+        /// @return This builder instance.
+        public Builder arguments(Map<String, Object> arguments) {
+            this.arguments = arguments;
+            return this;
+        }
+
+        /// Build a [LocalizationRequest] instance.
+        ///
+        /// @return Instantiated request to get a formatted localized value with.
+        public LocalizationRequest build() {
+            return new LocalizationRequest(key, defaultValue, arguments);
+        }
+
+        /// Factory to create a builder instance to construct a [LocalizationRequest].
+        ///
+        /// @param key Key associated with the requested value.
+        /// @return    Builder instance for a [LocalizationRequest].
+        public static Builder of(String key) {
+            return new Builder(key);
+        }
     }
 }

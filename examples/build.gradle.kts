@@ -15,7 +15,6 @@ javafx {
 }
 
 dependencies {
-    implementation(project(":Localize"))
     implementation(project(":LocalizeFX"))
 }
 

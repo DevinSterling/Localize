@@ -5,10 +5,10 @@ import java.util.MissingResourceException;
 /// Configuration to change how [Localize] handles operations.
 ///
 /// ### Default Configuration
-/// `isThrowWhenNoValueFound` = `false`
-/// `isIgnoreProcessingException` = `false`
-/// `isIgnoreMissingResourceBundles` = `false`
-/// `defaultMissingValue` = `""`
+/// - [isThrowWhenNoValueFound][LocalizeConfig#setThrowWhenNoValueFound] = `false`
+/// - [isIgnoreProcessingException][LocalizeConfig#setIgnoreProcessingExceptions] = `false`
+/// - [isIgnoreMissingResourceBundles][LocalizeConfig#setIgnoreMissingResourceBundles] = `false`
+/// - [defaultMissingValue][LocalizeConfig#setDefaultMissingValue] = `""`
 ///
 /// @since 1.0
 public class LocalizeConfig {
@@ -22,7 +22,10 @@ public class LocalizeConfig {
     public LocalizeConfig() {}
 
     /// When set to `true`, a [MissingResourceException] is thrown
-    /// when **ALL** bundles contain no value for a specified key.
+    /// when:
+    /// - **All** bundles contain no value for a specified key.
+    /// - [LocalizationRequest#getDefaultValue()] is `null`
+    ///   (Set by [LocalizationValueBuilder#defaultValue(String)]).
     ///
     /// The initial value is `false`.
     ///

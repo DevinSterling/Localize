@@ -44,6 +44,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     private final Applier applier;
     private final String key;
     private final Map<String, Object> values = new HashMap<>();
+    private String defaultValue;
     private boolean isNamedArgs;
     private boolean isNumberedArgs;
 
@@ -63,7 +64,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// Append named argument key-value pairings.
     ///
     /// @param args Named argument key-value pairings.
-    /// @return     this builder instance
+    /// @return     This builder instance.
     /// @throws IllegalStateException If numbered arguments were added prior.
     /// @throws NullPointerException If the given map or keys contained are `null`.
     public B args(Map<String, Object> args) {
@@ -80,8 +81,8 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// named arguments such as [#arg(String, Object)]
     /// can cause undefined behavior.**
     ///
-    /// @param args Numbered argument values
-    /// @return     this builder instance
+    /// @param args Numbered argument values.
+    /// @return     This builder instance.
     /// @throws IllegalStateException If named arguments were added prior.
     /// @throws NullPointerException If the given array is `null`.
     public B args(Object... args) {
@@ -98,8 +99,8 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// named arguments such as [#arg(String, Object)]
     /// can cause undefined behavior.**
     ///
-    /// @param value Numbered argument value
-    /// @return      this builder instance
+    /// @param value Numbered argument value.
+    /// @return      This builder instance.
     /// @throws IllegalStateException If named arguments were added prior.
     /// @see #args(Object...)
     /// @see #arg(String, Object)
@@ -111,9 +112,9 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
 
     /// Add a named argument with an associated value.
     ///
-    /// @param key   Named argument key
-    /// @param value Named argument value
-    /// @return      this builder instance
+    /// @param key   Named argument key.
+    /// @param value Named argument value.
+    /// @return      This builder instance.
     /// @throws IllegalStateException If numbered arguments were added prior.
     /// @throws NullPointerException If the given key is `null`.
     /// @see #args(Map)
@@ -125,14 +126,30 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return getBuilder();
     }
 
+    /// Set the default value if the requested key does not exist.
+    ///
+    /// @param defaultValue Default value.
+    /// @return             This builder instance.
+    /// @see                LocalizeConfig#setDefaultMissingValue(String)
+    public B defaultValue(String defaultValue) {
+        this.defaultValue = defaultValue;
+        return getBuilder();
+    }
+
     /// Retrieve a formatted string with all properties
     /// applied from this builder.
     ///
     /// @return The formatted localized value.
     public String value() {
-        return applier.evaluate(new LocalizationRequest(key, Map.copyOf(values)));
+        return applier.evaluate(
+            LocalizationRequest.Builder
+                .of(key)
+                .defaultValue(defaultValue)
+                .arguments(Map.copyOf(values))
+                .build()
+        );
     }
-
+    
     /// {@return The underlying applier}
     protected Applier getApplier() {
         return applier;
@@ -141,6 +158,12 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// {@return The underlying key}
     protected String getKey() {
         return key;
+    }
+
+    /// {@return The underlying default value}
+    /// @since 1.1
+    protected String getDefaultValue() {
+        return defaultValue;
     }
 
     /// {@return The underlying argument map}

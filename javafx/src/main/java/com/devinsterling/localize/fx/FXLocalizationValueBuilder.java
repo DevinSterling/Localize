@@ -43,6 +43,7 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
     public StringBinding binding() {
         // Effectively final variables to prevent implicit reference to this class
         String key = getKey();
+        String defaultValue = getDefaultValue();
         Applier applier = getApplier();
         ObservableValue<?> locale = this.locale;
 
@@ -50,7 +51,13 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         Map<String, Object> arguments = Map.copyOf(getArguments());
 
         return Bindings.createStringBinding(
-            () -> applier.evaluate(new LocalizationRequest(key, swapObservables(arguments))),
+            () -> applier.evaluate(
+                LocalizationRequest.Builder
+                    .of(key)
+                    .defaultValue(defaultValue)
+                    .arguments(swapObservables(arguments))
+                    .build()
+            ),
             getObservables(locale, arguments)
         );
     }

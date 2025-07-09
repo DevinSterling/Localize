@@ -179,13 +179,13 @@ public abstract class Localize {
     /// ```
     ///
     /// @param key      Key associated with `provider`.
-    /// @param provider Called upon calling refresh to obtain a ResourceBundle instance.
+    /// @param provider Called upon calling refresh to get a ResourceBundle instance.
     /// @return         True if the key had no association prior. Otherwise, False is
     ///                 returned when the previous entry is replaced with the new provider.
     /// @throws NullPointerException If `provider` is `null`.
     public boolean putBundleProvider(String key, ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(key, provider);
-        refreshBundleEntry(entry, getLocale());
+        refreshResourceBundle(entry, getLocale());
         return providerStore.put(entry);
     }
 
@@ -208,7 +208,7 @@ public abstract class Localize {
         ProviderEntry entry = providerStore.get(key);
 
         if (entry != null) {
-            refreshBundleEntry(entry, getLocale());
+            refreshResourceBundle(entry, getLocale());
         }
         return entry != null;
     }
@@ -277,14 +277,14 @@ public abstract class Localize {
     /// @param locale Locale to refresh all providers with.
     protected void refresh(Locale locale) {
         for (ProviderEntry entry : providerStore) {
-            refreshBundleEntry(entry, locale);
+            refreshResourceBundle(entry, locale);
         }
     }
 
     /// Apply and transform the request into a formatted localized string.
     ///
     /// @param request Request to format string with.
-    /// @return Requested formatted localized string
+    /// @return Requested formatted localized string.
     protected String applyBuilderProperties(LocalizationRequest request) {
         String value = null;
 
@@ -303,9 +303,11 @@ public abstract class Localize {
         }
 
         if (value == null) {
-            if (getConfig().isThrowWhenNoValueFound()) {
+            if (request.hasDefaultValue()) {
+                value = request.getDefaultValue();
+            } else if (getConfig().isThrowWhenNoValueFound()) {
                 throw new MissingResourceException(
-                        "Can't find resource for " + getClass().getName() +
+                        "Cannot find resource for " + getClass().getName() +
                                 ", key " + request.getKey() +
                                 ", bundles: " + getResourceBundles(),
                         getClass().getName(),
@@ -318,7 +320,7 @@ public abstract class Localize {
         return value;
     }
 
-    private void refreshBundleEntry(ProviderEntry entry, Locale locale) {
+    private void refreshResourceBundle(ProviderEntry entry, Locale locale) {
         try {
             entry.refresh(locale);
         } catch (MissingResourceException e) {
@@ -338,6 +340,7 @@ public abstract class Localize {
                 value = MessageFormat.format(value, request.getArguments());
             }
         }
+
         return value;
     }
 
