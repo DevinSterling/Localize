@@ -45,7 +45,6 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         String key = getKey();
         String defaultValue = getDefaultValue();
         Applier applier = getApplier();
-        ObservableValue<?> locale = this.locale;
 
         // Retrieve a snapshot
         Map<String, Object> arguments = Map.copyOf(getArguments());
@@ -58,7 +57,7 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
                     .arguments(swapObservables(arguments))
                     .build()
             ),
-            getObservables(locale, arguments)
+            getObservables(this.locale, arguments)
         );
     }
 
@@ -66,14 +65,14 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
     ///         extracted observables from `arguments`.
     private static Observable[] getObservables(Observable locale, Map<String, Object> arguments) {
         // Set to avoid duplicate observables
-        Set<Observable> observables = new HashSet<>(arguments.size());
+        Set<Observable> observables = new HashSet<>(arguments.size() + 1);
+        observables.add(locale);
 
         for (Object object : arguments.values()) {
             if (object instanceof Observable observable) {
                 observables.add(observable);
             }
         }
-        observables.add(locale);
 
         return observables.toArray(new Observable[0]);
     }

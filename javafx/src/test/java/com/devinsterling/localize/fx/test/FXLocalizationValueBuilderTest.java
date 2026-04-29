@@ -11,6 +11,7 @@ import javafx.beans.property.StringProperty;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
+import java.util.function.Supplier;
 
 import static com.devinsterling.localize.fx.test.TestUtil.*;
 
@@ -25,6 +26,8 @@ public class FXLocalizationValueBuilderTest {
         assertEquals("Click!", binding.get());
         localize.setLocale(Locale.JAPANESE);
         assertEquals("クリック！", binding.get());
+        localize.setLocale(Locale.KOREAN);
+        assertEquals("클릭!", binding.get());
     }
 
     @Test public void testBindingWithArgs() {
@@ -44,5 +47,37 @@ public class FXLocalizationValueBuilderTest {
         assertEquals("John Doeはこのボタンを2回クリックしました！", binding.get());
         name.set("Jane Doe");
         assertEquals("Jane Doeはこのボタンを2回クリックしました！", binding.get());
+    }
+
+    @Test public void testBindingWithMixedArgs() {
+        LocalizeFX localize = getLocalizeFXInstance();
+        StringProperty name = new SimpleStringProperty("John Doe");
+        StringBinding binding = localize.get(TEST_KEY_CLICK_LABEL)
+                .arg("click_count", 0)
+                .arg("name", name)
+                .binding();
+
+        assertEquals("John Doe clicked this button zero times!", binding.get());
+        localize.setLocale(Locale.JAPANESE);
+        assertEquals("John Doeはこのボタンを0回クリックしました！", binding.get());
+        name.set("Jane Doe");
+        localize.setLocale(Locale.KOREAN);
+        assertEquals("Jane Doe이(가) 이 버튼을 0번 클릭했습니다!", binding.get());
+        localize.setLocale(Locale.ENGLISH);
+        assertEquals("Jane Doe clicked this button zero times!", binding.get());
+    }
+
+    @Test public void testPlainValueWithArgs() {
+        LocalizeFX localize = getLocalizeFXInstance();
+        Supplier<String> supplier = () -> localize.get(TEST_KEY_CLICK_LABEL)
+                .arg("name", "Doe")
+                .arg("click_count", 777)
+                .value();
+
+        assertEquals("Doe clicked this button 777 times!", supplier.get());
+        localize.setLocale(Locale.JAPANESE);
+        assertEquals("Doeはこのボタンを777回クリックしました！", supplier.get());
+        localize.setLocale(Locale.KOREAN);
+        assertEquals("Doe이(가) 이 버튼을 777번 클릭했습니다!", supplier.get());
     }
 }

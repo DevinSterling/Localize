@@ -191,6 +191,7 @@ public abstract class LocalizeFX extends Localize {
             return FXThread.isUIThread() ? localeProperty.get() : locale;
         }
 
+        ///  NOTE: All methods of this class must be called from the JavaFX UI thread, if available.
         private class LocaleProperty extends SimpleObjectProperty<Locale> {
             private LocaleProperty(Locale locale) {
                 super(locale);
@@ -206,6 +207,9 @@ public abstract class LocalizeFX extends Localize {
             }
 
             private void setWithoutRefresh(Locale locale) {
+                // Call `get` to make the private super field `valid` set to `true`.
+                // - This ensures locale changes are eagerly propagated when calling `super.set`.
+                get();
                 super.set(locale);
             }
 
