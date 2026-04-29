@@ -412,14 +412,6 @@ public abstract class Localize {
         public void refresh(Locale locale) {
             this.bundle = getProvider().getBundle(locale);
         }
-
-        @Override public boolean equals(Object o) {
-            return this == o || o instanceof ProviderEntry entry && getKey().equals(entry.getKey());
-        }
-
-        @Override public int hashCode() {
-            return getKey().hashCode();
-        }
     }
 
     // Uses a list instead of Map as the number of
