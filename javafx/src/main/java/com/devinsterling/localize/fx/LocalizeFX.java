@@ -3,6 +3,7 @@ package com.devinsterling.localize.fx;
 import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
+import com.devinsterling.localize.ResourceBundleProvider;
 
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
@@ -93,6 +94,30 @@ public abstract class LocalizeFX extends Localize {
     public static LocalizeFX of(Locale locale, LocalizeConfig config) {
         assertLocale(locale);
         return new LocalizeFXImpl(locale, config);
+    }
+
+    /// {@inheritDoc}
+    ///
+    /// ### Note
+    /// Adding providers will update any active string bindings (e.g., from [#getBinding(String)]).
+    @Override public boolean putBundleProvider(String key, ResourceBundleProvider provider) {
+        boolean isNewProvider = super.putBundleProvider(key, provider);
+        notifyListeners();
+        return isNewProvider;
+    }
+
+    /// {@inheritDoc}
+    ///
+    /// ### Note
+    /// Removing providers will update any active string bindings (e.g., from [#getBinding(String)]).
+    @Override public boolean removeBundleProvider(String key) {
+        boolean isRemoved = super.removeBundleProvider(key);
+
+        if (isRemoved) {
+            notifyListeners();
+        }
+
+        return isRemoved;
     }
 
     /// {@inheritDoc}
