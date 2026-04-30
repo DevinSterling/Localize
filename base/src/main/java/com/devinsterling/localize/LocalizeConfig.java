@@ -64,17 +64,17 @@ public class LocalizeConfig {
         this.defaultMissingValue = defaultMissingValue;
     }
 
-    /// {@return True, if an exception is to be thrown.}
+    /// {@return `true`, if an exception is to be thrown.}
     public boolean isThrowWhenNoValueFound() {
         return isThrowWhenNoValueFound;
     }
 
-    /// {@return True, if runtime exceptions must be ignored.}
+    /// {@return `true`, if runtime exceptions must be ignored.}
     public boolean isIgnoreProcessingExceptions() {
         return isIgnoreProcessingExceptions;
     }
 
-    /// {@return True, if missing resource bundles are ignored.}
+    /// {@return `true`, if missing resource bundles are ignored.}
     public boolean isIgnoreMissingResourceBundles() {
         return isIgnoreMissingResourceBundles;
     }

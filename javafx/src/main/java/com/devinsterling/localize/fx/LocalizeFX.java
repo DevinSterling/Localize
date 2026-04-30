@@ -81,6 +81,7 @@ public abstract class LocalizeFX extends Localize {
     ///
     /// @param locale Initial locale.
     /// @return       **Thread-safe** LocalizeFX instance.
+    /// @throws NullPointerException If `locale` is `null`.
     public static LocalizeFX of(Locale locale) {
         return of(locale, new LocalizeConfig());
     }
@@ -101,6 +102,7 @@ public abstract class LocalizeFX extends Localize {
     /// @param locale Initial locale.
     /// @param config Initial Configuration.
     /// @return       **Thread-safe** LocalizeFX instance.
+    /// @throws NullPointerException If `locale` or `config` is `null`.
     public static LocalizeFX of(Locale locale, LocalizeConfig config) {
         assertLocale(locale);
         return new LocalizeFXImpl(locale, config);
@@ -159,7 +161,7 @@ public abstract class LocalizeFX extends Localize {
 
     /// Retrieve an observable string binding.
     ///
-    /// ### Example Usage:
+    /// ### Example Usage
     /// ```
     /// Button button = new Button();
     /// button.textProperty().bind(localize.getBinding("MyApp.button"));

@@ -122,6 +122,7 @@ public abstract class Localize {
     ///
     /// @param locale Initial locale.
     /// @return       **Thread-safe** Localize instance.
+    /// @throws NullPointerException If `locale` is `null`.
     public static Localize of(Locale locale) {
         return of(locale, new LocalizeConfig());
     }
@@ -142,6 +143,7 @@ public abstract class Localize {
     /// @param locale Initial locale.
     /// @param config Initial Configuration.
     /// @return       **Thread-safe** Localize instance.
+    /// @throws NullPointerException If `locale` or `config` is `null`.
     public static Localize of(Locale locale, LocalizeConfig config) {
         Objects.requireNonNull(locale, "locale must not be null");
         return new LocalizeImpl(locale, config);
@@ -166,13 +168,14 @@ public abstract class Localize {
         return config;
     }
 
-    /// Add a provider to this instance. The offered provider
-    /// is called each time the locale changes to fetch the required ResourceBundle.
+    /// Add a provider to this instance.
+    ///
+    /// The given provider is called each time the locale changes to fetch the required ResourceBundle.
     ///
     /// New providers have lower priority than any previously added ones.
     /// Replacing an existing provider with a key does not affect priority.
     ///
-    /// ### Example Usage:
+    /// ### Example Usage
     /// ```java
     /// localize.putBundleProvider("myKey", locale -> {
     ///     return ResourceBundle.getBundle("i18n.messages", locale);
@@ -190,7 +193,7 @@ public abstract class Localize {
     ///
     /// @param key      Key associated with `provider`.
     /// @param provider Called upon calling refresh to get a ResourceBundle instance.
-    /// @return         True if the key had no association prior. Otherwise, False is
+    /// @return         `true` if the key had no association prior. Otherwise, `false` is
     ///                 returned when the previous entry is replaced with the new provider.
     /// @throws NullPointerException If `provider` is `null`.
     public synchronized boolean putBundleProvider(String key, ResourceBundleProvider provider) {
@@ -203,16 +206,19 @@ public abstract class Localize {
     /// to this [Localize] instance.
     ///
     /// @param key Key associated with the provider to remove.
-    /// @return    True if the provider was removed.
+    /// @return    `true` if the provider was removed.
     public boolean removeBundleProvider(String key) {
         return providerStore.remove(key);
     }
 
     /// Trigger a refresh for a specified provider to fetch a new [ResourceBundle].
     ///
+    /// Useful for reloading a specific bundle from an external source (e.g., disk)
+    /// after its contents have changed during runtime.
+    ///
     /// @param key Key associated with the provider to refresh.
-    /// @return    True if the provider was refreshed. Otherwise, False is
-    ///            returned if the provided is not contained within this instance.
+    /// @return    `true` if the provider was refreshed. Otherwise, `false` is
+    ///            returned if the provider is not contained within this instance.
     /// @see #putBundleProvider(String, ResourceBundleProvider)
     public boolean refresh(String key) {
         ProviderEntry entry = providerStore.get(key);
@@ -224,6 +230,9 @@ public abstract class Localize {
     }
 
     /// Trigger all providers to refresh and fetch new [ResourceBundle] instances.
+    ///
+    /// Useful for reloading bundles from external sources (e.g., disk)
+    /// after their contents have changed during runtime.
     public void refresh() {
         refresh(getLocale());
     }

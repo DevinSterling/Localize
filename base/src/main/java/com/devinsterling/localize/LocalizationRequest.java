@@ -58,7 +58,7 @@ public class LocalizationRequest {
 
     /// Check if any named or numbered arguments were provided.
     ///
-    /// @return True if this request has arguments.
+    /// @return `true` if this request has arguments.
     public boolean hasArguments() {
         return !arguments.isEmpty();
     }

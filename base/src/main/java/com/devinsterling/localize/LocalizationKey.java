@@ -3,7 +3,7 @@ package com.devinsterling.localize;
 /// Utility to pass an instance that implements this interface
 /// directly to a [Localize] instance to request a value.
 ///
-/// ### Example Usage:
+/// ### Example Usage
 /// ```
 /// public enum MyMessageKeys implements LocalizationKey {
 ///     MESSAGE_BUTTON_HI("Message.button.hi"),
