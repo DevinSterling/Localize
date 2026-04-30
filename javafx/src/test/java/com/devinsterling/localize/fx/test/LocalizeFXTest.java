@@ -1,5 +1,6 @@
 package com.devinsterling.localize.fx.test;
 
+import com.devinsterling.localize.LocalizeConfig;
 import com.devinsterling.localize.fx.LocalizeFX;
 
 import javafx.beans.binding.StringBinding;
@@ -7,14 +8,24 @@ import javafx.beans.property.ObjectProperty;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ListResourceBundle;
 import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import static com.devinsterling.localize.fx.test.TestUtil.*;
 import static com.devinsterling.localize.fx.test.TestUtil.getLocalizeFXInstance;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocalizeFXTest {
+class LocalizeFXTest {
+
+    @Test void testDefaultLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        assertEquals(defaultLocale, LocalizeFX.of().getLocale());
+        assertEquals(defaultLocale, LocalizeFX.of(new LocalizeConfig()).getLocale());
+    }
 
     @Test void testDefaultConfig() {
         LocalizeConfig defaultConfig = new LocalizeConfig();
@@ -41,7 +52,7 @@ public class LocalizeFXTest {
         assertEquals("Click!", binding.get());
     }
 
-    @Test public void testLocaleProperty() {
+    @Test void testLocaleProperty() {
         LocalizeFX localize = LocalizeFX.of();
         ObjectProperty<Locale> localeProperty = localize.localeProperty();
 
@@ -57,7 +68,7 @@ public class LocalizeFXTest {
         assertEquals(Locale.ENGLISH, LocalizeFX.of(Locale.ENGLISH).localeProperty().get());
     }
 
-    @Test public void testPutBundleProviderRefresh() {
+    @Test void testPutBundleProviderRefresh() {
         LocalizeFX localize = LocalizeFX.of(Locale.KOREAN);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
         assertEquals("", binding.get());
@@ -66,7 +77,7 @@ public class LocalizeFXTest {
         assertEquals("클릭!", binding.get());
     }
 
-    @Test public void testPutBundleProviderReplaceRefresh() {
+    @Test void testPutBundleProviderReplaceRefresh() {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
@@ -77,7 +88,7 @@ public class LocalizeFXTest {
         assertEquals("Click!?", binding.get());
     }
 
-    @Test public void testRemoveBundleProviderRefresh() {
+    @Test void testRemoveBundleProviderRefresh() {
         LocalizeFX localize = LocalizeFX.of(Locale.JAPANESE);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
@@ -88,7 +99,7 @@ public class LocalizeFXTest {
         assertEquals("", binding.get());
     }
 
-    @Test public void testRemoveBundleProviderMissingKey() {
+    @Test void testRemoveBundleProviderMissingKey() {
         LocalizeFX localize = LocalizeFX.of(Locale.JAPANESE);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
@@ -100,7 +111,7 @@ public class LocalizeFXTest {
         assertEquals("クリック！", binding.get());
     }
 
-    @Test public void testRefreshNoProviders() {
+    @Test void testRefreshNoProviders() {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
@@ -111,7 +122,7 @@ public class LocalizeFXTest {
         assertEquals("", binding.get());
     }
 
-    @Test public void testRefresh() {
+    @Test void testRefresh() {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
 
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
@@ -128,5 +139,27 @@ public class LocalizeFXTest {
 
         localize.refresh("nonexistent");
         assertEquals("Click!", binding.get());
+    }
+
+    @Test void testRefreshUpdatesBundle() {
+        Function<String, ResourceBundle> bundleFactory = value -> new ListResourceBundle() {
+            @Override protected Object[][] getContents() {
+                return new Object[][] {{ TEST_KEY_CLICK_LABEL, value }};
+            }
+        };
+
+        AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
+        LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
+        StringBinding binding = localize.getBinding(TEST_KEY_CLICK_LABEL);
+
+        localize.putBundleProvider("provider", locale -> currentBundle.get());
+        assertEquals("abc", binding.get());
+
+        // Realistically, this would be the file changing on disk or similar
+        currentBundle.set(bundleFactory.apply("xyz"));
+        assertEquals("abc", binding.get());
+
+        localize.refresh("provider");
+        assertEquals("xyz", binding.get());
     }
 }

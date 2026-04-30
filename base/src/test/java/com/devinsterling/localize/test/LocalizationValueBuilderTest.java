@@ -13,9 +13,9 @@ import static com.devinsterling.localize.test.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocalizationValueBuilderTest {
+class LocalizationValueBuilderTest {
 
-    @Test public void testBuilder() {
+    @Test void testBuilder() {
         Localize localize = getLocalizeInstance();
 
         assertEquals(
@@ -26,7 +26,7 @@ public class LocalizationValueBuilderTest {
                 localize.get(() -> TEST_KEY_TEST).value());
     }
 
-    @Test public void testNamedArgs() {
+    @Test void testNamedArgs() {
         Localize localize = getLocalizeInstance();
         Supplier<String> supplier = () -> localize.get(TEST_KEY_NAMED)
                                                   .arg("first", "Apples")
@@ -44,7 +44,7 @@ public class LocalizationValueBuilderTest {
         assertEquals("ApplesとOrangesとStrawberries", supplier.get());
     }
 
-    @Test public void testNumberedArgs() {
+    @Test void testNumberedArgs() {
         Localize localize = getLocalizeInstance();
         Supplier<String> supplier = () -> localize.get(TEST_KEY_NUMBERED)
                                                   .arg("Oranges") // argument 0
@@ -62,7 +62,23 @@ public class LocalizationValueBuilderTest {
         assertEquals("ApplesとOrangesとStrawberries", supplier.get());
     }
 
-    @Test public void testDefaultValue() {
+    @Test void testDuplicateArgs() {
+        Localize localize = getLocalizeInstance();
+
+        localize.setLocale(Locale.JAPANESE);
+        String value = localize.get(TEST_KEY_NAMED)
+                               .arg("first", "Apples")
+                               .arg("first", "Pears")
+                               .arg("middle", "Oranges")
+                               .arg("last", "Mangoes")
+                               .arg("last", "Strawberries")
+                               .arg("last", "Bananas")
+                               .value();
+
+        assertEquals("PearsとOrangesとBananas", value);
+    }
+
+    @Test void testDefaultValue() {
         String defaultValue = "default";
         Localize localize = getLocalizeInstance();
 
@@ -74,18 +90,10 @@ public class LocalizationValueBuilderTest {
         assertEquals("hi", localize.get(TEST_KEY_GREET).defaultValue(defaultValue).value());
     }
 
-    @Test public void testExceptions() {
+    @Test void testExceptionsFromArguments() {
         Localize localize = Localize.of();
 
         assertDoesNotThrow(() -> localize.get("").arg("key", null));
-
-        // Construction
-        assertThrows(
-                NullPointerException.class,
-                () -> new LocalizationValueBuilder<>("", null));
-        assertThrows(
-                NullPointerException.class,
-                () -> new LocalizationValueBuilder<>(null, request -> ""));
 
         // Adding arguments
         assertThrows(
@@ -100,5 +108,54 @@ public class LocalizationValueBuilderTest {
         assertThrows(
                 IllegalStateException.class,
                 () -> localize.get("").args("key", "value").args(Map.of("key", "value")));
+    }
+
+    @Test void testCustomBuilderNullKey() {
+        LocalizationValueBuilder.Applier mockApplier = _ignoredRequest -> "";
+        assertThrows(NullPointerException.class, () -> new TestValueBuilder<>(null, mockApplier));
+    }
+
+    @Test void testCustomBuilderNullApplier() {
+        assertThrows(NullPointerException.class, () -> new TestValueBuilder<>("key", null));
+    }
+
+    @Test void testCustomBuilder() {
+        LocalizationValueBuilder.Applier mockApplier = _ignoredRequest -> "";
+        TestValueBuilder<?> builder = new TestValueBuilder<>("key", mockApplier);
+
+        assertSame(builder, builder.defaultValue("test_default_value"));
+        assertSame(builder, builder.args(Map.of("key1", "value1", "key2", "value2")));
+
+        assertEquals(mockApplier, builder.getApplier());
+        assertEquals("key", builder.getKey());
+        assertEquals("test_default_value", builder.getDefaultValue());
+        assertEquals(Map.of("key1", "value1", "key2", "value2"), builder.getArguments());
+    }
+}
+
+class TestValueBuilder<B extends TestValueBuilder<B>> extends LocalizationValueBuilder<B> {
+
+    TestValueBuilder(String key, Applier applier) {
+        super(key, applier);
+    }
+
+    /*//////////////////////////////////
+    /// Protected method made ///
+    //////////////////////////////////*/
+
+    public Applier getApplier() {
+        return super.getApplier();
+    }
+
+    public String getKey() {
+        return super.getKey();
+    }
+
+    public String getDefaultValue() {
+        return super.getDefaultValue();
+    }
+
+    public Map<String, Object> getArguments() {
+        return super.getArguments();
     }
 }

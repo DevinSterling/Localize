@@ -1,5 +1,6 @@
 plugins {
     `maven-publish`
+    jacoco
     alias(libs.plugins.jreleaser)
     alias(libs.plugins.javamodularity)
 }
@@ -41,8 +42,10 @@ subprojects {
         }
     }
 
-    // Upload artifact to MavenCentral
     if (project.name != "examples") afterEvaluate {
+        // Test coverage
+        apply(plugin = "jacoco")
+        // Upload artifact to MavenCentral
         apply(plugin = "maven-publish")
 
         publishing {

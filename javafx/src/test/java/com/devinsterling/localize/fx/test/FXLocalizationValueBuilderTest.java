@@ -17,9 +17,20 @@ import static com.devinsterling.localize.fx.test.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FXLocalizationValueBuilderTest {
+class FXLocalizationValueBuilderTest {
 
-    @Test public void testBinding() {
+    @Test void testGetBindingAgainstGet() {
+        LocalizeFX localize = getLocalizeFXInstance();
+
+        assertEquals(
+            // JavaFX value builder
+            localize.getBinding(() -> TEST_KEY_CLICK_ME).get(),
+            // Plain value builder
+            localize.get(() -> TEST_KEY_CLICK_ME).value()
+        );
+    }
+
+    @Test void testBinding() {
         LocalizeFX localize = getLocalizeFXInstance();
         StringBinding binding = localize.get(TEST_KEY_CLICK_ME).binding();
 
@@ -30,7 +41,7 @@ public class FXLocalizationValueBuilderTest {
         assertEquals("클릭!", binding.get());
     }
 
-    @Test public void testBindingWithArgs() {
+    @Test void testBindingWithArgs() {
         LocalizeFX localize = getLocalizeFXInstance();
         DoubleProperty clickCount = new SimpleDoubleProperty(1);
         StringProperty name = new SimpleStringProperty("John Doe");
@@ -49,7 +60,7 @@ public class FXLocalizationValueBuilderTest {
         assertEquals("Jane Doeはこのボタンを2回クリックしました！", binding.get());
     }
 
-    @Test public void testBindingWithMixedArgs() {
+    @Test void testBindingWithMixedArgs() {
         LocalizeFX localize = getLocalizeFXInstance();
         StringProperty name = new SimpleStringProperty("John Doe");
         StringBinding binding = localize.get(TEST_KEY_CLICK_LABEL)
@@ -67,7 +78,7 @@ public class FXLocalizationValueBuilderTest {
         assertEquals("Jane Doe clicked this button zero times!", binding.get());
     }
 
-    @Test public void testPlainValueWithArgs() {
+    @Test void testPlainValueWithArgs() {
         LocalizeFX localize = getLocalizeFXInstance();
         Supplier<String> supplier = () -> localize.get(TEST_KEY_CLICK_LABEL)
                 .arg("name", "Doe")

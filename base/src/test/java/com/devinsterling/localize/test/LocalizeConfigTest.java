@@ -14,9 +14,9 @@ import static com.devinsterling.localize.test.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocalizeConfigTest {
+class LocalizeConfigTest {
 
-    @Test public void testDefaultMissingValue() {
+    @Test void testDefaultMissingValue() {
         LocalizeConfig config = new LocalizeConfig();
         Localize localize = Localize.of(Locale.ENGLISH, config);
         String missingValue = "Missing Value";
@@ -27,7 +27,7 @@ public class LocalizeConfigTest {
         assertEquals(missingValue, localize.getValue("Missing Key"));
     }
 
-    @Test public void testMissingResourceBundle() {
+    @Test void testMissingResourceBundle() {
         Localize localize = Localize.of();
         LocalizeConfig config = localize.getConfig();
         ResourceBundleProvider provider = l -> ResourceBundle.getBundle("missing", l);
@@ -42,7 +42,7 @@ public class LocalizeConfigTest {
 
     }
 
-    @Test public void testValueNotFound() {
+    @Test void testValueNotFound() {
         Localize localize = Localize.of();
         LocalizeConfig config = localize.getConfig();
 
@@ -55,7 +55,7 @@ public class LocalizeConfigTest {
                 () -> localize.getValue("Missing Key"));
     }
 
-    @Test public void testIgnoreProcessingExceptions() {
+    @Test void testIgnoreProcessingExceptions() {
         Localize localize = getLocalizeInstance();
         LocalizeConfig config = localize.getConfig();
 

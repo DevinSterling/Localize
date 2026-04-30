@@ -6,13 +6,24 @@ import com.devinsterling.localize.LocalizeConfig;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ListResourceBundle;
 import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.devinsterling.localize.test.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocalizeTest {
+class LocalizeTest {
+
+    @Test void testDefaultLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        assertEquals(defaultLocale, Localize.of().getLocale());
+        assertEquals(defaultLocale, Localize.of(new LocalizeConfig()).getLocale());
+    }
 
     @Test void testDefaultConfig() {
         LocalizeConfig defaultConfig = new LocalizeConfig();
@@ -37,7 +48,15 @@ public class LocalizeTest {
         assertEquals(2, localize.getResourceBundles().size());
     }
 
-    @Test public void testRemoveProvider() {
+    @Test void testPutNullReturningProvider() {
+        Localize localize = Localize.of();
+        String key = "key";
+
+        localize.putBundleProvider(key, _unusedLocale -> null);
+        assertEquals("", localize.getValue("missing"));
+    }
+
+    @Test void testRemoveProvider() {
         Localize localize = Localize.of();
 
         assertFalse(localize.removeBundleProvider("key"));
@@ -49,21 +68,21 @@ public class LocalizeTest {
         assertTrue(localize.removeBundleProvider("key3"));
     }
 
-    @Test public void testLocale() {
+    @Test void testLocale() {
         Localize localize = Localize.of();
         assertEquals(Locale.getDefault(), localize.getLocale());
 
         localize.setLocale(Locale.ENGLISH);
-        assertEquals(localize.getLocale(), Locale.ENGLISH);
+        assertEquals(Locale.ENGLISH, localize.getLocale());
 
         localize.setLocale(Locale.CHINESE);
-        assertEquals(localize.getLocale(), Locale.CHINESE);
+        assertEquals(Locale.CHINESE, localize.getLocale());
 
         localize.setLocale(Locale.JAPANESE);
-        assertEquals(localize.getLocale(), Locale.JAPANESE);
+        assertEquals(Locale.JAPANESE, localize.getLocale());
     }
 
-    @Test public void testGetValue() {
+    @Test void testGetValue() {
         Localize localize = Localize.of(Locale.ENGLISH);
 
         // No bundles contained
@@ -85,7 +104,7 @@ public class LocalizeTest {
         assertEquals("テスト", localize.getValue(() -> TEST_KEY_TEST));
     }
 
-    @Test public void testProcessor() {
+    @Test void testProcessor() {
         Localize localize = Localize.of(Locale.ENGLISH);
         String sample = "sample";
         LocalizationRequestProcessor mock = (bundle, request) -> sample;
@@ -106,13 +125,94 @@ public class LocalizeTest {
         assertEquals("test", localize.getValue(() -> TEST_KEY_TEST));
     }
 
-    @Test public void testExceptions() {
-        assertThrows(NullPointerException.class, () -> Localize.of(null));
+    @Test void testExceptions() {
+        assertThrows(NullPointerException.class, () -> Localize.of((Locale) null));
         assertThrows(NullPointerException.class, () -> Localize.of(Locale.ENGLISH, null));
         assertThrows(NullPointerException.class, () -> Localize.of(null, new LocalizeConfig()));
 
         Localize localize = Localize.of();
         assertThrows(NullPointerException.class, () -> localize.setLocale(null));
         assertThrows(NullPointerException.class, () -> localize.setProcessor(null));
+    }
+
+    @Test void testReplaceBundleProvider() {
+        Localize localize = Localize.of(Locale.JAPANESE);
+
+        localize.putBundleProvider("provider", TEST_PROVIDER);
+        assertEquals("おはよう", localize.getValue(TEST_KEY_GREET));
+
+        localize.putBundleProvider("provider", TEST2_PROVIDER);
+        assertEquals("おはようございます", localize.getValue(TEST_KEY_GREET));
+    }
+
+    @Test void testRemoveBundleProvider() {
+        Localize localize = Localize.of(Locale.CHINESE);
+
+        localize.putBundleProvider("provider", TEST_PROVIDER);
+        assertEquals("早上好", localize.getValue(TEST_KEY_GREET));
+
+        localize.removeBundleProvider("provider");
+        assertEquals("", localize.getValue(TEST_KEY_GREET));
+    }
+
+    @Test void testRemoveBundleProviderMissingKey() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+
+        localize.putBundleProvider("provider", TEST_PROVIDER);
+        assertEquals("hi", localize.getValue(TEST_KEY_GREET));
+
+        localize.removeBundleProvider("");
+        localize.removeBundleProvider("Provider");
+        assertEquals("hi", localize.getValue(TEST_KEY_GREET));
+    }
+
+    @Test void testRefreshNoProviders() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+
+        localize.refresh();
+        assertEquals("", localize.getValue(TEST_KEY_GREET));
+
+        localize.refresh("provider");
+        assertEquals("", localize.getValue(TEST_KEY_GREET));
+    }
+
+    @Test void testRefresh() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        Supplier<String> supplier = () -> localize.getValue(TEST_KEY_GREET);
+
+        assertEquals("", supplier.get());
+
+        localize.putBundleProvider("provider", TEST_PROVIDER);
+        assertEquals("hi", supplier.get());
+
+        localize.refresh();
+        assertEquals("hi", supplier.get());
+
+        localize.refresh("provider");
+        assertEquals("hi", supplier.get());
+
+        localize.refresh("nonexistent");
+        assertEquals("hi", supplier.get());
+    }
+
+    @Test void testRefreshUpdatesBundle() {
+        Function<String, ResourceBundle> bundleFactory = value -> new ListResourceBundle() {
+            @Override protected Object[][] getContents() {
+                return new Object[][] {{ TEST_KEY_TEST, value }};
+            }
+        };
+
+        AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
+        Localize localize = Localize.of(Locale.ENGLISH);
+
+        localize.putBundleProvider("provider", locale -> currentBundle.get());
+        assertEquals("abc", localize.getValue(TEST_KEY_TEST));
+
+        // Realistically, this would be the file changing on disk or similar
+        currentBundle.set(bundleFactory.apply("xyz"));
+        assertEquals("abc", localize.getValue(TEST_KEY_TEST)); // still stale
+
+        localize.refresh("provider");
+        assertEquals("xyz", localize.getValue(TEST_KEY_TEST));
     }
 }
