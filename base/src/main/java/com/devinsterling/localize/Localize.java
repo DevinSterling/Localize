@@ -183,7 +183,7 @@ public abstract class Localize {
     /// @return         True if the key had no association prior. Otherwise, False is
     ///                 returned when the previous entry is replaced with the new provider.
     /// @throws NullPointerException If `provider` is `null`.
-    public boolean putBundleProvider(String key, ResourceBundleProvider provider) {
+    public synchronized boolean putBundleProvider(String key, ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(key, provider);
         refreshResourceBundle(entry, getLocale());
         return providerStore.put(entry);
@@ -352,7 +352,7 @@ public abstract class Localize {
             this.locale = locale;
         }
 
-        @Override public void setLocale(Locale locale) {
+        @Override public synchronized void setLocale(Locale locale) {
             Objects.requireNonNull(locale, "locale must not be null");
 
             if (!this.locale.equals(locale)) {

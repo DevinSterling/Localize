@@ -200,7 +200,7 @@ public abstract class LocalizeFX extends Localize {
             return localeProperty;
         }
 
-        @Override public void setLocale(Locale locale) {
+        @Override public synchronized void setLocale(Locale locale) {
             if (FXThread.isUIThread()) {
                 // Assertion/refreshing is handled within this method
                 localeProperty.set(locale);
