@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    # Run on all branches and not for tags
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  find_typos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Find typos
+        uses: crate-ci/typos@v1.40.0
+
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Build and Test
+        run: ./gradlew build
