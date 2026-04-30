@@ -10,6 +10,6 @@ dependencies {
     compileOnly(libs.javafx.graphics)
 
     testImplementation(libs.javafx.graphics)
-    testImplementation(libs.junit.api)
-    testRuntimeOnly(libs.junit.engine)
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.launcher)
 }

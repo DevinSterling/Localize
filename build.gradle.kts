@@ -7,7 +7,7 @@ plugins {
 
 allprojects {
     group = "com.devinsterling"
-    version = "1.1.0"
+    version = "1.2.0"
 }
 
 description = "A Java localization library"
@@ -37,9 +37,6 @@ subprojects {
         withType<Javadoc>().configureEach {
             options.encoding = "UTF-8"
         }
-        named<Test>("test") {
-            useJUnitPlatform()
-        }
     }
 
     if (project.name != "examples") afterEvaluate {
@@ -47,6 +44,10 @@ subprojects {
         apply(plugin = "jacoco")
         // Upload artifact to MavenCentral
         apply(plugin = "maven-publish")
+
+        tasks.test {
+            useJUnitPlatform()
+        }
 
         publishing {
             publications {
@@ -111,8 +112,11 @@ jreleaser {
 
     signing {
         active = org.jreleaser.model.Active.ALWAYS
-        armored = true
-        verify = true
+
+        pgp {
+            armored = true
+            verify = true
+        }
     }
 
     release {

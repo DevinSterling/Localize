@@ -1,12 +1,12 @@
 # Shared plugins/dependencies between projects
 
 [versions]
-module-plugin-dep = '1.8.15'
+module-plugin-dep = '2.0.0'
 javafx-plugin-dep = '0.1.0'
-jreleaser-plugin-dep = '1.17.0'
-javafx-dep = '17'
-junit-dep = '5.9.2'
-icu4j-dep = '76.1'
+jreleaser-plugin-dep = '1.24.0'
+javafx-dep = '17.0.19'
+junit-dep = '6.0.3'
+icu4j-dep = '78.3'
 
 [plugins]
 javamodularity = { id = 'org.javamodularity.moduleplugin', version.ref = 'module-plugin-dep' }
@@ -14,7 +14,7 @@ javafx-plugin = { id = 'org.openjfx.javafxplugin', version.ref = 'javafx-plugin-
 jreleaser = { id = 'org.jreleaser', version.ref = 'jreleaser-plugin-dep' }
 
 [libraries]
-junit-api = { module = 'org.junit.jupiter:junit-jupiter-api', version.ref = 'junit-dep' }
-junit-engine = { module = 'org.junit.jupiter:junit-jupiter-engine', version.ref = 'junit-dep' }
+junit-jupiter = { module = 'org.junit.jupiter:junit-jupiter', version.ref = 'junit-dep' }
+junit-launcher = { module = 'org.junit.platform:junit-platform-launcher', version.ref = 'junit-dep' }
 icu4j = { module = 'com.ibm.icu:icu4j', version.ref = 'icu4j-dep' }
 javafx-graphics = { module = 'org.openjfx:javafx-graphics', version.ref = 'javafx-dep' }
