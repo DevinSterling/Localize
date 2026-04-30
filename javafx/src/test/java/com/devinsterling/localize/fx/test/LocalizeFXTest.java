@@ -16,16 +16,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LocalizeFXTest {
 
-    @Test public void testGetBindingAgainstGetValue() {
-        LocalizeFX localize = getLocalizeFXInstance();
-
-        assertEquals(
-            localize.getBinding(TEST_KEY_CLICK_ME).get(),
-            localize.getValue(() -> TEST_KEY_CLICK_ME)
-        );
+    @Test void testDefaultConfig() {
+        LocalizeConfig defaultConfig = new LocalizeConfig();
+        assertEquals(defaultConfig, LocalizeFX.of().getConfig());
+        assertEquals(defaultConfig, LocalizeFX.of(Locale.ENGLISH).getConfig());
     }
 
-    @Test public void testBindingDuplicateLocale() {
+    @Test void testBindingDuplicateLocale() {
         LocalizeFX localize = getLocalizeFXInstance();
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 

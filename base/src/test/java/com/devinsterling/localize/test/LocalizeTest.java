@@ -14,7 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LocalizeTest {
 
-    @Test public void TestPutProvider() {
+    @Test void testDefaultConfig() {
+        LocalizeConfig defaultConfig = new LocalizeConfig();
+        assertEquals(defaultConfig, Localize.of().getConfig());
+        assertEquals(defaultConfig, Localize.of(Locale.ENGLISH).getConfig());
+    }
+
+    @Test void testPutProvider() {
         Localize localize = Localize.of();
         String key = "key";
 

@@ -85,6 +85,16 @@ public abstract class LocalizeFX extends Localize {
         return of(locale, new LocalizeConfig());
     }
 
+    /// Identical functionality as [#of(Locale, LocalizeConfig)] with a given
+    /// [LocalizeConfig] and initial locale set as [Locale#getDefault()].
+    ///
+    /// @param config Initial Configuration.
+    /// @return       **Thread-safe** LocalizeFX instance.
+    /// @throws NullPointerException If `config` is `null`.
+    public static LocalizeFX of(LocalizeConfig config) {
+        return of(Locale.getDefault(), config);
+    }
+
     /// Create a new [LocalizeFX] instance with a given
     /// [LocalizeFX] and [LocalizeConfig].
     ///

@@ -83,4 +83,13 @@ public class LocalizeConfig {
     public String getDefaultMissingValue() {
         return defaultMissingValue;
     }
+
+    @Override public boolean equals(Object obj) {
+        if (!(obj instanceof LocalizeConfig config)) return false;
+        if (config == this) return true;
+        return this.isIgnoreMissingResourceBundles == config.isIgnoreMissingResourceBundles
+                && this.isIgnoreProcessingExceptions == config.isIgnoreProcessingExceptions
+                && this.isThrowWhenNoValueFound == config.isThrowWhenNoValueFound
+                && this.defaultMissingValue.equals(config.defaultMissingValue);
+    }
 }

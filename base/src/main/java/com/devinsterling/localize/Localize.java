@@ -126,6 +126,16 @@ public abstract class Localize {
         return of(locale, new LocalizeConfig());
     }
 
+    /// Identical functionality as [#of(Locale, LocalizeConfig)] with a given
+    /// [LocalizeConfig] and initial locale set as [Locale#getDefault()].
+    ///
+    /// @param config Initial Configuration.
+    /// @return       **Thread-safe** Localize instance.
+    /// @throws NullPointerException If `config` is `null`.
+    public static Localize of(LocalizeConfig config) {
+        return of(Locale.getDefault(), config);
+    }
+
     /// Create a new [Localize] instance with a given
     /// [Locale] and [LocalizeConfig].
     ///
