@@ -1,6 +1,7 @@
 package com.devinsterling.localize;
 
 import java.util.MissingResourceException;
+import java.util.Objects;
 
 /// Configuration to change how [Localize] handles operations.
 ///
@@ -91,5 +92,14 @@ public class LocalizeConfig {
                 && this.isIgnoreProcessingExceptions == config.isIgnoreProcessingExceptions
                 && this.isThrowWhenNoValueFound == config.isThrowWhenNoValueFound
                 && this.defaultMissingValue.equals(config.defaultMissingValue);
+    }
+
+    @Override public int hashCode() {
+        return Objects.hash(
+            isIgnoreMissingResourceBundles,
+            isIgnoreProcessingExceptions,
+            isThrowWhenNoValueFound,
+            defaultMissingValue
+        );
     }
 }
