@@ -133,6 +133,7 @@ public abstract class Localize {
     /// @param config Initial Configuration.
     /// @return       **Thread-safe** Localize instance.
     /// @throws NullPointerException If `config` is `null`.
+    /// @since 1.2
     public static Localize of(LocalizeConfig config) {
         return of(Locale.getDefault(), config);
     }

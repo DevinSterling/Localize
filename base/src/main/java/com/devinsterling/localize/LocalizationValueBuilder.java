@@ -131,6 +131,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @param defaultValue Default value.
     /// @return             This builder instance.
     /// @see                LocalizeConfig#setDefaultMissingValue(String)
+    /// @since 1.1
     public B defaultValue(String defaultValue) {
         this.defaultValue = defaultValue;
         return getBuilder();
