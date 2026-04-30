@@ -1,8 +1,32 @@
 # Localize
-A simple localization library.
+A simple localization library (Supports Java 17+).
 
 [![Maven Central Version](https://img.shields.io/maven-central/v/com.devinsterling/localize-base?style=flat-square)](https://central.sonatype.com/artifact/com.devinsterling/localize-base)
-[![Base Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-base/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-base)
+[![Base Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-base/javadoc.svg?logo=&style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-base)
+
+## Usage with Maven and Gradle
+- Base functionality:
+  ```xml
+  <dependency>
+    <groupId>com.devinsterling</groupId>
+    <artifactId>localize-base</artifactId>
+    <version>1.2.0</version>
+  </dependency>
+  ```
+  ```kts
+  implementation("com.devinsterling:localize-base:1.2.0")
+  ```
+- Base functionality *and* JavaFX integration:
+  ```xml
+  <dependency>
+    <groupId>com.devinsterling</groupId>
+    <artifactId>localize-javafx</artifactId>
+    <version>1.2.0</version>
+  </dependency>
+  ```
+  ```kts
+  implementation("com.devinsterling:localize-javafx:1.2.0")
+  ```
 
 ___
 
@@ -96,38 +120,12 @@ clickButton.setOnAction(_ -> clickCount.set(clickCount.get() + 1));
 
 // Binding
 clickButton.textProperty().bind(localize.getBinding("MyApp.clickMe"));
-label.textProperty().bind(localize.get("MyApp.clickMessage")
+clickDetails.textProperty().bind(localize.get("MyApp.clickMessage")
                                   .arg("click_count", clickCount)
                                   .arg("name", textField.textProperty())
                                   .defaultValue("N/A")
                                   .binding());
 ```
-
-___
-
-## Usage with Maven and Gradle
-- Dependency for base functionality:
-  ```xml
-  <dependency>
-    <groupId>com.devinsterling</groupId>
-    <artifactId>localize-base</artifactId>
-    <version>1.2doc.0</version>
-  </dependency>
-  ```
-  ```kts
-  implementation("com.devinsterling:localize-base:1.1.0")
-  ```
-- Dependency for base functionality *and* JavaFX integration:
-  ```xml
-  <dependency>
-    <groupId>com.devinsterling</groupId>
-    <artifactId>localize-javafx</artifactId>
-    <version>1.2.0</version>
-  </dependency>
-  ```
-  ```kts
-  implementation("com.devinsterling:localize-javafx:1.1.0")
-  ```
 
 ## License
 Apache 2.0 [license](LICENSE)
