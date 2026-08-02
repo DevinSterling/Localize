@@ -2,6 +2,7 @@ plugins {
     java
     application
     alias(libs.plugins.javafx.plugin)
+    id("subproject-convention")
 }
 
 application {
