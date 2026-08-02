@@ -7,8 +7,8 @@ import java.util.ResourceBundle;
 /// @since 1.0
 @FunctionalInterface
 public interface LocalizationRequestProcessor {
-    /// Process a [LocalizationRequest] with a specified [ResourceBundle]
-    /// to retrieve a formatted localized string.
+    /// Processes the given [LocalizationRequest] with the specified
+    /// [ResourceBundle] to retrieve a formatted localized string.
     ///
     /// @param bundle  Bundle to perform a lookup on.
     /// @param request Request to get and format the value by.

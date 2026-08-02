@@ -48,7 +48,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     private boolean isNamedArgs;
     private boolean isNumberedArgs;
 
-    /// Instantiate a builder to request a specified localized value.
+    /// Creates a builder to request a specified localized value.
     ///
     /// @param key     Key to request a formatted localized value for.
     /// @param applier Callback to apply the properties of this builder
@@ -61,7 +61,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         this.applier = applier;
     }
 
-    /// Append named argument key-value pairings.
+    /// Appends named argument key-value pairings.
     ///
     /// @param args Named argument key-value pairings.
     /// @return     This builder instance.
@@ -75,11 +75,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return getBuilder();
     }
 
-    /// Append an array of numbered argument values.
-    ///
-    /// **Calling this method alongside methods that accept
-    /// named arguments such as [#arg(String, Object)]
-    /// can cause undefined behavior.**
+    /// Appends an array of numbered argument values.
     ///
     /// @param args Numbered argument values.
     /// @return     This builder instance.
@@ -93,11 +89,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return getBuilder();
     }
 
-    /// Add a numbered argument with an associated value.
-    ///
-    /// **Calling this method alongside methods that accept
-    /// named arguments such as [#arg(String, Object)]
-    /// can cause undefined behavior.**
+    /// Adds a numbered argument with an associated value.
     ///
     /// @param value Numbered argument value.
     /// @return      This builder instance.
@@ -110,7 +102,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return getBuilder();
     }
 
-    /// Add a named argument with an associated value.
+    /// Adds a named argument with an associated value.
     ///
     /// @param key   Named argument key.
     /// @param value Named argument value.
@@ -126,7 +118,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return getBuilder();
     }
 
-    /// Set the default value if the requested key does not exist.
+    /// Sets the default value if the requested key does not exist.
     ///
     /// @param defaultValue Default value.
     /// @return             This builder instance.
@@ -137,8 +129,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return getBuilder();
     }
 
-    /// Retrieve a formatted string with all properties
-    /// applied from this builder.
+    /// Retrieves a formatted string with all properties applied from this builder.
     ///
     /// @return The formatted localized value.
     public String value() {

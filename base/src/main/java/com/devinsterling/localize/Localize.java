@@ -15,6 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /// instance through the static factory methods listed here:
 /// - [#of()]
 /// - [#of(Locale)]
+/// - [#of(LocalizeConfig)]
 /// - [#of(Locale, LocalizeConfig)]
 ///
 /// ### Arguments and Pluralization
@@ -87,16 +88,16 @@ public abstract class Localize {
     private final LocalizeConfig config;
     private volatile LocalizationRequestProcessor processor = DEFAULT_PROCESSOR;
 
-    /// Create a [Localize] instance with the desired configuration.
+    /// Creates a [Localize] instance with the desired configuration.
     ///
     /// @param config The configuration.
+    /// @throws NullPointerException If `config` is `null`.
     protected Localize(LocalizeConfig config) {
         Objects.requireNonNull(config, "config must not be null");
         this.config = config;
     }
 
-    /// Set the locale and update all resource
-    /// bundles contained within this instance.
+    /// Sets the locale and updates all resource bundles.
     ///
     /// Changing the locale will trigger a [#refresh()]
     ///
@@ -104,12 +105,12 @@ public abstract class Localize {
     /// @throws NullPointerException If locale is `null`.
     public abstract void setLocale(Locale locale);
 
-    /// Retrieve the current locale of this instance.
+    /// The current locale.
     ///
     /// @return The current locale.
     public abstract Locale getLocale();
 
-    /// Identical functionality as [#of(Locale, LocalizeConfig)] with the
+    /// Equivalent to [#of(Locale, LocalizeConfig)] with the
     /// initial locale set as [Locale#getDefault()] and default configuration.
     ///
     /// @return **Thread-safe** Localize instance.
@@ -117,7 +118,7 @@ public abstract class Localize {
         return of(Locale.getDefault());
     }
 
-    /// Identical functionality as [#of(Locale, LocalizeConfig)] with a given
+    /// Equivalent to [#of(Locale, LocalizeConfig)] with a given
     /// [Locale] and default configuration.
     ///
     /// @param locale Initial locale.
@@ -127,7 +128,7 @@ public abstract class Localize {
         return of(locale, new LocalizeConfig());
     }
 
-    /// Identical functionality as [#of(Locale, LocalizeConfig)] with a given
+    /// Equivalent to [#of(Locale, LocalizeConfig)] with a given
     /// [LocalizeConfig] and initial locale set as [Locale#getDefault()].
     ///
     /// @param config Initial Configuration.
@@ -138,8 +139,7 @@ public abstract class Localize {
         return of(Locale.getDefault(), config);
     }
 
-    /// Create a new [Localize] instance with a given
-    /// [Locale] and [LocalizeConfig].
+    /// Creates a new [Localize] instance with the given [Locale] and [LocalizeConfig].
     ///
     /// @param locale Initial locale.
     /// @param config Initial Configuration.
@@ -150,7 +150,8 @@ public abstract class Localize {
         return new LocalizeImpl(locale, config);
     }
 
-    /// Set the processor of this instance.
+    /// Sets the request processor.
+    ///
     /// The processor is called each time a request is made to fetch a value.
     ///
     /// @param processor Processor to handle requests.
@@ -159,22 +160,27 @@ public abstract class Localize {
         this.processor = processor;
     }
 
-    /// {@return The processor of this instance}
+    /// {@return The request processor}
     public LocalizationRequestProcessor getProcessor() {
         return processor;
     }
 
-    /// {@return The configuration of this instance}
+    /// {@return The localize configuration}
     public LocalizeConfig getConfig() {
         return config;
     }
 
-    /// Add a provider to this instance.
+    /// Adds the given provider to retrieve localized values from.
     ///
-    /// The given provider is called each time the locale changes to fetch the required ResourceBundle.
+    /// The provider is called each time the locale changes to fetch the corresponding [ResourceBundle].
     ///
-    /// New providers have lower priority than any previously added ones.
-    /// Replacing an existing provider with a key does not affect priority.
+    /// ### Precedence
+    /// Providers are prioritized in the order they are added.
+    /// Providers added earlier have higher priority than those added later (e.g., fallbacks).
+    /// Replacing an existing provider with the given key does not change its priority.
+    ///
+    /// If multiple providers have the same resource property keys,
+    /// the value from the highest-priority provider is used.
     ///
     /// ### Example Usage
     /// ```java
@@ -196,15 +202,14 @@ public abstract class Localize {
     /// @param provider Called upon calling refresh to get a ResourceBundle instance.
     /// @return         `true` if the key had no association prior. Otherwise, `false` is
     ///                 returned when the previous entry is replaced with the new provider.
-    /// @throws NullPointerException If `provider` is `null`.
+    /// @throws NullPointerException If `key` or `provider` is `null`.
     public synchronized boolean putBundleProvider(String key, ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(key, provider);
         refreshResourceBundle(entry, getLocale());
         return providerStore.put(entry);
     }
 
-    /// Remove a [ResourceBundleProvider] that was previously added
-    /// to this [Localize] instance.
+    /// Removes the [ResourceBundleProvider] associated with the given key.
     ///
     /// @param key Key associated with the provider to remove.
     /// @return    `true` if the provider was removed.
@@ -212,14 +217,14 @@ public abstract class Localize {
         return providerStore.remove(key);
     }
 
-    /// Trigger a refresh for a specified provider to fetch a new [ResourceBundle].
+    /// Triggers a refresh for the specified provider to fetch a new [ResourceBundle].
     ///
     /// Useful for reloading a specific bundle from an external source (e.g., disk)
     /// after its contents have changed during runtime.
     ///
     /// @param key Key associated with the provider to refresh.
-    /// @return    `true` if the provider was refreshed. Otherwise, `false` is
-    ///            returned if the provider is not contained within this instance.
+    /// @return    `true` if the provider was refreshed.
+    ///            Otherwise, `false` is returned if the provider was not found.
     /// @see #putBundleProvider(String, ResourceBundleProvider)
     public boolean refresh(String key) {
         ProviderEntry entry = providerStore.get(key);
@@ -230,7 +235,7 @@ public abstract class Localize {
         return entry != null;
     }
 
-    /// Trigger all providers to refresh and fetch new [ResourceBundle] instances.
+    /// Triggers all providers to refresh and fetch new [ResourceBundle] instances.
     ///
     /// Useful for reloading bundles from external sources (e.g., disk)
     /// after their contents have changed during runtime.
@@ -238,30 +243,27 @@ public abstract class Localize {
         refresh(getLocale());
     }
 
-    /// Retrieve a builder instance to get a formatted localized string.
-    /// Upon calling [LocalizationValueBuilder#value()], this [Localize]
-    /// instance will eagerly search through all resource bundles contained
-    /// and return the first match to format by.
+    /// Returns a builder instance to get a formatted localized string.
     ///
     /// @param key Key associated with the resource value to retrieve.
     /// @return    **Non-thread-safe** builder instance to format the requested value.
     /// @throws NullPointerException If `key` is `null`.
+    /// @see LocalizationValueBuilder#value
     public LocalizationValueBuilder<?> get(String key) {
         return new LocalizationValueBuilder<>(key, this::applyBuilderProperties);
     }
 
-    /// Identical functionality as [#get(String)].
+    /// Equivalent to [#get(String)].
     ///
     /// @param key Key associated with the resource value to retrieve.
     /// @return    **Non-thread-safe** builder instance to format the requested value.
     /// @throws NullPointerException If `key` is `null`.
+    /// @see LocalizationValueBuilder#value
     public LocalizationValueBuilder<?> get(LocalizationKey key) {
         return get(key.getKey());
     }
 
-    /// Retrieve the value associated with a resource bundle key.
-    /// This will eagerly search through all resource bundles contained
-    /// within this [Localize] instance and return the first match.
+    /// Retrieves the value associated with a resource bundle key.
     ///
     /// @param key Key associated with the resource value to retrieve.
     /// @return    Resource bundle value or an empty string if not found.
@@ -271,7 +273,7 @@ public abstract class Localize {
         return get(key).value();
     }
 
-    /// Identical functionality as [#getValue(String)].
+    /// Equivalent to [#getValue(String)].
     ///
     /// @param key Key associated with the resource value to retrieve.
     /// @return    Resource bundle value or an empty string if not found.
@@ -281,7 +283,7 @@ public abstract class Localize {
         return getValue(key.getKey());
     }
 
-    /// Retrieve all resource bundles contained within this [Localize] instance.
+    /// Returns all contained resource bundles.
     ///
     /// @return Immutable snapshot of all resource bundles at the time of calling.
     public Collection<ResourceBundle> getResourceBundles() {
@@ -291,8 +293,7 @@ public abstract class Localize {
                       .toList();
     }
 
-    /// Trigger all providers to refresh and fetch new [ResourceBundle] instances
-    /// with a given [Locale].
+    /// Triggers all providers to refresh and fetch new [ResourceBundle] instances with a given [Locale].
     ///
     /// @param locale Locale to refresh all providers with.
     protected void refresh(Locale locale) {
@@ -301,7 +302,7 @@ public abstract class Localize {
         }
     }
 
-    /// Apply and transform the request into a formatted localized string.
+    /// Applies and transforms the request into a formatted localized string.
     ///
     /// @param request Request to format string with.
     /// @return Requested formatted localized string.
@@ -392,7 +393,7 @@ public abstract class Localize {
         private final ResourceBundleProvider provider;
         private volatile ResourceBundle bundle;
 
-        /// Instantiate an entry container instance.
+        /// Creates an entry container instance.
         ///
         /// @param key      Identifier of this entry instance to construct.
         /// @param provider Provider to fetch new resource bundles on refresh.
@@ -404,9 +405,7 @@ public abstract class Localize {
             this.provider = provider;
         }
 
-        /// Retrieve the identifier of this [ProviderEntry] instance.
-        ///
-        /// @return Entry identifier.
+        /// {@return The entry identifier}
         public String getKey() {
             return key;
         }
@@ -424,8 +423,7 @@ public abstract class Localize {
             return bundle;
         }
 
-        /// Fetch a new resource bundle using this instance's
-        /// [ResourceBundleProvider].
+        /// Fetches a new resource bundle using this entry's [ResourceBundleProvider].
         ///
         /// @param locale Locale associated with the resource bundle.
         /// @see #getProvider()
@@ -434,8 +432,7 @@ public abstract class Localize {
         }
     }
 
-    // Uses a list instead of Map as the number of
-    // providers is typically small (1~3).
+    // Uses a list instead of Map as the number of providers is typically small (1~15).
     // Reads/iteration are **far greater** than writes
     private static class ProviderStore extends CopyOnWriteArrayList<ProviderEntry> {
         public ProviderEntry get(String key) {
@@ -447,8 +444,7 @@ public abstract class Localize {
             return null;
         }
 
-        // Synchronized to ensure that no
-        // modifications occur during iteration.
+        // Synchronized to ensure that no modifications occur during iteration.
         public synchronized boolean put(ProviderEntry entry) {
             for (int i = 0; i < size(); i++) {
                 if (get(i).getKey().equals(entry.getKey())) {

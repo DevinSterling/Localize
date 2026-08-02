@@ -18,8 +18,7 @@ public class LocalizeConfig {
     private volatile boolean isIgnoreMissingResourceBundles = false;
     private volatile String defaultMissingValue = "";
 
-    /// Instantiate a configuration instance
-    /// with all values set to their defaults.
+    /// Creates a configuration instance with all values set to their defaults.
     public LocalizeConfig() {}
 
     /// When set to `true`, a [MissingResourceException] is thrown

@@ -18,6 +18,7 @@ import java.util.Objects;
 /// instance through the static factory methods listed here:
 /// - [#of()]
 /// - [#of(Locale)]
+/// - [#of(LocalizeConfig)]
 /// - [#of(Locale, LocalizeConfig)]
 ///
 /// This class provides an observable string binding
@@ -25,13 +26,16 @@ import java.util.Objects;
 /// locale or any arguments change.
 ///
 /// ### Example
-/// properties file:
+/// Properties file (`messages_en.properties`):
 /// ```
-/// MyApp.buttonClick = "Click to increment"
-/// MyApp.clickCount = "Clicked {click_count, plural, 0={zero times} 1={one time} other{# times}}!"
+/// MyApp.buttonClick = Click to increment
+/// MyApp.clickCount = Clicked {click_count, plural, 0={zero times} 1={one time} other{# times}}!
 /// ```
 /// JavaFX code:
 /// ```
+/// LocalizeFX localize = LocalizeFX.of();
+/// localize.addBundleProvider(locale -> ResourceBundle.getBundle("messages", locale));
+///
 /// Button button = new Button();
 /// Label label = new Label();
 /// DoubleProperty clickCount = new SimpleDoubleProperty();
@@ -45,18 +49,20 @@ import java.util.Objects;
 /// @since 1.0
 public abstract class LocalizeFX extends Localize {
 
-    /// Create a [LocalizeFX] instance with the desired configuration.
+    /// Creates a [LocalizeFX] instance with the desired configuration.
     ///
     /// @param config The configuration.
+    /// @throws NullPointerException If `config` is `null`.
     protected LocalizeFX(LocalizeConfig config) {
         super(config);
     }
 
-    /// Locale associated with this [Localize] instance.
+    /// The current locale.
+    ///
     /// Each time the locale is changed, all providers are refreshed.
     ///
-    /// When not on the FX application thread, it is recommended to
-    /// use [#getLocale()] and [#setLocale(Locale)] instead.
+    /// When not on the FX application thread, it is recommended
+    /// to use [#getLocale()] and [#setLocale(Locale)] instead.
     ///
     /// @return **Non-thread-safe** observable locale property.
     /// @see #setLocale(Locale)
@@ -68,7 +74,7 @@ public abstract class LocalizeFX extends Localize {
     /// to listeners, triggering all string bindings to update.
     protected abstract void notifyListeners();
 
-    /// Identical functionality as [#of(Locale, LocalizeConfig)] with the
+    /// Equivalent to [#of(Locale, LocalizeConfig)] with the
     /// initial locale set as [Locale#getDefault()] and default configuration.
     ///
     /// @return **Thread-safe** LocalizeFX instance.
@@ -76,7 +82,7 @@ public abstract class LocalizeFX extends Localize {
         return of(Locale.getDefault());
     }
 
-    /// Identical functionality as [#of(Locale, LocalizeConfig)] with a given
+    /// Equivalent to [#of(Locale, LocalizeConfig)] with a given
     /// [Locale] and default configuration.
     ///
     /// @param locale Initial locale.
@@ -86,7 +92,7 @@ public abstract class LocalizeFX extends Localize {
         return of(locale, new LocalizeConfig());
     }
 
-    /// Identical functionality as [#of(Locale, LocalizeConfig)] with a given
+    /// Equivalent to [#of(Locale, LocalizeConfig)] with a given
     /// [LocalizeConfig] and initial locale set as [Locale#getDefault()].
     ///
     /// @param config Initial Configuration.
@@ -97,8 +103,7 @@ public abstract class LocalizeFX extends Localize {
         return of(Locale.getDefault(), config);
     }
 
-    /// Create a new [LocalizeFX] instance with a given
-    /// [LocalizeFX] and [LocalizeConfig].
+    /// Creates a new [LocalizeFX] instance with a given [LocalizeFX] and [LocalizeConfig].
     ///
     /// @param locale Initial locale.
     /// @param config Initial Configuration.
@@ -160,7 +165,7 @@ public abstract class LocalizeFX extends Localize {
         return get(key.getKey());
     }
 
-    /// Retrieve an observable string binding.
+    /// Retrieves an observable string binding.
     ///
     /// ### Example Usage
     /// ```
@@ -177,7 +182,7 @@ public abstract class LocalizeFX extends Localize {
         return get(key).binding();
     }
 
-    /// Identical functionality as [#getBinding(String)].
+    /// Equivalent to [#getBinding(String)].
     ///
     /// @param  key Resource bundle key.
     /// @return     Observable string binding.

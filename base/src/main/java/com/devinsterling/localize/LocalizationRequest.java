@@ -11,11 +11,12 @@ public class LocalizationRequest {
     private final String defaultValue;
     private final Map<String, Object> arguments;
 
-    /// Instantiate a request to get a formatted localized value.
+    /// Creates a request to get a formatted localized value.
     ///
+    /// @deprecated      Prefer [Builder#of(String)] instead.
     /// @param key       Key associated with the requested value.
     /// @param arguments Positional or Named arguments to format with.
-    /// @deprecated      Prefer [Builder#of(String)] instead.
+    /// @throws NullPointerException If `key` or `arguments` is `null`.
     @Deprecated(since = "1.1")
     public LocalizationRequest(String key, Map<String, Object> arguments) {
         this(key, null, arguments);
@@ -30,12 +31,12 @@ public class LocalizationRequest {
         this.arguments = arguments;
     }
 
-    /// {@return Key associated with the requested value.}
+    /// {@return The key associated with the requested value.}
     public String getKey() {
         return key;
     }
 
-    /// {@return Key associated with the requested value.}
+    /// {@return The default value associated with the requested value.}
     /// @since 1.1
     public String getDefaultValue() {
         return defaultValue;
@@ -43,7 +44,7 @@ public class LocalizationRequest {
 
     /// Named or numbered arguments to format with.
     ///
-    /// **Note**: Numbered arguments keys are numbers in string form, such as `"1"`, `"2"`, etc.
+    /// **Note**: Numbered arguments keys are numbers in string form, such as `"0"`, `"1"`, etc.
     ///
     /// @return Immutable arguments map to format with.
     public Map<String, Object> getArguments() {
@@ -76,7 +77,7 @@ public class LocalizationRequest {
             this.key = key;
         }
 
-        /// Set the default value to return if the key is not found.
+        /// Sets the default value to return if the key is not found.
         ///
         /// @param defaultValue Default value.
         /// @return This builder instance.
@@ -85,9 +86,9 @@ public class LocalizationRequest {
             return this;
         }
 
-        /// Set the position or named arguments to format with.
+        /// Sets the position or named arguments to format with.
         ///
-        /// **Note**: Numbered arguments keys are numbers in string form, such as `"1"`, `"2"`, etc.
+        /// **Note**: Numbered arguments keys are numbers in string form, such as `"0"`, `"1"`, etc.
         ///
         /// @param arguments Positional or Named arguments.
         /// @return This builder instance.
@@ -96,14 +97,14 @@ public class LocalizationRequest {
             return this;
         }
 
-        /// Build a [LocalizationRequest] instance.
+        /// Builds a [LocalizationRequest] instance.
         ///
-        /// @return Instantiated request to get a formatted localized value with.
+        /// @return Request to get a formatted localized value with.
         public LocalizationRequest build() {
             return new LocalizationRequest(key, defaultValue, arguments);
         }
 
-        /// Factory to create a builder instance to construct a [LocalizationRequest].
+        /// Creates a builder instance to construct a [LocalizationRequest].
         ///
         /// @param key Key associated with the requested value.
         /// @return    Builder instance for a [LocalizationRequest].

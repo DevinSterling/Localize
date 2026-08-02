@@ -1,7 +1,6 @@
 package com.devinsterling.localize;
 
-/// Utility to pass an instance that implements this interface
-/// directly to a [Localize] instance to request a value.
+/// Utility to pass implementors directly to a [Localize] instance to request a value.
 ///
 /// ### Example Usage
 /// ```
@@ -31,8 +30,7 @@ package com.devinsterling.localize;
 /// @see Localize#getValue(LocalizationKey)
 /// @since 1.0
 public interface LocalizationKey {
-    /// Get a resource bundle string key
-    /// for retrieving an associated value.
+    /// Returns the resource bundle key for retrieving the corresponding localized value.
     ///
     /// @return Resource bundle key.
     String getKey();
