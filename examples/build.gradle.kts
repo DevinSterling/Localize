@@ -11,8 +11,8 @@ application {
 }
 
 javafx {
-    version = "17"
-    modules = listOf("javafx.controls")
+    version = libs.versions.javafx.dep.get()
+    modules("javafx.controls")
 }
 
 dependencies {

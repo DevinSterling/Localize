@@ -7,8 +7,11 @@ plugins {
 
 description = "Localize JavaFX integration module"
 
+javafx {
+    version = libs.versions.javafx.dep.get()
+    modules("javafx.graphics")
+}
+
 dependencies {
     api(project(":Localize"))
-    compileOnly(libs.javafx.graphics)
-    testImplementation(libs.javafx.graphics)
 }

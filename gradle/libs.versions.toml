@@ -17,4 +17,3 @@ jreleaser = { id = 'org.jreleaser', version.ref = 'jreleaser-plugin-dep' }
 junit-jupiter = { module = 'org.junit.jupiter:junit-jupiter', version.ref = 'junit-dep' }
 junit-launcher = { module = 'org.junit.platform:junit-platform-launcher', version.ref = 'junit-dep' }
 icu4j = { module = 'com.ibm.icu:icu4j', version.ref = 'icu4j-dep' }
-javafx-graphics = { module = 'org.openjfx:javafx-graphics', version.ref = 'javafx-dep' }
