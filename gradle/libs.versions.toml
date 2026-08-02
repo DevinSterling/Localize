@@ -1,11 +1,11 @@
 # Shared plugins/dependencies between projects
 
 [versions]
-module-plugin-dep = '2.0.0'
+module-plugin-dep = '2.0.1'
 javafx-plugin-dep = '0.1.0'
-jreleaser-plugin-dep = '1.24.0'
-javafx-dep = '17.0.19'
-junit-dep = '6.0.3'
+jreleaser-plugin-dep = '1.25.0'
+javafx-dep = '17.0.20'
+junit-dep = '6.1.2'
 icu4j-dep = '78.3'
 
 [plugins]
