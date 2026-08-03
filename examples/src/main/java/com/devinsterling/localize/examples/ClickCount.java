@@ -21,7 +21,7 @@ public class ClickCount extends Application {
 
     @Override public void start(Stage stage) {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-        localize.putBundleProvider("Provider1", locale -> ResourceBundle.getBundle("messages", locale));
+        localize.addBundleProvider(locale -> ResourceBundle.getBundle("messages", locale));
 
         // Properties
         DoubleProperty clickCount = new SimpleDoubleProperty();
