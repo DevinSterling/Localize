@@ -94,8 +94,7 @@ public abstract class Localize {
     /// @param config The configuration.
     /// @throws NullPointerException If `config` is `null`.
     protected Localize(LocalizeConfig config) {
-        Objects.requireNonNull(config, "config must not be null");
-        this.config = config;
+        this.config = Objects.requireNonNull(config, "config must not be null");
     }
 
     /// Sets the locale and updates all resource bundles.
@@ -147,8 +146,7 @@ public abstract class Localize {
     /// @return       **Thread-safe** Localize instance.
     /// @throws NullPointerException If `locale` or `config` is `null`.
     public static Localize of(Locale locale, LocalizeConfig config) {
-        Objects.requireNonNull(locale, "locale must not be null");
-        return new LocalizeImpl(locale, config);
+        return new LocalizeImpl(assertLocale(locale), config);
     }
 
     /// Sets the request processor.
@@ -157,8 +155,7 @@ public abstract class Localize {
     ///
     /// @param processor Processor to handle requests.
     public void setProcessor(LocalizationRequestProcessor processor) {
-        Objects.requireNonNull(processor, "Processor must not be null");
-        this.processor = processor;
+        this.processor = Objects.requireNonNull(processor, "Processor must not be null");
     }
 
     /// {@return The request processor}
@@ -389,6 +386,10 @@ public abstract class Localize {
         return value;
     }
 
+    private static Locale assertLocale(Locale locale) {
+        return Objects.requireNonNull(locale, "locale must not be null");
+    }
+
     private static final class LocalizeImpl extends Localize {
         private volatile Locale locale;
 
@@ -398,9 +399,7 @@ public abstract class Localize {
         }
 
         @Override public synchronized void setLocale(Locale locale) {
-            Objects.requireNonNull(locale, "locale must not be null");
-
-            if (!this.locale.equals(locale)) {
+            if (!this.locale.equals(assertLocale(locale))) {
                 this.locale = locale;
                 refresh(locale);
             }
@@ -422,11 +421,8 @@ public abstract class Localize {
         /// @param key      Identifier of this entry instance to construct.
         /// @param provider Provider to fetch new resource bundles on refresh.
         public ProviderEntry(String key, ResourceBundleProvider provider) {
-            Objects.requireNonNull(key, "key must not be null");
-            Objects.requireNonNull(provider, "provider must not be null");
-
-            this.key = key;
-            this.provider = provider;
+            this.key = Objects.requireNonNull(key, "key must not be null");
+            this.provider = Objects.requireNonNull(provider, "provider must not be null");
         }
 
         /// {@return The entry identifier}

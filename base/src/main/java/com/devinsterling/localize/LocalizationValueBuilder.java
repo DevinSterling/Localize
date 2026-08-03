@@ -55,10 +55,8 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     ///                to the requested value.
     /// @throws NullPointerException if `key` or `applier` is `null`.
     public LocalizationValueBuilder(String key, Applier applier) {
-        Objects.requireNonNull(key, "Key must not be null");
-        Objects.requireNonNull(applier, "Applier must not be null");
-        this.key = key;
-        this.applier = applier;
+        this.key = Objects.requireNonNull(key, "Key must not be null");
+        this.applier = Objects.requireNonNull(applier, "Applier must not be null");
     }
 
     /// Appends named argument key-value pairings.

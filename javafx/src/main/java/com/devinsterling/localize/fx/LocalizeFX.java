@@ -110,8 +110,7 @@ public abstract class LocalizeFX extends Localize {
     /// @return       **Thread-safe** LocalizeFX instance.
     /// @throws NullPointerException If `locale` or `config` is `null`.
     public static LocalizeFX of(Locale locale, LocalizeConfig config) {
-        assertLocale(locale);
-        return new LocalizeFXImpl(locale, config);
+        return new LocalizeFXImpl(assertLocale(locale), config);
     }
 
     /// {@inheritDoc}
@@ -192,8 +191,8 @@ public abstract class LocalizeFX extends Localize {
         return getBinding(key.getKey());
     }
 
-    private static void assertLocale(Locale locale) {
-        Objects.requireNonNull(locale, "locale must not be null");
+    private static Locale assertLocale(Locale locale) {
+        return Objects.requireNonNull(locale, "locale must not be null");
     }
 
     private static class LocalizeFXImpl extends LocalizeFX {
@@ -218,15 +217,20 @@ public abstract class LocalizeFX extends Localize {
             return localeProperty;
         }
 
-        @Override public synchronized void setLocale(Locale locale) {
+        @Override public void setLocale(Locale locale) {
             if (FXThread.isUIThread()) {
                 // Assertion/refreshing is handled within this method
                 localeProperty.set(locale);
-            } else if (!this.locale.equals(locale)) {
-                assertLocale(locale);
-                this.locale = locale;
-                refresh(locale);
-                FXThread.onUIThread(() -> localeProperty.setWithoutRefresh(locale));
+                return;
+            }
+
+            assertLocale(locale);
+            synchronized (this) {
+                if (!this.locale.equals(locale)) {
+                    this.locale = locale;
+                    refresh(locale);
+                    FXThread.onUIThread(() -> localeProperty.setWithoutRefresh(locale));
+                }
             }
         }
 
@@ -241,9 +245,8 @@ public abstract class LocalizeFX extends Localize {
             }
 
             @Override public void set(Locale locale) {
-                if (get().equals(locale)) return;
+                if (get().equals(assertLocale(locale))) return;
 
-                assertLocale(locale);
                 LocalizeFXImpl.this.locale = locale;
                 refresh(locale); // Eagerly refresh
                 super.set(locale);

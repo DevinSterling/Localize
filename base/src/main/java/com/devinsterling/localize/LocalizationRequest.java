@@ -23,12 +23,9 @@ public class LocalizationRequest {
     }
 
     private LocalizationRequest(String key, String defaultValue, Map<String, Object> arguments) {
-        Objects.requireNonNull(key, "key must not be null");
-        Objects.requireNonNull(arguments, "arguments must not be null");
-
-        this.key = key;
+        this.key = Objects.requireNonNull(key, "key must not be null");
+        this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
         this.defaultValue = defaultValue;
-        this.arguments = arguments;
     }
 
     /// {@return The key associated with the requested value.}
