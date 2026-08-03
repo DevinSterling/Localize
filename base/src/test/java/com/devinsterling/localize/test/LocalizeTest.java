@@ -48,6 +48,20 @@ class LocalizeTest {
         assertEquals(2, localize.getResourceBundles().size());
     }
 
+    @Test void testAddProvider() {
+        Localize localize = Localize.of();
+
+        String key1 = localize.addBundleProvider(TEST_PROVIDER);
+        String key2 = localize.addBundleProvider(TEST2_PROVIDER);
+        assertEquals(2, localize.getResourceBundles().size());
+
+        localize.removeBundleProvider(key1);
+        assertEquals(1, localize.getResourceBundles().size());
+
+        localize.putBundleProvider(key2, TEST_PROVIDER);
+        assertEquals(1, localize.getResourceBundles().size());
+    }
+
     @Test void testPutNullReturningProvider() {
         Localize localize = Localize.of();
         String key = "key";

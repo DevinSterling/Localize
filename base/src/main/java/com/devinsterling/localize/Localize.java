@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /// Base class to handle localization.
@@ -207,6 +208,29 @@ public abstract class Localize {
         ProviderEntry entry = new ProviderEntry(key, provider);
         refreshResourceBundle(entry, getLocale());
         return providerStore.put(entry);
+    }
+
+    /// Adds the given provider and returns the generated unique key linked to it.
+    ///
+    /// This method is equivalent to [#putBundleProvider(String, ResourceBundleProvider)]
+    /// without the need to manually specify a key.
+    ///
+    /// @apiNote        It is recommended to **not** make any assumptions on the length or format
+    ///                 of the returned generated unique key as it could change in between versions.
+    /// @param provider Called upon calling refresh to get a ResourceBundle instance.
+    /// @return         The generated key, if needed for calls to [#removeBundleProvider(String)] or [#refresh(String)].
+    /// @throws NullPointerException If `provider` is `null`.
+    /// @since 1.3
+    public synchronized String addBundleProvider(ResourceBundleProvider provider) {
+        String uniqueKey;
+        // Ensure the key is unique.
+        // NOTE: In nearly every single case there is only 1 iteration
+        do {
+            uniqueKey = UUID.randomUUID().toString();
+        } while (providerStore.get(uniqueKey) != null);
+
+        putBundleProvider(uniqueKey, provider);
+        return uniqueKey;
     }
 
     /// Removes the [ResourceBundleProvider] associated with the given key.
