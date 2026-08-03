@@ -1,16 +1,24 @@
 /// # Localize
-/// A simple localization library.
+/// A simple-to-use localization library.
+///
+/// - Repository:
+///   [https://github.com/DevinSterling/Localize](https://github.com/DevinSterling/Localize)
+/// - JavaFX Integration Module:
+///   [https://javadoc.io/doc/com.devinsterling/localize-javafx](https://javadoc.io/doc/com.devinsterling/localize-javafx)
 /// ___
 /// Localize is a Java localization library that simplifies internationalizing applications.
-/// It’s built to be straightforward to set up and use.
+/// It’s designed to be straightforward to set up and use.
 ///
 /// 1. Create a `Localize` instance:
 ///    ```java
 ///    Localize localize = Localize.of(Locale.ENGLISH);
 ///    ```
-/// 2. Add a provider for resource bundles using a key:
+/// 2. Add a provider for resource bundles:
 ///    ```java
+///    // Insert using a unique key
 ///    localize.putBundleProvider("ProviderKey", locale -> ResourceBundle.getBundle("i18n.sample", locale));
+///    // Or without
+///    localize.addBundleProvider(locale -> ResourceBundle.getBundle("i18n.sample", locale));
 ///    ```
 /// 3. Retrieve localized values by key:
 ///    ```java
@@ -68,7 +76,8 @@
 ///   ```
 /// ___
 ///
-/// Localize also features an integration module for JavaFX, **LocalizeFX**,
+/// Localize also features an
+/// [integration module for JavaFX, **LocalizeFX**](https://javadoc.io/doc/com.devinsterling/localize-javafx),
 /// to automatically reflect changes in the UI.
 module com.devinsterling.localize {
     requires com.ibm.icu;

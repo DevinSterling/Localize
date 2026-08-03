@@ -1,16 +1,21 @@
 /// # LocalizeFX
-/// Localize JavaFX integration Module
+/// Localize JavaFX integration module.
+///
+/// - Repository:
+///   [https://github.com/DevinSterling/Localize](https://github.com/DevinSterling/Localize)
+/// - Base Module:
+///   [https://javadoc.io/doc/com.devinsterling/localize-base](https://javadoc.io/doc/com.devinsterling/localize-base)
 /// ___
 /// LocalizeFX integrates with JavaFX observables to automatically
 /// reflect changes in UI components when the locale or observable
 /// arguments change without manual intervention.
 ///
 /// ### Mouse clicker example
-/// Each time the Button is clicked or the TextField is edited,
+/// Each time the `Button` is clicked or the `TextField` is edited,
 /// the associated localized values are updated.
 /// ```java
 /// LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-/// localize.putBundleProvider("ProviderKey", locale -> ResourceBundle.getBundle("messages", locale));
+/// localize.addBundleProvider(locale -> ResourceBundle.getBundle("messages", locale));
 ///
 /// DoubleProperty clickCount = new SimpleDoubleProperty();
 /// Label clickDetails = new Label();

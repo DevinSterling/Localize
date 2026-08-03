@@ -1,5 +1,5 @@
 # Localize
-A simple localization library (Supports Java 17+).
+A simple-to-use Java/FX localization library (Supports Java 17+).
 
 [![Maven Central Version](https://img.shields.io/maven-central/v/com.devinsterling/localize-base?style=flat-square)](https://central.sonatype.com/artifact/com.devinsterling/localize-base)
 [![Base Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-base/javadoc.svg?logo=&style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-base)
@@ -31,15 +31,18 @@ A simple localization library (Supports Java 17+).
 ___
 
 Localize is a Java localization library that simplifies internationalizing applications. 
-It’s built to be straightforward to set up and use.
+It’s designed to be straightforward to set up and use.
 
 1. Create a thread-safe `Localize` instance: 
    ```java
    Localize localize = Localize.of(Locale.ENGLISH);
    ```
-2. Add a provider for resource bundles using a key:
+2. Add a provider for resource bundles:
    ```java
+   // Insert using a unique key
    localize.putBundleProvider("ProviderKey", locale -> ResourceBundle.getBundle("i18n.sample", locale));
+   // Or without
+   localize.addBundleProvider(locale -> ResourceBundle.getBundle("i18n.sample", locale));
    ``` 
 3. Retrieve localized values by key:
    ```java
@@ -48,7 +51,7 @@ It’s built to be straightforward to set up and use.
    localize.setLocale(Locale.JAPANESE);
    String ja = localize.getValue("MyProgram.clickButton"); // Returns "クリック！"
    ``` 
-   
+
 ## Resource Bundles
 
 A `Localize` instance accepts multiple providers as additional sources or fallbacks,
@@ -68,7 +71,7 @@ localize.getConfig().setDefaultMissingValue("Missing value");
 
 Localize uses [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/) under the hood, 
 though this can be changed by providing a custom 
-[LocalizationRequestProcessor](base/src/main/java/com/devinsterling/localize/LocalizationRequestProcessor.java).
+[LocalizationRequestProcessor]([https://javadoc.io/doc/com.devinsterling/localize-base/latest/com.devinsterling.localize/com/devinsterling/localize/LocalizationRequestProcessor.html)).
 With the default processor, Localize supports both named and numbered arguments along with pluralization.
 
 Here is a look inside the contents of a sample properties file:
@@ -105,11 +108,11 @@ Through an integration module, Localize integrates with JavaFX observables to au
 reflect changes in UI components when the locale or observable arguments change without manual intervention.
 
 ### Mouse clicker example
-Each time the Button is clicked or the TextField is edited, 
+Each time the `Button` is clicked or the `TextField` is edited, 
 the associated localized values are updated.
 ```java
 LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-localize.putBundleProvider("ProviderKey", locale -> ResourceBundle.getBundle("messages", locale));
+localize.addBundleProvider(locale -> ResourceBundle.getBundle("messages", locale));
 
 DoubleProperty clickCount = new SimpleDoubleProperty();
 Label clickDetails = new Label();
