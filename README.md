@@ -10,22 +10,22 @@ A simple-to-use Java/FX localization library (Supports Java 17+).
   <dependency>
     <groupId>com.devinsterling</groupId>
     <artifactId>localize-base</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
   </dependency>
   ```
   ```kts
-  implementation("com.devinsterling:localize-base:1.2.0")
+  implementation("com.devinsterling:localize-base:1.3.0")
   ```
 - Base functionality *and* JavaFX integration:
   ```xml
   <dependency>
     <groupId>com.devinsterling</groupId>
     <artifactId>localize-javafx</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
   </dependency>
   ```
   ```kts
-  implementation("com.devinsterling:localize-javafx:1.2.0")
+  implementation("com.devinsterling:localize-javafx:1.3.0")
   ```
 
 ___
