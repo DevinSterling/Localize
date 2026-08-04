@@ -19,5 +19,9 @@ tasks {
     }
     withType<Javadoc>().configureEach {
         options.encoding = "UTF-8"
+        (options as StandardJavadocDocletOptions).tags(
+            "apiNote:a:API Note:",
+            "implSpec:a:Implementation Requirements:",
+        )
     }
 }
