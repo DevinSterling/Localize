@@ -3,12 +3,16 @@ package com.devinsterling.localize;
 import com.ibm.icu.text.MessageFormat;
 
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /// Base class to handle localization.
 ///
@@ -80,12 +84,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 ///                .value()
 ///                .equals("There are 100 people on campus."));
 /// ```
+/// @implSpec Implementations must ensure that locale updates are thread-safe.
 /// @since 1.0
 public abstract class Localize {
     /// The default processor to handle converting a [LocalizationRequest]
     /// into a formatted localized string.
     public static final LocalizationRequestProcessor DEFAULT_PROCESSOR = Localize::processRequest;
     private final ProviderStore providerStore = new ProviderStore();
+    private final Object providerLock = new Object();
     private final LocalizeConfig config;
     private volatile LocalizationRequestProcessor processor = DEFAULT_PROCESSOR;
 
@@ -201,10 +207,11 @@ public abstract class Localize {
     /// @return         `true` if the key had no association prior. Otherwise, `false` is
     ///                 returned when the previous entry is replaced with the new provider.
     /// @throws NullPointerException If `key` or `provider` is `null`.
-    public synchronized boolean putBundleProvider(String key, ResourceBundleProvider provider) {
+    public boolean putBundleProvider(String key, ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(key, provider);
-        refreshResourceBundle(entry, getLocale());
-        return providerStore.put(entry);
+        boolean isNewEntry = providerStore.put(entry);
+        refresh(entry);
+        return isNewEntry;
     }
 
     /// Adds the given provider and returns the generated unique key linked to it.
@@ -218,15 +225,22 @@ public abstract class Localize {
     /// @return         The generated key, if needed for calls to [#removeBundleProvider(String)] or [#refresh(String)].
     /// @throws NullPointerException If `provider` is `null`.
     /// @since 1.3
-    public synchronized String addBundleProvider(ResourceBundleProvider provider) {
+    public String addBundleProvider(ResourceBundleProvider provider) {
+        ProviderEntry entry;
         String uniqueKey;
-        // Ensure the key is unique.
-        // NOTE: In nearly every single case there is only 1 iteration
-        do {
-            uniqueKey = UUID.randomUUID().toString();
-        } while (providerStore.get(uniqueKey) != null);
 
-        putBundleProvider(uniqueKey, provider);
+        synchronized (providerStore) {
+            // Ensure the key is unique.
+            // NOTE: In nearly every single case there is only 1 iteration
+            do {
+                uniqueKey = UUID.randomUUID().toString();
+            } while (providerStore.get(uniqueKey) != null);
+
+            entry =  new ProviderEntry(uniqueKey, provider);
+            providerStore.add(entry);
+        }
+
+        refresh(entry);
         return uniqueKey;
     }
 
@@ -249,11 +263,13 @@ public abstract class Localize {
     /// @see #putBundleProvider(String, ResourceBundleProvider)
     public boolean refresh(String key) {
         ProviderEntry entry = providerStore.get(key);
+        boolean isFound = entry != null;
 
-        if (entry != null) {
-            refreshResourceBundle(entry, getLocale());
+        if (isFound) {
+            refresh(entry);
         }
-        return entry != null;
+
+        return isFound;
     }
 
     /// Triggers all providers to refresh and fetch new [ResourceBundle] instances.
@@ -314,25 +330,17 @@ public abstract class Localize {
                       .toList();
     }
 
-    /// Triggers all providers to refresh and fetch new [ResourceBundle] instances with a given [Locale].
-    ///
-    /// @param locale Locale to refresh all providers with.
-    protected void refresh(Locale locale) {
-        for (ProviderEntry entry : providerStore) {
-            refreshResourceBundle(entry, locale);
-        }
-    }
-
     /// Applies and transforms the request into a formatted localized string.
     ///
     /// @param request Request to format string with.
     /// @return Requested formatted localized string.
     protected String applyBuilderProperties(LocalizationRequest request) {
         String value = null;
+        ResourceBundle bundle;
 
         for (ProviderEntry entry : providerStore) {
-            if (entry.getBundle() != null) try {
-                value = getProcessor().process(entry.getBundle(), request);
+            if ((bundle = entry.getBundle()) != null) try {
+                value = getProcessor().process(bundle, request);
 
                 if (value != null) {
                     break;
@@ -362,14 +370,62 @@ public abstract class Localize {
         return value;
     }
 
-    private void refreshResourceBundle(ProviderEntry entry, Locale locale) {
+    /// Triggers all providers to refresh and fetch new [ResourceBundle] instances with a given [Locale].
+    ///
+    /// @param locale Locale to refresh all providers with.
+    protected void refresh(Locale locale) {
+        record VersionBundle(long version, ResourceBundle bundle) {}
+
+        Map<ProviderEntry, VersionBundle> newBundles = new IdentityHashMap<>();
+
+        for (ProviderEntry entry : providerStore) {
+            // Stop early if the locale changes mid-way or the thread is interrupted
+            if (!locale.equals(getLocale()) || Thread.currentThread().isInterrupted()) return;
+
+            long version = entry.version.incrementAndGet();
+            ResourceBundle bundle = getResourceBundle(entry, locale);
+            newBundles.put(entry, new VersionBundle(version, bundle));
+        }
+
+        // Apply the new bundles
+        synchronized (providerLock) {
+            if (locale.equals(getLocale())) {
+                for (Map.Entry<ProviderEntry, VersionBundle> mapEntry : newBundles.entrySet()) {
+                    ProviderEntry entry = mapEntry.getKey();
+                    VersionBundle versionBundle = mapEntry.getValue();
+
+                    if (entry.version.get() == versionBundle.version) {
+                        entry.bundle = versionBundle.bundle;
+                    }
+                }
+            }
+        }
+    }
+
+    private void refresh(ProviderEntry entry) {
+        long version = entry.version.incrementAndGet();
+        ResourceBundle bundle = getResourceBundle(entry, getLocale());
+
+        synchronized (providerLock) {
+            if (version == entry.version.get()) {
+                entry.bundle = bundle;
+            }
+        }
+    }
+
+    /// @return The corresponding [ResourceBundle], or `null` if it was not found
+    ///         and [LocalizeConfig#isIgnoreMissingResourceBundles()] is `true`.
+    private ResourceBundle getResourceBundle(ProviderEntry entry, Locale locale) {
+        ResourceBundle bundle = null;
+
         try {
-            entry.refresh(locale);
+            bundle = entry.getProvider().getBundle(locale);
         } catch (MissingResourceException e) {
             if (!getConfig().isIgnoreMissingResourceBundles()) {
                 throw e;
             }
         }
+        return bundle;
     }
 
     private static String processRequest(ResourceBundle bundle, LocalizationRequest request) {
@@ -391,22 +447,26 @@ public abstract class Localize {
     }
 
     private static final class LocalizeImpl extends Localize {
-        private volatile Locale locale;
+        private final AtomicReference<Locale> locale;
 
         private LocalizeImpl(Locale locale, LocalizeConfig config) {
             super(config);
-            this.locale = locale;
+            this.locale = new AtomicReference<>(locale);
         }
 
-        @Override public synchronized void setLocale(Locale locale) {
-            if (!this.locale.equals(assertLocale(locale))) {
-                this.locale = locale;
+        @Override public void setLocale(Locale locale) {
+            assertLocale(locale);
+            // If the given new `locale` is equivalent to the current locale,
+            // no replacement is performed, matching `LocalizeFXImpl#setLocale`.
+            Locale previous = this.locale.getAndUpdate(old -> old.equals(locale) ? old : locale);
+
+            if (!locale.equals(previous)) {
                 refresh(locale);
             }
         }
 
         @Override public Locale getLocale() {
-            return locale;
+            return locale.get();
         }
     }
 
@@ -414,13 +474,15 @@ public abstract class Localize {
     private static final class ProviderEntry {
         private final String key;
         private final ResourceBundleProvider provider;
+        /// A counter to stop stale refreshes early.
+        private final AtomicLong version = new AtomicLong();
         private volatile ResourceBundle bundle;
 
         /// Creates an entry container instance.
         ///
         /// @param key      Identifier of this entry instance to construct.
         /// @param provider Provider to fetch new resource bundles on refresh.
-        public ProviderEntry(String key, ResourceBundleProvider provider) {
+        private ProviderEntry(String key, ResourceBundleProvider provider) {
             this.key = Objects.requireNonNull(key, "key must not be null");
             this.provider = Objects.requireNonNull(provider, "provider must not be null");
         }
@@ -442,19 +504,11 @@ public abstract class Localize {
         public ResourceBundle getBundle() {
             return bundle;
         }
-
-        /// Fetches a new resource bundle using this entry's [ResourceBundleProvider].
-        ///
-        /// @param locale Locale associated with the resource bundle.
-        /// @see #getProvider()
-        public void refresh(Locale locale) {
-            this.bundle = getProvider().getBundle(locale);
-        }
     }
 
     // Uses a list instead of Map as the number of providers is typically small (1~15).
     // Reads/iteration are **far greater** than writes
-    private static class ProviderStore extends CopyOnWriteArrayList<ProviderEntry> {
+    private static final class ProviderStore extends CopyOnWriteArrayList<ProviderEntry> {
         public ProviderEntry get(String key) {
             for (ProviderEntry entry : this) {
                 if (entry.getKey().equals(key)) {
@@ -464,18 +518,21 @@ public abstract class Localize {
             return null;
         }
 
-        // Synchronized to ensure that no modifications occur during iteration.
-        public synchronized boolean put(ProviderEntry entry) {
+        // Synchronized to ensure that no modifications occur during iteration
+        // (e.g., if `remove` is called, then it'll wait until this method completes)
+        public synchronized boolean put(ProviderEntry newEntry) {
             for (int i = 0; i < size(); i++) {
-                if (get(i).getKey().equals(entry.getKey())) {
-                    set(i, entry);
+                ProviderEntry entry = get(i);
+
+                if (entry.getKey().equals(newEntry.getKey())) {
+                    set(i, newEntry);
                     return false;
                 }
             }
-            return add(entry);
+            return add(newEntry);
         }
 
-        public boolean remove(String key) {
+        public synchronized boolean remove(String key) {
             return removeIf(entry -> entry.getKey().equals(key));
         }
     }
