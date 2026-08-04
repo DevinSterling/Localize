@@ -1,6 +1,20 @@
 # Changelog
 
-## 1.2 (2026-04-30)
+## 1.3.0 (2026-08-03)
+### Additions　**＋**
+- New `Localize#addBundleProvider` method to add a `ResourceBundleProvider` without explicitly specifying a key.
+
+### Changes　**⟳**
+- Improve concurrency and thread-safety of `Localize` implementations.
+- Remove lock contention during `ResourceBundle` loading.
+- Refine documentation for enhanced clarity.
+
+### Fixes　**✓**
+- Fix inconsistent provider state when adding or removing providers concurrently.
+- Prevent stale `ResourceBundle` updates from overwriting newer locale changes.
+- Ensure `LocalizeFX#getLocale` consistently reflects the current locale across all threads.
+
+## 1.2.0 (2026-04-30)
 ### Additions　**＋**
 Add new convenience static factory methods:
 - `Localize#of(LocalizeConfig)`
@@ -19,7 +33,7 @@ Add new convenience static factory methods:
 
 ## 1.1.0 (2025-07-09)
 ### Additions　**＋**
-- New `defaultValue` method for `LocalizationValueBuilder` to specify a default value
+- New `LocalizationValueBuilder#defaultValue` method to specify a default value
   to return when a given key is not found.
 - `LocalizationRequest` now features an inner static `Builder` class to build requests 
   more ergonomically.
