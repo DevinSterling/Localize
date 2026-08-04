@@ -4,7 +4,7 @@ plugins {
     id("publish-convention")
 }
 
-description = "A Java localization library"
+description = "A simple-to-use Java localization library."
 
 dependencies {
     implementation(libs.icu4j)

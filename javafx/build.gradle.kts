@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.javafx.plugin)
 }
 
-description = "Localize JavaFX integration module"
+description = "Localize JavaFX integration module."
 
 javafx {
     version = libs.versions.javafx.dep.get()

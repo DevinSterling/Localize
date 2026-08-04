@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.jreleaser)
 }
 
+// jreleaser requires a base description
+description = "A simple-to-use Java localization library."
+
 jreleaser {
     project {
         authors = listOf(ProjectInfo.AUTHOR)
@@ -37,7 +40,7 @@ jreleaser {
 gradle.projectsEvaluated {
     // Retrieve all publishable projects
     val publishedProjects = rootProject.subprojects.filter {
-        it.pluginManager.hasPlugin("publishing-conventions")
+        it.pluginManager.hasPlugin("publish-convention")
     }
 
     jreleaser {
