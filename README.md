@@ -71,7 +71,7 @@ localize.getConfig().setDefaultMissingValue("Missing value");
 
 Localize uses [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/) under the hood, 
 though this can be changed by providing a custom 
-[LocalizationRequestProcessor]([https://javadoc.io/doc/com.devinsterling/localize-base/latest/com.devinsterling.localize/com/devinsterling/localize/LocalizationRequestProcessor.html)).
+[LocalizationRequestProcessor](https://javadoc.io/doc/com.devinsterling/localize-base/latest/com.devinsterling.localize/com/devinsterling/localize/LocalizationRequestProcessor.html).
 With the default processor, Localize supports both named and numbered arguments along with pluralization.
 
 Here is a look inside the contents of a sample properties file:
