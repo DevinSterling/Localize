@@ -121,9 +121,9 @@ class LocalizeTest {
     @Test void testProcessor() {
         Localize localize = Localize.of(Locale.ENGLISH);
         String sample = "sample";
-        LocalizationRequestProcessor mock = (bundle, request) -> sample;
+        LocalizationRequestProcessor mock = (ctx) -> sample;
 
-        assertEquals(Localize.DEFAULT_PROCESSOR, localize.getProcessor());
+        assertEquals(LocalizationRequestProcessor.DEFAULT, localize.getProcessor());
 
         localize.setProcessor(mock);
         // No bundles contained
@@ -134,7 +134,7 @@ class LocalizeTest {
         assertEquals(sample, localize.getValue(TEST_KEY_GREET));
         assertEquals(sample, localize.getValue(() -> TEST_KEY_TEST));
 
-        localize.setProcessor(Localize.DEFAULT_PROCESSOR);
+        localize.setProcessor(LocalizationRequestProcessor.DEFAULT);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
         assertEquals("test", localize.getValue(() -> TEST_KEY_TEST));
     }

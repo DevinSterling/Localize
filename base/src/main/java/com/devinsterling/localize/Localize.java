@@ -340,7 +340,13 @@ public abstract class Localize {
 
         for (ProviderEntry entry : providerStore) {
             if ((bundle = entry.getBundle()) != null) try {
-                value = getProcessor().process(bundle, request);
+                value = processor.process(
+                    LocalizationRequestProcessor.Context.Builder
+                        .of(request)
+                        .bundle(bundle)
+                        .locale(getLocale())
+                        .build()
+                );
 
                 if (value != null) {
                     break;
@@ -428,7 +434,9 @@ public abstract class Localize {
         return bundle;
     }
 
-    private static String processRequest(ResourceBundle bundle, LocalizationRequest request) {
+    private static String processRequest(LocalizationRequestProcessor.Context ctx) {
+        ResourceBundle bundle = ctx.getBundle();
+        LocalizationRequest request = ctx.getRequest();
         String value = null;
 
         if (bundle.containsKey(request.getKey())) {

@@ -81,7 +81,7 @@ class LocalizeConfigTest {
         Localize localize = getLocalizeInstance();
         LocalizeConfig config = localize.getConfig();
 
-        localize.setProcessor((bundle, request) -> {
+        localize.setProcessor(ctx -> {
             throw new TestException();
         });
 
