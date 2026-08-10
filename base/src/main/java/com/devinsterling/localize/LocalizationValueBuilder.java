@@ -95,6 +95,15 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return getBuilder();
     }
 
+    /// Adds a numbered *deferred* argument that is supplied during formatting.
+    ///
+    /// @param valueSupplier Numbered argument value.
+    /// @return              This builder instance.
+    /// @throws IllegalStateException If named arguments were added prior.
+    public B arg(Supplier<?> valueSupplier) {
+        return arg((Object) valueSupplier);
+    }
+
     /// Adds a named argument with an associated value.
     ///
     /// @param key   Named argument key.
@@ -108,6 +117,17 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         Objects.requireNonNull(key, "Argument key must not be null");
         arguments.add(key, value);
         return getBuilder();
+    }
+
+    /// Adds a named *deferred* argument that is supplied during formatting.
+    ///
+    /// @param key           Named argument key.
+    /// @param valueSupplier Named argument value.
+    /// @return              This builder instance.
+    /// @throws IllegalStateException If numbered arguments were added prior.
+    /// @throws NullPointerException If the given key is `null`.
+    public B arg(String key, Supplier<?> valueSupplier) {
+        return arg(key, (Object) valueSupplier);
     }
 
     /// Sets the default value if the requested key does not exist.

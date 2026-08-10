@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.devinsterling.localize.test.TestUtil.*;
@@ -25,6 +26,28 @@ class LocalizationValueBuilderTest {
         assertEquals(
                 localize.getValue(() -> TEST_KEY_TEST),
                 localize.get(() -> TEST_KEY_TEST).value());
+    }
+
+    @Test void testPositionalDeferredArgs() {
+        Localize localize = getLocalizeInstance();
+        AtomicInteger counter = new AtomicInteger();
+        LocalizationValueBuilder<?> builder = localize.get(TEST_KEY_OUTPUT).arg(counter::get);
+
+        assertEquals("Output: 0", builder.value());
+        counter.incrementAndGet();
+        counter.incrementAndGet();
+        assertEquals("Output: 2", builder.value());
+    }
+
+    @Test void testNamedDeferredArgs() {
+        Localize localize = getLocalizeInstance();
+        AtomicInteger counter = new AtomicInteger();
+        LocalizationValueBuilder<?> builder = localize.get(TEST_KEY_OUTPUT).arg("0", counter::get);
+
+        counter.incrementAndGet();
+        assertEquals("Output: 1", builder.value());
+        counter.incrementAndGet();
+        assertEquals("Output: 2", builder.value());
     }
 
     @Test void testNamedArgs() {

@@ -14,6 +14,7 @@ public final class TestUtil {
     public static final String TEST_KEY_TEST = "Test.test";
     public static final String TEST_KEY_NAMED = "Test.named";
     public static final String TEST_KEY_NUMBERED = "Test.numbered";
+    public static final String TEST_KEY_OUTPUT = "Test.output";
 
     private TestUtil() {}
 
