@@ -65,7 +65,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     public B args(Map<String, Object> args) {
         for (Map.Entry<String, Object> entry : args.entrySet()) {
             String key = Objects.requireNonNull(entry.getKey(), "Argument key must not be null");
-            arguments.add(key, entry.getValue());
+            arguments.add(key, interceptValue(entry.getValue()));
         }
         return getBuilder();
     }
@@ -78,7 +78,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @throws NullPointerException If the given array is `null`.
     public B args(Object... args) {
         for (Object arg : args) {
-            arguments.add(arg);
+            arguments.add(interceptValue(arg));
         }
         return getBuilder();
     }
@@ -91,7 +91,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @see #args(Object...)
     /// @see #arg(String, Object)
     public B arg(Object value) {
-        arguments.add(value);
+        arguments.add(interceptValue(value));
         return getBuilder();
     }
 
@@ -115,7 +115,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @see #arg(Object)
     public B arg(String key, Object value) {
         Objects.requireNonNull(key, "Argument key must not be null");
-        arguments.add(key, value);
+        arguments.add(key, interceptValue(value));
         return getBuilder();
     }
 
@@ -152,6 +152,31 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
                 .arguments(arguments.get().resolve(getResolver()))
                 .build()
         );
+    }
+
+    /// Intercepts an argument value before it is stored.
+    ///
+    /// This method allows subclasses to transform argument values.
+    /// For example, replacing the original value with a deferred or computed value.
+    ///
+    /// ### Note
+    /// When overriding, subclasses may call `super.interceptValue` to preserve default behavior.
+    /// ```
+    /// @Override protected Object interceptValue(Object value) {
+    ///     if (value instanceof TextField field) {
+    ///         registerListener(field, TextField::addListener, TextField::removeListener);
+    ///         value = (Supplier<String>) field::getText;
+    ///     }
+    ///
+    ///     // Calling super can be performed before or after main logic
+    ///     return super.interceptValue(key, value);
+    /// }
+    /// ```
+    ///
+    /// @param value Argument value to potentially transform.
+    /// @return      The transformed or original value.
+    protected Object interceptValue(Object value) {
+        return value;
     }
 
     /// Returns a snapshot of the current arguments.
