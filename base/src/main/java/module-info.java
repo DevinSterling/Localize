@@ -80,7 +80,5 @@
 /// [integration module for JavaFX, **LocalizeFX**](https://javadoc.io/doc/com.devinsterling/localize-javafx),
 /// to automatically reflect changes in the UI.
 module com.devinsterling.localize {
-    requires com.ibm.icu;
-
     exports com.devinsterling.localize;
 }

@@ -1,6 +1,9 @@
 package com.devinsterling.localize;
 
+import java.text.MessageFormat;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
@@ -117,4 +120,86 @@ public interface LocalizationRequestProcessor {
             }
         }
     }
+
+    /// The default processor to handle converting a [LocalizationRequest]
+    /// into a formatted localized string.
+    LocalizationRequestProcessor DEFAULT = new LocalizationRequestProcessor() {
+        @Override public String process(Context ctx) {
+            ResourceBundle bundle = ctx.getBundle();
+            LocalizationRequest request = ctx.getRequest();
+            String value = null;
+
+            if (bundle.containsKey(request.getKey())) {
+                Arguments arguments = request.getArguments();
+                value = bundle.getString(request.getKey());
+
+                if (request.hasArguments()) {
+                    Object[] positionalArguments;
+
+                    // Convert named arguments to 0-based positional arguments
+                    if (arguments.isPositional()) {
+                        positionalArguments = arguments.toArray();
+                    } else {
+                        positionalArguments = new Object[arguments.size()];
+                        value = convertToPositionalArgs(value, arguments.toNamedMap(), positionalArguments);
+                    }
+
+                    value = new MessageFormat(value, ctx.getLocale()).format(positionalArguments);
+                }
+            }
+
+            return value;
+        }
+
+        private static String convertToPositionalArgs(
+            String value,
+            Map<String, Object> mapArguments,
+            Object[] arguments
+        ) {
+            Map<String, Integer> keyToIndex = new HashMap<>();
+            StringBuilder buf = new StringBuilder(value.length());
+            boolean isQuoted = false;
+            int insertAt = 0;
+            int start = -1;
+
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+
+                if (start >= 0) {
+                    if (c == '}' || c == ',') {
+                        String key = value.substring(start, i);
+                        // Before inserting, check if the key was visited before
+                        Integer position = keyToIndex.get(key);
+
+                        if (position == null) {
+                            position = insertAt++;
+                            keyToIndex.put(key, position);
+
+                            if (position < arguments.length) {
+                                arguments[position] = mapArguments.get(key);
+                            }
+                        }
+
+                        buf.append(position);
+                        start = -1;
+                    } else {
+                        continue;
+                    }
+                } else if (c == '\'') {
+                    isQuoted = !isQuoted;
+                } else if (!isQuoted && c == '{') {
+                    start = i + 1;
+                }
+
+                buf.append(c);
+            }
+
+            // If there's an unclosed brace, add the content after
+            if (start > 0) {
+                buf.append(value, start, value.length());
+            }
+
+            return buf.toString();
+        }
+    };
 }

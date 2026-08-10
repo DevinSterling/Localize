@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /// - [#of(Locale, LocalizeConfig)]
 ///
 /// ### Arguments and Pluralization
-/// The default [LocalizationRequestProcessor], [#DEFAULT_PROCESSOR],
+/// The default [`LocalizationRequestProcessor`][LocalizationRequestProcessor#DEFAULT],
 /// includes support for named arguments, pluralization, and many other aspects based on
 /// [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/#platform-dependencies).
 ///
@@ -87,13 +87,10 @@ import java.util.concurrent.atomic.AtomicReference;
 /// @implSpec Implementations must ensure that locale updates are thread-safe.
 /// @since 1.0
 public abstract class Localize {
-    /// The default processor to handle converting a [LocalizationRequest]
-    /// into a formatted localized string.
-    public static final LocalizationRequestProcessor DEFAULT_PROCESSOR = Localize::processRequest;
     private final ProviderStore providerStore = new ProviderStore();
     private final Object providerLock = new Object();
     private final LocalizeConfig config;
-    private volatile LocalizationRequestProcessor processor = DEFAULT_PROCESSOR;
+    private volatile LocalizationRequestProcessor processor = LocalizationRequestProcessor.DEFAULT;
 
     /// Creates a [Localize] instance with the desired configuration.
     ///
@@ -432,22 +429,6 @@ public abstract class Localize {
             }
         }
         return bundle;
-    }
-
-    private static String processRequest(LocalizationRequestProcessor.Context ctx) {
-        ResourceBundle bundle = ctx.getBundle();
-        LocalizationRequest request = ctx.getRequest();
-        String value = null;
-
-        if (bundle.containsKey(request.getKey())) {
-            value = bundle.getString(request.getKey());
-
-            if (request.hasArguments()) {
-                value = MessageFormat.format(value, request.getArguments().toNamedMap());
-            }
-        }
-
-        return value;
     }
 
     private static Locale assertLocale(Locale locale) {

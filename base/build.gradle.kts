@@ -5,7 +5,3 @@ plugins {
 }
 
 description = "A simple-to-use Java localization library."
-
-dependencies {
-    implementation(libs.icu4j)
-}
