@@ -81,4 +81,7 @@
 /// to automatically reflect changes in the UI.
 module com.devinsterling.localize {
     exports com.devinsterling.localize;
+
+    // Service Provider Interface (SPI)
+    uses com.devinsterling.localize.LocalizationRequestProcessor;
 }

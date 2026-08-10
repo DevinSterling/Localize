@@ -1,6 +1,6 @@
 package com.devinsterling.localize;
 
-import com.ibm.icu.text.MessageFormat;
+import com.devinsterling.localize.spi.RequestProcessorRegistry;
 
 import java.util.Collection;
 import java.util.IdentityHashMap;
@@ -90,7 +90,7 @@ public abstract class Localize {
     private final ProviderStore providerStore = new ProviderStore();
     private final Object providerLock = new Object();
     private final LocalizeConfig config;
-    private volatile LocalizationRequestProcessor processor = LocalizationRequestProcessor.DEFAULT;
+    private volatile LocalizationRequestProcessor processor = RequestProcessorRegistry.DEFAULT;
 
     /// Creates a [Localize] instance with the desired configuration.
     ///
@@ -157,6 +157,7 @@ public abstract class Localize {
     /// The processor is called each time a request is made to fetch a value.
     ///
     /// @param processor Processor to handle requests.
+    /// @throws NullPointerException If `processor` is `null`.
     public void setProcessor(LocalizationRequestProcessor processor) {
         this.processor = Objects.requireNonNull(processor, "Processor must not be null");
     }
