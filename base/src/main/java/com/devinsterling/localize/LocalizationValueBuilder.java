@@ -1,8 +1,8 @@
 package com.devinsterling.localize;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /// Builder instance to retrieve formatted localized string values.
 ///
@@ -41,18 +41,15 @@ import java.util.Objects;
 /// @param <B> Builder instance type.
 /// @since 1.0
 public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
+    private final DynamicArguments arguments = new DynamicArguments();
     private final Applier applier;
     private final String key;
-    private final Map<String, Object> values = new HashMap<>();
     private String defaultValue;
-    private boolean isNamedArgs;
-    private boolean isNumberedArgs;
 
     /// Creates a builder to request a specified localized value.
     ///
     /// @param key     Key to request a formatted localized value for.
-    /// @param applier Callback to apply the properties of this builder
-    ///                to the requested value.
+    /// @param applier Callback to apply the properties of this builder to the requested value.
     /// @throws NullPointerException if `key` or `applier` is `null`.
     public LocalizationValueBuilder(String key, Applier applier) {
         this.key = Objects.requireNonNull(key, "Key must not be null");
@@ -66,9 +63,9 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @throws IllegalStateException If numbered arguments were added prior.
     /// @throws NullPointerException If the given map or keys contained are `null`.
     public B args(Map<String, Object> args) {
-        checkIsNamedArgs();
         for (Map.Entry<String, Object> entry : args.entrySet()) {
-            arg(entry.getKey(), entry.getValue());
+            String key = Objects.requireNonNull(entry.getKey(), "Argument key must not be null");
+            arguments.add(key, entry.getValue());
         }
         return getBuilder();
     }
@@ -80,9 +77,8 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @throws IllegalStateException If named arguments were added prior.
     /// @throws NullPointerException If the given array is `null`.
     public B args(Object... args) {
-        checkIsNumberedArgs();
         for (Object arg : args) {
-            values.put(String.valueOf(values.size()), arg);
+            arguments.add(arg);
         }
         return getBuilder();
     }
@@ -95,8 +91,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @see #args(Object...)
     /// @see #arg(String, Object)
     public B arg(Object value) {
-        checkIsNumberedArgs();
-        values.put(String.valueOf(values.size()), value);
+        arguments.add(value);
         return getBuilder();
     }
 
@@ -111,8 +106,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @see #arg(Object)
     public B arg(String key, Object value) {
         Objects.requireNonNull(key, "Argument key must not be null");
-        checkIsNamedArgs();
-        values.put(key, value);
+        arguments.add(key, value);
         return getBuilder();
     }
 
@@ -131,15 +125,28 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     ///
     /// @return The formatted localized value.
     public String value() {
-        return applier.evaluate(
+        return getApplier().evaluate(
             LocalizationRequest.Builder
-                .of(key)
-                .defaultValue(defaultValue)
-                .arguments(Map.copyOf(values))
+                .of(getKey())
+                .defaultValue(getDefaultValue())
+                .arguments(arguments.get().resolve(getResolver()))
                 .build()
         );
     }
-    
+
+    /// Returns a snapshot of the current arguments.
+    ///
+    /// After this method call, arguments added through this builder are not included in the returned snapshot.
+    ///
+    /// @return Arguments snapshot.
+    protected final Arguments snapshotArguments() {
+        return arguments.snapshot();
+    }
+
+    protected Arguments.Resolver getResolver() {
+        return DefaultArgumentsResolver.INSTANCE;
+    }
+
     /// {@return The underlying applier}
     protected Applier getApplier() {
         return applier;
@@ -156,33 +163,10 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return defaultValue;
     }
 
-    /// {@return The underlying argument map}
-    protected Map<String, Object> getArguments() {
-        return values;
-    }
-
     /// {@return This builder instance}
     @SuppressWarnings("unchecked")
     protected B getBuilder() {
         return (B) this;
-    }
-
-    private void checkIsNumberedArgs() {
-        if (isNamedArgs) {
-            throwMixedArgsException();
-        }
-        isNumberedArgs = true;
-    }
-
-    private void checkIsNamedArgs() {
-        if (isNumberedArgs) {
-            throwMixedArgsException();
-        }
-        isNamedArgs = true;
-    }
-
-    private void throwMixedArgsException() {
-        throw new IllegalStateException("Mixing Named and numbered arguments is not supported");
     }
 
     /// Callback to fetch the value of a requested string

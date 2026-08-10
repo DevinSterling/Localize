@@ -435,7 +435,7 @@ public abstract class Localize {
             value = bundle.getString(request.getKey());
 
             if (request.hasArguments()) {
-                value = MessageFormat.format(value, request.getArguments());
+                value = MessageFormat.format(value, request.getArguments().toNamedMap());
             }
         }
 

@@ -1,5 +1,6 @@
 package com.devinsterling.localize.test;
 
+import com.devinsterling.localize.Arguments;
 import com.devinsterling.localize.LocalizationValueBuilder;
 import com.devinsterling.localize.Localize;
 
@@ -129,7 +130,9 @@ class LocalizationValueBuilderTest {
         assertEquals(mockApplier, builder.getApplier());
         assertEquals("key", builder.getKey());
         assertEquals("test_default_value", builder.getDefaultValue());
-        assertEquals(Map.of("key1", "value1", "key2", "value2"), builder.getArguments());
+
+        Arguments args = builder.arguments();
+        assertEquals(Map.of("key1", "value1", "key2", "value2"), args.toNamedMap());
     }
 }
 
@@ -155,7 +158,7 @@ class TestValueBuilder<B extends TestValueBuilder<B>> extends LocalizationValueB
         return super.getDefaultValue();
     }
 
-    public Map<String, Object> getArguments() {
-        return super.getArguments();
+    public Arguments arguments() {
+        return snapshotArguments();
     }
 }

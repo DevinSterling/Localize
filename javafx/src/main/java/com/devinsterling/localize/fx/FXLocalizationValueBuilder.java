@@ -1,5 +1,6 @@
 package com.devinsterling.localize.fx;
 
+import com.devinsterling.localize.Arguments;
 import com.devinsterling.localize.LocalizationRequest;
 import com.devinsterling.localize.LocalizationValueBuilder;
 
@@ -32,6 +33,10 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         this.locale = locale;
     }
 
+    @Override public Arguments.Resolver getResolver() {
+        return FXArgumentsResolver.INSTANCE;
+    }
+
     /// Retrieves an observable formatted string with all properties applied from this builder.
     ///
     /// The binding is automatically updated when any of the passed observable arguments or the locale changes.
@@ -42,47 +47,38 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         String key = getKey();
         String defaultValue = getDefaultValue();
         Applier applier = getApplier();
-
-        // Retrieve a snapshot
-        Map<String, Object> arguments = Map.copyOf(getArguments());
+        Arguments arguments = snapshotArguments();
+        Arguments.Resolver resolver = getResolver();
 
         return Bindings.createStringBinding(
             () -> applier.evaluate(
                 LocalizationRequest.Builder
                     .of(key)
                     .defaultValue(defaultValue)
-                    .arguments(swapObservables(arguments))
+                    .arguments(arguments.resolve(resolver))
                     .build()
             ),
-            getObservables(this.locale, arguments)
+            getObservables(locale, arguments)
         );
     }
 
     /// @return An array containing provided `locale` + all extracted observables from `arguments`.
-    private static Observable[] getObservables(Observable locale, Map<String, Object> arguments) {
+    private static Observable[] getObservables(Observable locale, Arguments arguments) {
         // Set to avoid duplicate observables
-        Set<Observable> observables = new HashSet<>(arguments.size() + 1);
-        observables.add(locale);
+        Set<Observable> observables = null;
 
-        for (Object object : arguments.values()) {
-            if (object instanceof Observable observable) {
+        for (Object value : arguments.values()) {
+            if (value instanceof Observable observable) {
+                if (observables == null) {
+                    // In most cases, the majority of arguments are observables
+                    observables = new HashSet<>(arguments.size() + 1);
+                    observables.add(locale);
+                }
+
                 observables.add(observable);
             }
         }
 
-        return observables.toArray(new Observable[0]);
-    }
-
-    /// @return A map where all entries with an ObservableValue are swapped with the value contained within them.
-    private static Map<String, Object> swapObservables(Map<String, Object> arguments) {
-        Map<String, Object> normalizedMap = new HashMap<>(arguments);
-
-        for (Map.Entry<String, Object> entry : arguments.entrySet()) {
-            if (entry.getValue() instanceof ObservableValue<?> observable) {
-                normalizedMap.put(entry.getKey(), observable.getValue());
-            }
-        }
-
-        return normalizedMap;
+        return observables == null ? new Observable[] { locale } : observables.toArray(new Observable[0]);
     }
 }

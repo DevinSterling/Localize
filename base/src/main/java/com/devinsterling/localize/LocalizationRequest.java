@@ -9,20 +9,9 @@ import java.util.Objects;
 public class LocalizationRequest {
     private final String key;
     private final String defaultValue;
-    private final Map<String, Object> arguments;
+    private final Arguments arguments;
 
-    /// Creates a request to get a formatted localized value.
-    ///
-    /// @deprecated      Prefer [Builder#of(String)] instead.
-    /// @param key       Key associated with the requested value.
-    /// @param arguments Positional or Named arguments to format with.
-    /// @throws NullPointerException If `key` or `arguments` is `null`.
-    @Deprecated(since = "1.1")
-    public LocalizationRequest(String key, Map<String, Object> arguments) {
-        this(key, null, arguments);
-    }
-
-    private LocalizationRequest(String key, String defaultValue, Map<String, Object> arguments) {
+    private LocalizationRequest(String key, String defaultValue, Arguments arguments) {
         this.key = Objects.requireNonNull(key, "key must not be null");
         this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
         this.defaultValue = defaultValue;
@@ -39,12 +28,10 @@ public class LocalizationRequest {
         return defaultValue;
     }
 
-    /// Named or numbered arguments to format with.
+    /// Returns the arguments to format with.
     ///
-    /// **Note**: Numbered arguments keys are numbers in string form, such as `"0"`, `"1"`, etc.
-    ///
-    /// @return Immutable arguments map to format with.
-    public Map<String, Object> getArguments() {
+    /// @return Arguments to format with.
+    public Arguments getArguments() {
         return arguments;
     }
 
@@ -54,7 +41,7 @@ public class LocalizationRequest {
         return defaultValue != null;
     }
 
-    /// Check if any named or numbered arguments were provided.
+    /// Checks if any arguments were provided.
     ///
     /// @return `true` if this request has arguments.
     public boolean hasArguments() {
@@ -68,7 +55,7 @@ public class LocalizationRequest {
     public static class Builder {
         private final String key;
         private String defaultValue;
-        private Map<String, Object> arguments = Map.of();
+        private Arguments arguments = Arguments.NONE;
 
         private Builder(String key) {
             this.key = key;
@@ -89,14 +76,17 @@ public class LocalizationRequest {
         ///
         /// @param arguments Positional or Named arguments.
         /// @return This builder instance.
-        public Builder arguments(Map<String, Object> arguments) {
-            this.arguments = arguments;
+        /// @throws NullPointerException If `arguments` is `null`.
+        /// @since 2.0
+        public Builder arguments(Arguments arguments) {
+            this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
             return this;
         }
 
         /// Builds a [LocalizationRequest] instance.
         ///
         /// @return Request to get a formatted localized value with.
+        /// @throws NullPointerException If `key` or `arguments` is `null`.
         public LocalizationRequest build() {
             return new LocalizationRequest(key, defaultValue, arguments);
         }
