@@ -5,3 +5,7 @@ plugins {
 }
 
 description = "A simple-to-use Java localization library."
+
+publishConvention {
+    displayName = "Localize"
+}

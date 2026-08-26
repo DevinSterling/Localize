@@ -2,6 +2,12 @@ plugins {
     `maven-publish`
 }
 
+interface PublishConventionExtension {
+    val displayName: Property<String>
+}
+
+val extension = extensions.create<PublishConventionExtension>("publishConvention")
+
 afterEvaluate {
     publishing {
         repositories {
@@ -16,7 +22,7 @@ afterEvaluate {
             artifactId = "localize-${project.projectDir.name}"
 
             pom {
-                name = project.name
+                name = extension.displayName
                 description = project.description
                 url = ProjectInfo.REPOSITORY
                 inceptionYear = ProjectInfo.INCEPTION_YEAR
