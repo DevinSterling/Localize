@@ -285,7 +285,7 @@ public abstract class Localize {
     /// @throws NullPointerException If `key` is `null`.
     /// @see LocalizationValueBuilder#value
     public LocalizationValueBuilder<?> get(String key) {
-        return new LocalizationValueBuilder<>(key, this::applyBuilderProperties);
+        return new LocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this::applyBuilderProperties);
     }
 
     /// Equivalent to [#get(String)].
@@ -333,26 +333,60 @@ public abstract class Localize {
     /// @param request Request to format string with.
     /// @return Requested formatted localized string.
     protected String applyBuilderProperties(LocalizationRequest request) {
+        LocalizationRequestSource localizationRequestSource = request.getSource();
         String value = null;
+
+        // In Java 21, this will be replaced with a switch
+        if (localizationRequestSource instanceof LocalizationRequestSource.Key key) {
+            value = applyBuilderProperties(key, request);
+        } else if (localizationRequestSource instanceof LocalizationRequestSource.Pattern pattern) {
+            value = applyBuilderProperties(pattern, request);
+        }
+
+        return value;
+    }
+
+    private String applyBuilderProperties(LocalizationRequestSource.Pattern source, LocalizationRequest request) {
+        // Since a pattern is given, `defaultValue` is not used here as a value will always be present
+        return getProcessor().process(
+            LocalizationRequestProcessor.Context.Builder
+                .of(source.value())
+                .arguments(request.getArguments())
+                .locale(getLocale())
+                .build()
+        );
+    }
+
+    private String applyBuilderProperties(LocalizationRequestSource.Key source, LocalizationRequest request) {
         ResourceBundle bundle;
+        String key = source.value();
+        String value = null;
+
+        LocalizationRequestProcessor.Context.Builder contextBuilder = LocalizationRequestProcessor.Context.Builder
+                .of("")
+                .arguments(request.getArguments());
 
         for (ProviderEntry entry : providerStore) {
-            if ((bundle = entry.getBundle()) != null) try {
-                value = processor.process(
-                    LocalizationRequestProcessor.Context.Builder
-                        .of(request)
-                        .bundle(bundle)
+            if ((bundle = entry.getBundle()) == null || !bundle.containsKey(key)) continue;
+
+            String pattern = bundle.getString(key);
+
+            try {
+                value = getProcessor().process(
+                    contextBuilder
+                        .pattern(pattern)
+                        // Locale can change mid-loop, so it's always set here
                         .locale(getLocale())
                         .build()
                 );
-
-                if (value != null) {
-                    break;
-                }
             } catch (RuntimeException e) {
                 if (!getConfig().isIgnoreProcessingExceptions()) {
                     throw e;
                 }
+            }
+
+            if (value != null) {
+                break;
             }
         }
 
@@ -361,16 +395,17 @@ public abstract class Localize {
                 value = request.getDefaultValue();
             } else if (getConfig().isThrowWhenNoValueFound()) {
                 throw new MissingResourceException(
-                        "Cannot find resource for " + getClass().getName() +
-                                ", key " + request.getKey() +
-                                ", bundles: " + getResourceBundles(),
-                        getClass().getName(),
-                        request.getKey()
+                    "Cannot find resource for " + getClass().getName() +
+                            ", key " + key +
+                            ", bundles: " + getResourceBundles(),
+                    getClass().getName(),
+                    key
                 );
             } else {
                 value = getConfig().getDefaultMissingValue();
             }
         }
+
         return value;
     }
 

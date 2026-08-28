@@ -7,19 +7,22 @@ import java.util.Objects;
 ///
 /// @since 1.0
 public class LocalizationRequest {
-    private final String key;
+    private final LocalizationRequestSource source;
     private final String defaultValue;
     private final Arguments arguments;
 
-    private LocalizationRequest(String key, String defaultValue, Arguments arguments) {
-        this.key = Objects.requireNonNull(key, "key must not be null");
+    private LocalizationRequest(LocalizationRequestSource source, String defaultValue, Arguments arguments) {
+        this.source = Objects.requireNonNull(source, "source must not be null");
         this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
         this.defaultValue = defaultValue;
     }
 
-    /// {@return The key associated with the requested value.}
-    public String getKey() {
-        return key;
+    /// Returns the source to derive a formatted localized value from.
+    ///
+    /// @return Request source.
+    /// @since 2.0
+    public LocalizationRequestSource getSource() {
+        return source;
     }
 
     /// {@return The default value associated with the requested value.}
@@ -43,22 +46,24 @@ public class LocalizationRequest {
 
     /// Checks if any arguments were provided.
     ///
-    /// @return `true` if this request has arguments.
-    public boolean hasArguments() {
-        return !arguments.isEmpty();
-    }
-
-    /// Builder to build a [LocalizationRequest] for retrieval of a formatted localized value.
-    ///
-    /// @see Builder#of(String) to instantiate a builder instance.
+    /// @see Builder#of(LocalizationRequestSource)
     /// @since 1.1
     public static class Builder {
-        private final String key;
+        private final LocalizationRequestSource source;
         private String defaultValue;
         private Arguments arguments = Arguments.NONE;
 
-        private Builder(String key) {
-            this.key = key;
+        private Builder(LocalizationRequestSource source) {
+            this.source = source;
+        }
+
+        /// Creates a builder instance to construct a [LocalizationRequest].
+        ///
+        /// @param source Source to derive a formatted localized value from.
+        /// @return       Builder instance for a [LocalizationRequest].
+        /// @throws NullPointerException If `source` is `null`.
+        public static Builder of(LocalizationRequestSource source) {
+            return new Builder(Objects.requireNonNull(source, "source must not be null"));
         }
 
         /// Sets the default value to return if the key is not found.
@@ -86,17 +91,8 @@ public class LocalizationRequest {
         /// Builds a [LocalizationRequest] instance.
         ///
         /// @return Request to get a formatted localized value with.
-        /// @throws NullPointerException If `key` or `arguments` is `null`.
         public LocalizationRequest build() {
-            return new LocalizationRequest(key, defaultValue, arguments);
-        }
-
-        /// Creates a builder instance to construct a [LocalizationRequest].
-        ///
-        /// @param key Key associated with the requested value.
-        /// @return    Builder instance for a [LocalizationRequest].
-        public static Builder of(String key) {
-            return new Builder(key);
+            return new LocalizationRequest(source, defaultValue, arguments);
         }
     }
 }

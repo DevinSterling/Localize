@@ -43,16 +43,16 @@ import java.util.function.Supplier;
 public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     private final ArgumentsHelper arguments = new ArgumentsHelper(null);
     private final Applier applier;
-    private final String key;
+    private final LocalizationRequestSource source;
     private String defaultValue;
 
     /// Creates a builder to request a specified localized value.
     ///
-    /// @param key     Key to request a formatted localized value for.
+    /// @param source  Source to derive a formatted localized value from.
     /// @param applier Callback to apply the properties of this builder to the requested value.
-    /// @throws NullPointerException if `key` or `applier` is `null`.
-    public LocalizationValueBuilder(String key, Applier applier) {
-        this.key = Objects.requireNonNull(key, "Key must not be null");
+    /// @throws NullPointerException if `source` or `applier` is `null`.
+    public LocalizationValueBuilder(LocalizationRequestSource source, Applier applier) {
+        this.source = Objects.requireNonNull(source, "source must not be null");
         this.applier = Objects.requireNonNull(applier, "Applier must not be null");
     }
 
@@ -147,7 +147,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     public String value() {
         return getApplier().evaluate(
             LocalizationRequest.Builder
-                .of(getKey())
+                .of(getSource())
                 .defaultValue(getDefaultValue())
                 .arguments(arguments.get().resolve(getResolver()))
                 .build()
@@ -197,9 +197,12 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return applier;
     }
 
-    /// {@return The underlying key}
-    protected String getKey() {
-        return key;
+    /// Returns the source to derive a formatted localized value from.
+    ///
+    /// @return Request source.
+    /// @since 2.0
+    protected LocalizationRequestSource getSource() {
+        return source;
     }
 
     /// {@return The underlying default value}

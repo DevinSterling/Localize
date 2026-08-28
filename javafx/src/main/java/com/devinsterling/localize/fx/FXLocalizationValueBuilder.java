@@ -2,6 +2,7 @@ package com.devinsterling.localize.fx;
 
 import com.devinsterling.localize.Arguments;
 import com.devinsterling.localize.LocalizationRequest;
+import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.LocalizationValueBuilder;
 
 import javafx.beans.Observable;
@@ -24,12 +25,12 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
 
     /// Creates a builder to request a specified localized binding.
     ///
-    /// @param key     Key to request a formatted localized value for.
+    /// @param source   Source to derive a formatted localized value from.
     /// @param locale  Observable of the selected locale.
     /// @param applier Callback to apply the properties of this builder
     ///                to the requested value.
-    public FXLocalizationValueBuilder(String key, ObservableValue<?> locale, Applier applier) {
-        super(key, applier);
+    public FXLocalizationValueBuilder(LocalizationRequestSource source, ObservableValue<?> locale, Applier applier) {
+        super(source, applier);
         this.locale = locale;
     }
 
@@ -44,7 +45,7 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
     /// @return The observable formatted localized value, **intended for the FX application thread only**.
     public StringBinding binding() {
         // Effectively final variables to prevent implicit reference to this class
-        String key = getKey();
+        LocalizationRequestSource source = getSource();
         String defaultValue = getDefaultValue();
         Applier applier = getApplier();
         Arguments arguments = snapshotArguments();
@@ -53,7 +54,7 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         return Bindings.createStringBinding(
             () -> applier.evaluate(
                 LocalizationRequest.Builder
-                    .of(key)
+                    .of(source)
                     .defaultValue(defaultValue)
                     .arguments(arguments.resolve(resolver))
                     .build()

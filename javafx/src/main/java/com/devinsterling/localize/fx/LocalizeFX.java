@@ -1,6 +1,7 @@
 package com.devinsterling.localize.fx;
 
 import com.devinsterling.localize.LocalizationKey;
+import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
 import com.devinsterling.localize.ResourceBundleProvider;
@@ -168,7 +169,7 @@ public abstract class LocalizeFX extends Localize {
 
     /// {@inheritDoc}
     @Override public FXLocalizationValueBuilder<?> get(String key) {
-        return new FXLocalizationValueBuilder<>(key, localeProperty(), this::applyBuilderProperties);
+        return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this::applyBuilderProperties);
     }
 
     /// {@inheritDoc}
