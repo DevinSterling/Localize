@@ -41,7 +41,7 @@ import java.util.function.Supplier;
 /// @param <B> Builder instance type.
 /// @since 1.0
 public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
-    private final DynamicArguments arguments = new DynamicArguments();
+    private final ArgumentsHelper arguments = new ArgumentsHelper(null);
     private final Applier applier;
     private final String key;
     private String defaultValue;

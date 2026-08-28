@@ -55,7 +55,7 @@ public interface Arguments {
     /// @throws NullPointerException If `arguments` is `null`.
     static Arguments of(List<?> arguments) {
         Objects.requireNonNull(arguments, "arguments must not be null");
-        return DynamicArguments.Positional.asUnmodifiable(arguments);
+        return ArgumentsHelper.ofPositionalArguments(arguments);
     }
 
     /// Returns a [named][isNamed] [Arguments] view of the given map.
@@ -67,7 +67,7 @@ public interface Arguments {
     /// @throws NullPointerException If `arguments` is `null`.
     static Arguments of(Map<String, ?> arguments) {
         Objects.requireNonNull(arguments, "arguments must not be null");
-        return DynamicArguments.Named.asUnmodifiable(arguments);
+        return ArgumentsHelper.ofNamedArguments(arguments);
     }
 
     /// Returns the total number of arguments.
@@ -187,7 +187,7 @@ public interface Arguments {
         /// To prevent ambiguity when there are zero arguments without any context,
         /// they are treated as neither named nor positional.
         ///
-        /// If the type is none, then [isEmpty] is always `true`.
+        /// If the type is none, then [Arguments#isEmpty] is always `true`.
         NONE,
 
         /// Positional arguments (e.g., stored as sequential values).
