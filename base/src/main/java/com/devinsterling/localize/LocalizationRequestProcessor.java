@@ -19,6 +19,31 @@ public interface LocalizationRequestProcessor {
     /// @return Formatted localized string or `null` if not found.
     String process(Context context);
 
+    /// Returns the preferred arguments type, if any.
+    ///
+    /// | [Arguments.Type]            | Effect                  |
+    /// |-----------------------------|-------------------------|
+    /// | [Arguments.Type#NAMED]      | Prefer named arguments. |
+    /// | [Arguments.Type#NONE]       | No Effect.              |
+    /// | [Arguments.Type#POSITIONAL] | No Effect.              |
+    /// | `null`                      | No Effect (default).    |
+    ///
+    /// ### Named Arguments Hint
+    /// A hint of [Arguments.Type#NAMED] requests that positional arguments are internally stored as named arguments,
+    /// using the positional index as the argument key.
+    /// For example, if a [builder][LocalizationValueBuilder] receives
+    /// [positional][LocalizationValueBuilder#arg(Object)] arguments, they are internally treated as named arguments
+    /// using key-value pairs (e.g., key=`"0"`, value=`"argument"`).
+    ///
+    /// This is only an implementation detail of the backing data structure.
+    /// Hints have no effect on [Arguments#type].
+    ///
+    /// @return Preferred arguments type or `null` if unspecified.
+    /// @since 2.0
+    default Arguments.Type argumentsHint() {
+        return null;
+    }
+
     /// Processor context to assist creation of formatted localized values.
     ///
     /// @see Builder#of(String)
