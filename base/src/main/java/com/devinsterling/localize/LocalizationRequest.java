@@ -6,7 +6,7 @@ import java.util.Objects;
 /// A Request to format an associated localized value with.
 ///
 /// @since 1.0
-public class LocalizationRequest {
+public final class LocalizationRequest {
     private final LocalizationRequestSource source;
     private final String defaultValue;
     private final Arguments arguments;
@@ -48,7 +48,7 @@ public class LocalizationRequest {
     ///
     /// @see Builder#of(LocalizationRequestSource)
     /// @since 1.1
-    public static class Builder {
+    public static final class Builder {
         private final LocalizationRequestSource source;
         private String defaultValue;
         private Arguments arguments = Arguments.NONE;
