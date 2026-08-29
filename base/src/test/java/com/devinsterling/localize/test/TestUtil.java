@@ -7,8 +7,11 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public final class TestUtil {
-    public static final ResourceBundleProvider TEST_PROVIDER = locale -> ResourceBundle.getBundle("test", locale);
-    public static final ResourceBundleProvider TEST2_PROVIDER = locale -> ResourceBundle.getBundle("test2", locale);
+    public static final String TEST_PROVIDER_NAME = "test";
+    public static final String TEST2_PROVIDER_NAME = "test2";
+
+    public static final ResourceBundleProvider TEST_PROVIDER = locale -> ResourceBundle.getBundle(TEST_PROVIDER_NAME, locale);
+    public static final ResourceBundleProvider TEST2_PROVIDER = locale -> ResourceBundle.getBundle(TEST2_PROVIDER_NAME, locale);
 
     public static final String TEST_KEY_GREET = "Test.greet";
     public static final String TEST_KEY_TEST = "Test.test";
@@ -20,7 +23,7 @@ public final class TestUtil {
 
     public static Localize getLocalizeInstance() {
         Localize localize = Localize.of(Locale.ENGLISH);
-        localize.putBundleProvider("key", TEST_PROVIDER);
+        localize.addBundleProvider(TEST_PROVIDER);
         return localize;
     }
 }

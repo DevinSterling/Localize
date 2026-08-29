@@ -205,11 +205,31 @@ public abstract class Localize {
     /// @return         `true` if the key had no association prior. Otherwise, `false` is
     ///                 returned when the previous entry is replaced with the new provider.
     /// @throws NullPointerException If `key` or `provider` is `null`.
+    /// @see putBundleProvider(String, String)
+    /// @see addBundleProvider(ResourceBundleProvider)
     public boolean putBundleProvider(String key, ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(key, provider);
         boolean isNewEntry = providerStore.put(entry);
         refresh(entry);
         return isNewEntry;
+    }
+
+    /// Shorthand for [#putBundleProvider(String, ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
+    ///
+    /// This method is equivalent to:
+    /// ```
+    /// putBundleProvider(key, locale -> ResourceBundle.getBundle(baseName, locale));
+    /// ```
+    /// @param key                    Key associated with `provider`.
+    /// @param resourceBundleBaseName Called upon calling refresh to get a ResourceBundle instance.
+    /// @return                       `true` if the key had no association prior. Otherwise, `false` is
+    ///                               returned when the previous entry is replaced with the new provider.
+    /// @throws NullPointerException If `key` or `provider` is `null`.
+    /// @see putBundleProvider(String, ResourceBundleProvider)
+    /// @see addBundleProvider(String)
+    /// @since 2.0
+    public boolean putBundleProvider(String key, String resourceBundleBaseName) {
+        return putBundleProvider(key, locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
     }
 
     /// Adds the given provider and returns the generated unique key linked to it.
@@ -222,6 +242,8 @@ public abstract class Localize {
     /// @param provider Called upon calling refresh to get a ResourceBundle instance.
     /// @return         The generated key, if needed for calls to [#removeBundleProvider(String)] or [#refresh(String)].
     /// @throws NullPointerException If `provider` is `null`.
+    /// @see addBundleProvider(String)
+    /// @see putBundleProvider(String, ResourceBundleProvider)
     /// @since 1.3
     public String addBundleProvider(ResourceBundleProvider provider) {
         ProviderEntry entry;
@@ -234,12 +256,29 @@ public abstract class Localize {
                 uniqueKey = UUID.randomUUID().toString();
             } while (providerStore.get(uniqueKey) != null);
 
-            entry =  new ProviderEntry(uniqueKey, provider);
+            entry = new ProviderEntry(uniqueKey, provider);
             providerStore.add(entry);
         }
 
         refresh(entry);
         return uniqueKey;
+    }
+
+    /// Shorthand for [#addBundleProvider(ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
+    ///
+    /// This method is equivalent to:
+    /// ```
+    /// addBundleProvider(locale -> ResourceBundle.getBundle(baseName, locale));
+    /// ```
+    /// @param resourceBundleBaseName Resource bundle base name.
+    /// @return                       The generated key, if needed for calls to
+    ///                               [#removeBundleProvider(String)] or [#refresh(String)].
+    /// @throws NullPointerException If `provider` is `null`.
+    /// @see addBundleProvider(ResourceBundleProvider)
+    /// @see putBundleProvider(String, String)
+    /// @since 2.0
+    public String addBundleProvider(String resourceBundleBaseName) {
+        return addBundleProvider(locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
     }
 
     /// Removes the [ResourceBundleProvider] associated with the given key.

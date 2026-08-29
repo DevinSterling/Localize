@@ -48,6 +48,17 @@ class LocalizeTest {
         assertEquals(2, localize.getResourceBundles().size());
     }
 
+    @Test void testPutProviderByBaseName() {
+        Localize localize = Localize.of();
+        String key = "key";
+
+        // NOTE: these methods delegate to `putBundleProvider(String, ResourceBundleProvider)`
+        localize.putBundleProvider(key, TEST_PROVIDER_NAME);
+        localize.putBundleProvider(key, TEST2_PROVIDER_NAME);
+        localize.putBundleProvider("other", TEST2_PROVIDER_NAME);
+        assertEquals(2, localize.getResourceBundles().size());
+    }
+
     @Test void testAddProvider() {
         Localize localize = Localize.of();
 
@@ -60,6 +71,15 @@ class LocalizeTest {
 
         localize.putBundleProvider(key2, TEST_PROVIDER);
         assertEquals(1, localize.getResourceBundles().size());
+    }
+
+    @Test void testAddProviderByBaseName() {
+        Localize localize = Localize.of();
+
+        // NOTE: these methods delegate to `addBundleProvider(ResourceBundleProvider)`
+        localize.addBundleProvider(TEST_PROVIDER_NAME);
+        localize.addBundleProvider(TEST2_PROVIDER_NAME);
+        assertEquals(2, localize.getResourceBundles().size());
     }
 
     @Test void testPutNullReturningProvider() {
