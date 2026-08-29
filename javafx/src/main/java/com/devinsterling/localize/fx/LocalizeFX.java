@@ -168,12 +168,12 @@ public abstract class LocalizeFX extends Localize {
     }
 
     @Override public FXLocalizationValueBuilder<?> format(String pattern) {
-        return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this::applyBuilderProperties);
+        return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this);
     }
 
     /// {@inheritDoc}
     @Override public FXLocalizationValueBuilder<?> get(String key) {
-        return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this::applyBuilderProperties);
+        return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this);
     }
 
     /// {@inheritDoc}
@@ -206,6 +206,11 @@ public abstract class LocalizeFX extends Localize {
     /// @see #getValue(LocalizationKey)
     public StringBinding getBinding(LocalizationKey key) {
         return getBinding(key.getKey());
+    }
+
+    // todo Elevate to access in the builder
+    @Override protected String applyBuilderProperties(LocalizationRequest request) {
+        return super.applyBuilderProperties(request);
     }
 
     private static Locale assertLocale(Locale locale) {

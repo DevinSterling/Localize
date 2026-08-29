@@ -21,17 +21,14 @@ import java.util.Set;
 /// @param <B> Builder instance type.
 /// @since 1.0
 public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>> extends LocalizationValueBuilder<B> {
-    private final ObservableValue<?> locale;
 
     /// Creates a builder to request a specified localized binding.
     ///
     /// @param source   Source to derive a formatted localized value from.
-    /// @param locale  Observable of the selected locale.
-    /// @param applier Callback to apply the properties of this builder
-    ///                to the requested value.
-    public FXLocalizationValueBuilder(LocalizationRequestSource source, ObservableValue<?> locale, Applier applier) {
-        super(source, applier);
-        this.locale = locale;
+    /// @param localize Localization instance to handle requests.
+    /// @throws NullPointerException if `source` or `localize` is `null`.
+    protected FXLocalizationValueBuilder(LocalizationRequestSource source, LocalizeFX localize) {
+        super(source, localize);
     }
 
     @Override public Arguments.Resolver getResolver() {
@@ -44,23 +41,27 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
     ///
     /// @return The observable formatted localized value, **intended for the FX application thread only**.
     public StringBinding binding() {
+        LocalizeFX localize = getLocalize();
         // Effectively final variables to prevent implicit reference to this class
         LocalizationRequestSource source = getSource();
         String defaultValue = getDefaultValue();
-        Applier applier = getApplier();
         Arguments arguments = snapshotArguments();
         Arguments.Resolver resolver = getResolver();
 
         return Bindings.createStringBinding(
-            () -> applier.evaluate(
+            () -> localize.applyBuilderProperties(
                 LocalizationRequest.Builder
                     .of(source)
                     .defaultValue(defaultValue)
                     .arguments(arguments.resolve(resolver))
                     .build()
             ),
-            getObservables(locale, arguments)
+            getObservables(localize.localeProperty(), arguments)
         );
+    }
+
+    protected LocalizeFX getLocalize() {
+        return (LocalizeFX) super.getLocalize();
     }
 
     /// @return An array containing provided `locale` + all extracted observables from `arguments`.

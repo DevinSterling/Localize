@@ -41,19 +41,20 @@ import java.util.function.Supplier;
 /// @param <B> Builder instance type.
 /// @since 1.0
 public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
-    private final ArgumentsHelper arguments = new ArgumentsHelper(null);
-    private final Applier applier;
+    private final ArgumentsHelper arguments;
     private final LocalizationRequestSource source;
+    private final Localize localize;
     private String defaultValue;
 
     /// Creates a builder to request a specified localized value.
     ///
-    /// @param source  Source to derive a formatted localized value from.
-    /// @param applier Callback to apply the properties of this builder to the requested value.
-    /// @throws NullPointerException if `source` or `applier` is `null`.
-    public LocalizationValueBuilder(LocalizationRequestSource source, Applier applier) {
+    /// @param source   Source to derive a formatted localized value from.
+    /// @param localize Localization instance to handle requests.
+    /// @throws NullPointerException if `source` or `localize` is `null`.
+    protected LocalizationValueBuilder(LocalizationRequestSource source, Localize localize) {
         this.source = Objects.requireNonNull(source, "source must not be null");
-        this.applier = Objects.requireNonNull(applier, "Applier must not be null");
+        this.localize = Objects.requireNonNull(localize, "localize must not be null");
+        this.arguments = new ArgumentsHelper(localize.getProcessor().argumentsHint());
     }
 
     /// Appends named argument key-value pairings.
@@ -145,7 +146,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     ///
     /// @return The formatted localized value.
     public String value() {
-        return getApplier().evaluate(
+        return localize.applyBuilderProperties(
             LocalizationRequest.Builder
                 .of(getSource())
                 .defaultValue(getDefaultValue())
@@ -192,9 +193,12 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return DefaultArgumentsResolver.INSTANCE;
     }
 
-    /// {@return The underlying applier}
-    protected Applier getApplier() {
-        return applier;
+    /// Returns the localization instance to handle requests.
+    ///
+    /// @return Localization instance.
+    /// @since 2.0
+    protected Localize getLocalize() {
+        return localize;
     }
 
     /// Returns the source to derive a formatted localized value from.
@@ -215,17 +219,5 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     @SuppressWarnings("unchecked")
     protected B getBuilder() {
         return (B) this;
-    }
-
-    /// Callback to fetch the value of a requested string
-    /// from the properties provided to a [LocalizationValueBuilder] instance.
-    @FunctionalInterface
-    public interface Applier {
-        /// Apply the requested properties provided into
-        /// an appropriately formatted string.
-        ///
-        /// @param request Requested properties to apply.
-        /// @return The formatted value.
-        String evaluate(LocalizationRequest request);
     }
 }

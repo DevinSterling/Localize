@@ -336,7 +336,7 @@ public abstract class Localize {
     /// @see get(String)
     /// @since 2.0
     public LocalizationValueBuilder<?> format(String pattern) {
-        return new LocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this::applyBuilderProperties);
+        return new LocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this);
     }
 
     /// Returns a builder for formatting a localized value retrieved from the given resource key.
@@ -361,7 +361,7 @@ public abstract class Localize {
     /// @see LocalizationValueBuilder#value
     /// @see format
     public LocalizationValueBuilder<?> get(String key) {
-        return new LocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this::applyBuilderProperties);
+        return new LocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this);
     }
 
     /// Equivalent to [#get(String)].

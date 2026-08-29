@@ -1,6 +1,7 @@
 package com.devinsterling.localize.test;
 
 import com.devinsterling.localize.Arguments;
+import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.LocalizationValueBuilder;
 import com.devinsterling.localize.Localize;
 
@@ -135,23 +136,30 @@ class LocalizationValueBuilderTest {
     }
 
     @Test void testCustomBuilderNullKey() {
-        LocalizationValueBuilder.Applier mockApplier = _ignoredRequest -> "";
-        assertThrows(NullPointerException.class, () -> new TestValueBuilder<>(null, mockApplier));
+        Localize localize = Localize.of();
+        assertThrows(NullPointerException.class, () -> new TestValueBuilder<>(null, localize));
     }
 
-    @Test void testCustomBuilderNullApplier() {
-        assertThrows(NullPointerException.class, () -> new TestValueBuilder<>("key", null));
+    @Test void testCustomBuilderNullLocalize() {
+        assertThrows(
+            NullPointerException.class,
+            () -> {
+                LocalizationRequestSource source = new LocalizationRequestSource.Key("key");
+                new TestValueBuilder<>(source, null);
+            }
+        );
     }
 
     @Test void testCustomBuilder() {
-        LocalizationValueBuilder.Applier mockApplier = _ignoredRequest -> "";
-        TestValueBuilder<?> builder = new TestValueBuilder<>("key", mockApplier);
+        Localize localize = Localize.of();
+        LocalizationRequestSource source = new LocalizationRequestSource.Key("key");
+        TestValueBuilder<?> builder = new TestValueBuilder<>(source, localize);
 
         assertSame(builder, builder.defaultValue("test_default_value"));
         assertSame(builder, builder.args(Map.of("key1", "value1", "key2", "value2")));
 
-        assertEquals(mockApplier, builder.getApplier());
-        assertEquals("key", builder.getKey());
+        assertEquals(localize, builder.getLocalize());
+        assertEquals(source, builder.getSource());
         assertEquals("test_default_value", builder.getDefaultValue());
 
         Arguments args = builder.arguments();
@@ -161,20 +169,20 @@ class LocalizationValueBuilderTest {
 
 class TestValueBuilder<B extends TestValueBuilder<B>> extends LocalizationValueBuilder<B> {
 
-    TestValueBuilder(String key, Applier applier) {
-        super(key, applier);
+    TestValueBuilder(LocalizationRequestSource source, Localize localize) {
+        super(source, localize);
     }
 
     /*//////////////////////////////////
-    /// Protected method made ///
+    /// Protected method made public ///
     //////////////////////////////////*/
 
-    public Applier getApplier() {
-        return super.getApplier();
+    public Localize getLocalize() {
+        return super.getLocalize();
     }
 
-    public String getKey() {
-        return super.getKey();
+    public LocalizationRequestSource getSource() {
+        return super.getSource();
     }
 
     public String getDefaultValue() {
