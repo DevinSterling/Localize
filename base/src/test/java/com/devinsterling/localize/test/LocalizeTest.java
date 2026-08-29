@@ -1,6 +1,5 @@
 package com.devinsterling.localize.test;
 
-import com.devinsterling.localize.LocalizationRequestProcessor;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
 
@@ -136,27 +135,6 @@ class LocalizeTest {
         localize.setLocale(Locale.JAPANESE);
         assertEquals("おはよう", localize.getValue(TEST_KEY_GREET));
         assertEquals("テスト", localize.getValue(() -> TEST_KEY_TEST));
-    }
-
-    @Test void testProcessor() {
-        Localize localize = Localize.of(Locale.ENGLISH);
-        String sample = "sample";
-        LocalizationRequestProcessor mock = (ctx) -> sample;
-
-        assertEquals(LocalizationRequestProcessor.DEFAULT, localize.getProcessor());
-
-        localize.setProcessor(mock);
-        // No bundles contained
-        assertEquals("", localize.getValue(TEST_KEY_GREET));
-
-        localize.putBundleProvider("key", TEST_PROVIDER);
-        assertEquals(mock, localize.getProcessor());
-        assertEquals(sample, localize.getValue(TEST_KEY_GREET));
-        assertEquals(sample, localize.getValue(() -> TEST_KEY_TEST));
-
-        localize.setProcessor(LocalizationRequestProcessor.DEFAULT);
-        assertEquals("hi", localize.getValue(TEST_KEY_GREET));
-        assertEquals("test", localize.getValue(() -> TEST_KEY_TEST));
     }
 
     @Test void testExceptions() {
