@@ -1,4 +1,4 @@
-package com.devinsterling.localize.fx.test;
+package com.devinsterling.localize.fx;
 
 import com.devinsterling.localize.ResourceBundleProvider;
 import com.devinsterling.localize.fx.LocalizeFX;

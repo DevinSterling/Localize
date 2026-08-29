@@ -1,8 +1,4 @@
-package com.devinsterling.localize.test;
-
-import com.devinsterling.localize.Localize;
-import com.devinsterling.localize.LocalizeConfig;
-import com.devinsterling.localize.ResourceBundleProvider;
+package com.devinsterling.localize;
 
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +6,7 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import static com.devinsterling.localize.test.TestUtil.*;
+import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 

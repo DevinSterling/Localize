@@ -1,7 +1,6 @@
-package com.devinsterling.localize.fx.test;
+package com.devinsterling.localize.fx;
 
 import com.devinsterling.localize.LocalizeConfig;
-import com.devinsterling.localize.fx.LocalizeFX;
 
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
@@ -14,7 +13,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import static com.devinsterling.localize.fx.test.TestUtil.*;
+import static com.devinsterling.localize.fx.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 

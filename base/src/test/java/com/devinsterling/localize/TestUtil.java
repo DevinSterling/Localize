@@ -1,7 +1,4 @@
-package com.devinsterling.localize.test;
-
-import com.devinsterling.localize.Localize;
-import com.devinsterling.localize.ResourceBundleProvider;
+package com.devinsterling.localize;
 
 import java.util.Locale;
 import java.util.ResourceBundle;

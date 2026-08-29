@@ -1,9 +1,4 @@
-package com.devinsterling.localize.test;
-
-import com.devinsterling.localize.Arguments;
-import com.devinsterling.localize.LocalizationRequestSource;
-import com.devinsterling.localize.LocalizationValueBuilder;
-import com.devinsterling.localize.Localize;
+package com.devinsterling.localize;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.devinsterling.localize.test.TestUtil.*;
+import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 

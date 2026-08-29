@@ -1,6 +1,5 @@
-package com.devinsterling.localize.test;
+package com.devinsterling.localize;
 
-import com.devinsterling.localize.Arguments;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

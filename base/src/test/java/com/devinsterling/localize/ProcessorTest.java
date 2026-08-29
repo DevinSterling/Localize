@@ -1,15 +1,11 @@
-package com.devinsterling.localize.test;
-
-import com.devinsterling.localize.Arguments;
-import com.devinsterling.localize.LocalizationRequestProcessor;
-import com.devinsterling.localize.Localize;
+package com.devinsterling.localize;
 
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Locale;
 
-import static com.devinsterling.localize.test.TestUtil.*;
+import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 

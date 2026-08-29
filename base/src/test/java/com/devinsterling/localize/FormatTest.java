@@ -1,6 +1,4 @@
-package com.devinsterling.localize.test;
-
-import com.devinsterling.localize.Localize;
+package com.devinsterling.localize;
 
 import org.junit.jupiter.api.Test;
 

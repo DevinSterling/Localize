@@ -1,6 +1,4 @@
-package com.devinsterling.localize.fx.test;
-
-import com.devinsterling.localize.fx.LocalizeFX;
+package com.devinsterling.localize.fx;
 
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.DoubleProperty;
@@ -13,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Locale;
 import java.util.function.Supplier;
 
-import static com.devinsterling.localize.fx.test.TestUtil.*;
+import static com.devinsterling.localize.fx.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
