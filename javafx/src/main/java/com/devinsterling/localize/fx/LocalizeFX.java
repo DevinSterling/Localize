@@ -150,7 +150,6 @@ public abstract class LocalizeFX extends Localize {
         return isRemoved;
     }
 
-    /// {@inheritDoc}
     @Override public boolean refresh(String key) {
         boolean isRefreshed = super.refresh(key);
 
@@ -161,7 +160,6 @@ public abstract class LocalizeFX extends Localize {
         return isRefreshed;
     }
 
-    /// {@inheritDoc}
     @Override public void refresh() {
         super.refresh();
         notifyListeners();
@@ -171,12 +169,10 @@ public abstract class LocalizeFX extends Localize {
         return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this);
     }
 
-    /// {@inheritDoc}
     @Override public FXLocalizationValueBuilder<?> get(String key) {
         return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this);
     }
 
-    /// {@inheritDoc}
     @Override public FXLocalizationValueBuilder<?> get(LocalizationKey key) {
         return get(key.getKey());
     }
