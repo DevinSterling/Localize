@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static com.devinsterling.localize.fx.test.TestUtil.*;
-import static com.devinsterling.localize.fx.test.TestUtil.getLocalizeFXInstance;
 
 import static org.junit.jupiter.api.Assertions.*;
 
