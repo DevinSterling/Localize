@@ -167,6 +167,10 @@ public abstract class LocalizeFX extends Localize {
         notifyListeners();
     }
 
+    @Override public FXLocalizationValueBuilder<?> format(String pattern) {
+        return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this::applyBuilderProperties);
+    }
+
     /// {@inheritDoc}
     @Override public FXLocalizationValueBuilder<?> get(String key) {
         return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this::applyBuilderProperties);

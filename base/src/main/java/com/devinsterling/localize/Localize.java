@@ -278,12 +278,49 @@ public abstract class Localize {
         refresh(getLocale());
     }
 
-    /// Returns a builder instance to get a formatted localized string.
+    /// Returns a builder for formatting a localized value from the given pattern.
     ///
+    /// ### Example Usage
+    /// Using a pattern format with positional arguments:
+    /// ```
+    /// String value = localize.format("Hello {0} {1}!")
+    ///                        .arg("John")
+    ///                        .arg("Doe")
+    ///                        .value();
+    ///
+    /// assert value.equals("Hello John Doe!");
+    /// ```
+    /// @param pattern Pattern used to derive the formatted localized value.
+    /// @return        **Non-thread-safe** builder instance to format the requested value.
+    /// @throws NullPointerException If `pattern` is `null`.
+    /// @see LocalizationValueBuilder#value
+    /// @see get(String)
+    /// @since 2.0
+    public LocalizationValueBuilder<?> format(String pattern) {
+        return new LocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this::applyBuilderProperties);
+    }
+
+    /// Returns a builder for formatting a localized value retrieved from the given resource key.
+    ///
+    /// ### Example Usage
+    /// Within a resource bundle (e.g., `my-app-i18n.properties`):
+    /// ```
+    /// MyApp.greet=Hello {first} {last}!
+    /// ```
+    /// Requesting the resource value by key:
+    /// ```
+    /// String value = localize.get("MyApp.greet")
+    ///                        .arg("first", "John")
+    ///                        .arg("last", "Doe")
+    ///                        .value();
+    ///
+    /// assert value.equals("Hello John Doe!");
+    /// ```
     /// @param key Key associated with the resource value to retrieve.
     /// @return    **Non-thread-safe** builder instance to format the requested value.
     /// @throws NullPointerException If `key` is `null`.
     /// @see LocalizationValueBuilder#value
+    /// @see format
     public LocalizationValueBuilder<?> get(String key) {
         return new LocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this::applyBuilderProperties);
     }
