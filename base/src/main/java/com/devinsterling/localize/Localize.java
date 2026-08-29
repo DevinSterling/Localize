@@ -404,25 +404,35 @@ public abstract class Localize {
                       .toList();
     }
 
-    /// Applies and transforms the request into a formatted localized string.
+    /// Formats the request as-is into a localized value.
     ///
-    /// @param request Request to format string with.
-    /// @return Requested formatted localized string.
-    protected String applyBuilderProperties(LocalizationRequest request) {
+    /// This method does **not** perform any post-processing on the given request.
+    /// For example, argument resolution is not performed here, which [LocalizationValueBuilder] handles implicitly.
+    ///
+    /// This method is primarily useful for circumventing the builder API and implicit argument resolution.
+    /// For all other use cases, prefer [get(String)] and [format(String)].
+    ///
+    /// @param request Request to format.
+    /// @return        Formatted localized value.
+    /// @throws NullPointerException If `request` is `null`.
+    /// @see format(String)
+    /// @see get(String)
+    /// @since 2.0
+    public String formatValue(LocalizationRequest request) {
         LocalizationRequestSource localizationRequestSource = request.getSource();
         String value = null;
 
         // In Java 21, this will be replaced with a switch
         if (localizationRequestSource instanceof LocalizationRequestSource.Key key) {
-            value = applyBuilderProperties(key, request);
+            value = formatValue(key, request);
         } else if (localizationRequestSource instanceof LocalizationRequestSource.Pattern pattern) {
-            value = applyBuilderProperties(pattern, request);
+            value = formatValue(pattern, request);
         }
 
         return value;
     }
 
-    private String applyBuilderProperties(LocalizationRequestSource.Pattern source, LocalizationRequest request) {
+    private String formatValue(LocalizationRequestSource.Pattern source, LocalizationRequest request) {
         // Since a pattern is given, `defaultValue` is not used here as a value will always be present
         return getProcessor().process(
             LocalizationRequestProcessor.Context.Builder
@@ -433,7 +443,7 @@ public abstract class Localize {
         );
     }
 
-    private String applyBuilderProperties(LocalizationRequestSource.Key source, LocalizationRequest request) {
+    private String formatValue(LocalizationRequestSource.Key source, LocalizationRequest request) {
         ResourceBundle bundle;
         String key = source.value();
         String value = null;

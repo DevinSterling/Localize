@@ -49,7 +49,7 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         Arguments.Resolver resolver = getResolver();
 
         return Bindings.createStringBinding(
-            () -> localize.applyBuilderProperties(
+            () -> localize.formatValue(
                 LocalizationRequest.Builder
                     .of(source)
                     .defaultValue(defaultValue)

@@ -208,11 +208,6 @@ public abstract class LocalizeFX extends Localize {
         return getBinding(key.getKey());
     }
 
-    // todo Elevate to access in the builder
-    @Override protected String applyBuilderProperties(LocalizationRequest request) {
-        return super.applyBuilderProperties(request);
-    }
-
     private static Locale assertLocale(Locale locale) {
         return Objects.requireNonNull(locale, "locale must not be null");
     }

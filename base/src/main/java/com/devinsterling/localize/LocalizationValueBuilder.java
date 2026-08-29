@@ -146,7 +146,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     ///
     /// @return The formatted localized value.
     public String value() {
-        return localize.applyBuilderProperties(
+        return localize.formatValue(
             LocalizationRequest.Builder
                 .of(getSource())
                 .defaultValue(getDefaultValue())
