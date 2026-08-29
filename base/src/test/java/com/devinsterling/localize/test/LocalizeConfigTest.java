@@ -29,6 +29,9 @@ class LocalizeConfigTest {
         LocalizeConfig config2 = new LocalizeConfig();
         config2.setDefaultMissingValue("missing");
 
+        // - `config1` must be placed before null, else `LocalizeConfig#equal(null)` is never called here.
+        // noinspection MisorderedAssertEqualsArguments
+        assertNotEquals(config1, null);
         assertNotEquals(config1, config2);
         assertNotEquals(config1.hashCode(), config2.hashCode());
     }
