@@ -1,9 +1,8 @@
 package com.devinsterling.localize;
 
-import java.util.Map;
 import java.util.Objects;
 
-/// A Request to format an associated localized value with.
+/// A request to format an associated localized value with.
 ///
 /// @since 1.0
 public final class LocalizationRequest {
@@ -25,7 +24,10 @@ public final class LocalizationRequest {
         return source;
     }
 
-    /// {@return The default value associated with the requested value.}
+    /// Returns the default value for the requested value, if any.
+    ///
+    /// @return Default value or `null` if not set.
+    /// @see hasDefaultValue
     /// @since 1.1
     public String getDefaultValue() {
         return defaultValue;
@@ -38,13 +40,16 @@ public final class LocalizationRequest {
         return arguments;
     }
 
-    /// {@return `true` if there is a non-null default value set.}
+    /// Checks if a default value is present.
+    ///
+    /// @return `true` if a non-null default value is set.
+    /// @see getDefaultValue
     /// @since 1.1
     public boolean hasDefaultValue() {
         return defaultValue != null;
     }
 
-    /// Checks if any arguments were provided.
+    /// Builder to create a [LocalizationRequest] for retrieval of a formatted localized value.
     ///
     /// @see Builder#of(LocalizationRequestSource)
     /// @since 1.1
@@ -76,8 +81,6 @@ public final class LocalizationRequest {
         }
 
         /// Sets the position or named arguments to format with.
-        ///
-        /// **Note**: Numbered arguments keys are numbers in string form, such as `"0"`, `"1"`, etc.
         ///
         /// @param arguments Positional or Named arguments.
         /// @return This builder instance.

@@ -24,9 +24,15 @@ import java.util.concurrent.atomic.AtomicReference;
 /// - [#of(Locale, LocalizeConfig)]
 ///
 /// ### Arguments and Pluralization
-/// The default [`LocalizationRequestProcessor`][LocalizationRequestProcessor#DEFAULT],
-/// includes support for named arguments, pluralization, and many other aspects based on
-/// [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/#platform-dependencies).
+/// By default, Localize uses a [LocalizationRequestProcessor] built around [java.text.MessageFormat],
+/// though this can be replaced [programmatically][setProcessor] or via SPI by providing a custom processor.
+/// The default processor supports both named and numbered arguments,
+/// as well as pluralization through [java.text.ChoiceFormat] choice patterns.
+///
+/// > For advanced message formatting, plural rules, and greater control over bundle properties,
+/// see the [ICU4J integration module](https://github.com/DevinSterling/Localize#icu4j-integration),
+/// an optional dependency (`localize-icu4j`) providing
+/// [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/#platform-dependencies) support.
 ///
 /// ### Example
 /// Localization `*.properties` files reside under `resources`.
@@ -45,44 +51,44 @@ import java.util.concurrent.atomic.AtomicReference;
 /// // Named arguments (Argument insertion order does not matter)
 /// MyApp.say2 = {intro}, {name}
 /// // Pluralization and named arguments
-/// MyApp.people = There {num_people, plural,\
-///   =0{are no people on {location}.}\
-///   =1{is one person on {location}.}\
-///   other{are # people on {location}.}}
+/// MyApp.people = There {num_people, choice,\
+/// 0 #are no people|\
+/// 1 #is one person|\
+/// 1 <are {num_people} people} on {location}.
 /// ```
 ///
 /// The following localization files may be called as such:
 /// ```java
-/// Localize localize = new Localize();
-/// localize.putBundleProvider("key1", locale -> {
-///    return ResourceBundle.getBundle("sample.message", locale);
-/// });
+/// Localize localize = Localize.of();
+/// localize.addBundleProvider("sample.message");
+/// // Or alternatively for more control
+/// localize.addBundleProvider(locale -> ResourceBundle.getBundle("sample.message", locale));
 ///
 /// // We may now change the locale a number of times.
 /// localize.setLocale(Locale.CHINESE);
-/// assert(localize.getValue("MyApp.greet").equals("早上好"));
+/// assert localize.getValue("MyApp.greet").equals("早上好");
 ///
-/// localize.setLocale(Locale.JAPAN);
-/// assert(localize.getValue("MyApp.greet").equals("おはよう"));
+/// localize.setLocale(Locale.JAPANESE);
+/// assert localize.getValue("MyApp.greet").equals("おはよう");
 ///
 /// localize.setLocale(Locale.ENGLISH);
-/// assert(localize.get("MyApp.say1")
+/// assert localize.get("MyApp.say1")
 ///                .arg("Hi")
 ///                .arg("Devin")
 ///                .value()
-///                .equals("Hi, Devin"));
+///                .equals("Hi, Devin");
 ///
-/// assert(localize.get("MyApp.say2")
+/// assert localize.get("MyApp.say2")
 ///                .arg("name", "Devin")
 ///                .arg("intro", "Hi")
 ///                .value()
-///                .equals("Hi, Devin"));
+///                .equals("Hi, Devin");
 ///
-/// assert(localize.get("MyApp.people")
+/// assert localize.get("MyApp.people")
 ///                .arg("location", "campus")
 ///                .arg("num_people", 100)
 ///                .value()
-///                .equals("There are 100 people on campus."));
+///                .equals("There are 100 people on campus.");
 /// ```
 /// @implSpec Implementations must ensure that locale updates are thread-safe.
 /// @since 1.0

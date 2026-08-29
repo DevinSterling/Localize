@@ -144,7 +144,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
 
     /// Retrieves a formatted string with all properties applied from this builder.
     ///
-    /// @return The formatted localized value.
+    /// @return Formatted localized value.
     public String value() {
         return localize.formatValue(
             LocalizationRequest.Builder
@@ -176,19 +176,26 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     ///
     /// @param value Argument value to potentially transform.
     /// @return      The transformed or original value.
+    /// @since 2.0
     protected Object interceptValue(Object value) {
         return value;
     }
 
-    /// Returns a snapshot of the current arguments.
+    /// Returns an immutable snapshot of the current arguments.
     ///
     /// After this method call, arguments added through this builder are not included in the returned snapshot.
     ///
     /// @return Arguments snapshot.
+    /// @since 2.0
     protected final Arguments snapshotArguments() {
         return arguments.snapshot();
     }
 
+    /// Returns the argument resolver used before retrieving localized values.
+    ///
+    /// Default: [DefaultArgumentsResolver]
+    /// @return Arguments resolver.
+    /// @since 2.0
     protected Arguments.Resolver getResolver() {
         return DefaultArgumentsResolver.INSTANCE;
     }
@@ -209,13 +216,17 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return source;
     }
 
-    /// {@return The underlying default value}
+    /// Returns the default value, if any.
+    ///
+    /// @return Default value or `null` if not set.
     /// @since 1.1
     protected String getDefaultValue() {
         return defaultValue;
     }
 
-    /// {@return This builder instance}
+    /// Returns this builder instance.
+    ///
+    /// @return This builder instance.
     @SuppressWarnings("unchecked")
     protected B getBuilder() {
         return (B) this;

@@ -64,8 +64,10 @@ public abstract class LocalizeFX extends Localize {
     ///
     /// Each time the locale is changed, all providers are refreshed.
     ///
-    /// When not on the FX application thread, it is recommended
-    /// to use [#getLocale()] and [#setLocale(Locale)] instead.
+    /// **This method is intended to be called on the JavaFX Application thread only.**
+    /// When not on that thread, it is recommended
+    /// to use [#getLocale()] and [#setLocale(Locale)] instead,
+    /// which are thread-safe.
     ///
     /// @return **Non-thread-safe** observable locale property.
     /// @see #setLocale(Locale)
@@ -75,6 +77,8 @@ public abstract class LocalizeFX extends Localize {
 
     /// Triggers the locale property to emit an invalidation event
     /// to listeners, triggering all string bindings to update.
+    ///
+    /// @implSpec This method must be thread-safe, dispatching to the JavaFX application thread when needed.
     protected abstract void notifyListeners();
 
     /// Equivalent to [#of(Locale, LocalizeConfig)] with the
@@ -106,7 +110,7 @@ public abstract class LocalizeFX extends Localize {
         return of(Locale.getDefault(), config);
     }
 
-    /// Creates a new [LocalizeFX] instance with a given [LocalizeFX] and [LocalizeConfig].
+    /// Creates a new [LocalizeFX] instance with a given [Locale] and [LocalizeConfig].
     ///
     /// @param locale Initial locale.
     /// @param config Initial Configuration.
@@ -179,6 +183,8 @@ public abstract class LocalizeFX extends Localize {
 
     /// Retrieves an observable string binding.
     ///
+    /// **This method is intended to be called on the JavaFX Application thread only.**
+    ///
     /// ### Example Usage
     /// ```
     /// Button button = new Button();
@@ -195,6 +201,8 @@ public abstract class LocalizeFX extends Localize {
     }
 
     /// Equivalent to [#getBinding(String)].
+    ///
+    /// **This method is intended to be called on the JavaFX Application thread only.**
     ///
     /// @param  key Resource bundle key.
     /// @return     Observable string binding.

@@ -8,15 +8,11 @@ import com.devinsterling.localize.LocalizationValueBuilder;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.value.ObservableValue;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-/// Builder to provide an observable string binding
-/// of a formatted localized value.
+/// Builder to provide an observable string binding of a formatted localized value.
 ///
 /// @param <B> Builder instance type.
 /// @since 1.0
@@ -37,9 +33,11 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
 
     /// Retrieves an observable formatted string with all properties applied from this builder.
     ///
+    /// **This method is intended to be called on the JavaFX Application thread only.**
+    ///
     /// The binding is automatically updated when any of the passed observable arguments or the locale changes.
     ///
-    /// @return The observable formatted localized value, **intended for the FX application thread only**.
+    /// @return Observable formatted localized value.
     public StringBinding binding() {
         LocalizeFX localize = getLocalize();
         // Effectively final variables to prevent implicit reference to this class

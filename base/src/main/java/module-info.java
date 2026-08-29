@@ -3,13 +3,15 @@
 ///
 /// - Repository:
 ///   [https://github.com/DevinSterling/Localize](https://github.com/DevinSterling/Localize)
-/// - JavaFX Integration Module:
-///   [https://javadoc.io/doc/com.devinsterling/localize-javafx](https://javadoc.io/doc/com.devinsterling/localize-javafx)
+/// - Integration Modules:
+///   - [ICU4J](https://github.com/DevinSterling/Localize#icu4j-integration)
+///   - [JavaFX](https://github.com/DevinSterling/Localize#localizefx--javafx-integration)
+///   - [Swing](https://github.com/DevinSterling/Localize#localizeswing--swing-integration)
 /// ___
 /// Localize is a Java localization library that simplifies internationalizing applications.
 /// It’s designed to be straightforward to set up and use.
 ///
-/// 1. Create a `Localize` instance:
+/// 1. Create a thread-safe `Localize` instance:
 ///    ```java
 ///    Localize localize = Localize.of(Locale.ENGLISH);
 ///    ```
@@ -19,6 +21,8 @@
 ///    localize.putBundleProvider("ProviderKey", locale -> ResourceBundle.getBundle("i18n.sample", locale));
 ///    // Or without
 ///    localize.addBundleProvider(locale -> ResourceBundle.getBundle("i18n.sample", locale));
+///    // Or by resource bundle base name
+///    localize.addBundleProvider("i18n.sample");
 ///    ```
 /// 3. Retrieve localized values by key:
 ///    ```java
@@ -35,7 +39,7 @@
 /// Configuration can control scenarios such as where no value or when a resource bundle is not found.
 /// ```java
 /// localize.putBundleProvider("Provider1", locale -> ResourceBundle.getBundle("i18n.sample", locale));
-/// localize.putBundleProvider("Provider2", locale -> ResourceBundle.getBundle("i18n.other", locale));
+/// localize.addBundleProvider("i18n.other");
 /// ...
 /// // Removing a provider when no longer needed:
 /// localize.removeBundleProvider("Provider1");
@@ -45,20 +49,28 @@
 ///
 /// ## Plurals and Arguments
 ///
-/// Localize uses [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/) under the hood,
-/// though this can be changed by providing a custom `LocalizationRequestProvider`.
-/// With the default provider, Localize supports both named and numbered arguments along with pluralization.
+/// By default, Localize uses a
+/// [`LocalizationRequestProcessor`][com.devinsterling.localize.LocalizationRequestProcessor]
+/// built around [java.text.MessageFormat], though this can be replaced
+/// [programmatically][com.devinsterling.localize.Localize#setProcessor] or via SPI by providing a custom processor.
+/// The default processor supports both named and numbered arguments,
+/// as well as pluralization through [java.text.ChoiceFormat] choice patterns.
+///
+/// > For advanced message formatting, plural rules, and greater control over bundle properties,
+/// see the [ICU4J integration module](https://github.com/DevinSterling/Localize#icu4j-integration),
+/// an optional dependency (`localize-icu4j`) providing
+/// [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/#platform-dependencies) support.
 ///
 /// Here is a look inside the contents of a sample properties file:
 /// ```properties
-/// MyApp.clickMessage = {name} clicked this button {click_count, plural,\
-/// =0{zero times}\
-/// =1{one time}\
-/// other{# times}}.
-/// MyApp.NumberArgs = {0} clicked this button {1, plural,\
-/// =0{zero times}\
-/// =1{one time}\
-/// other{# times}}.
+/// MyApp.clickMessage={name} clicked this button {click_count, choice,\
+/// 0 #zero times|\
+/// 1 #one time|\
+/// 1 <{click_count} times}!
+/// MyApp.numberedArguments={0} clicked this button {1, choice,\
+/// 0 #zero times|\
+/// 1 #one time|\
+/// 1 <{1} times}!
 /// ```
 /// - Named Arguments:
 ///   ```java
@@ -69,7 +81,7 @@
 ///   ```
 /// - Numbered Arguments:
 ///   ```java
-///   localize.get("MyApp.NumberArgs")
+///   localize.get("MyApp.numberedArguments")
 ///           .arg("John Doe") // Argument 0
 ///           .arg(55) // Argument 1
 ///           .value(); // Returns "John Doe clicked this button 55 times."
