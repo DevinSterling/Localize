@@ -32,15 +32,15 @@ public class IcuFormatter implements LocalizationFormatter {
         return Arguments.Type.NAMED;
     }
 
-    @Override public String format(Context context) {
-        String value = context.getPattern();
-        Map<String, Object> arguments = context.getArguments().toNamedMap();
+    @Override public String format(Request request) {
+        String value = request.getPattern();
+        Map<String, Object> arguments = request.getArguments().toNamedMap();
 
-        value = switch (config.getMessageFormat().getType()) {
-            case V1_MESSAGE_FORMAT -> new MessageFormat(value, context.getLocale())
+        value = switch (getConfig().getMessageFormat().getType()) {
+            case V1_MESSAGE_FORMAT -> new MessageFormat(value, request.getLocale())
                     .format(arguments);
             case V2_MESSAGE_FORMAT -> MessageFormatter.builder()
-                    .setLocale(context.getLocale())
+                    .setLocale(request.getLocale())
                     .setPattern(value)
                     .build()
                     .formatToString(arguments);

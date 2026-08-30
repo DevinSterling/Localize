@@ -12,11 +12,12 @@ import java.util.Objects;
 /// @since 1.0
 @FunctionalInterface
 public interface LocalizationFormatter {
-    /// Processes the given [Context] to retrieve a formatted localized string.
+    /// Processes the given [Request] to retrieve a formatted localized string.
     ///
-    /// @param context Formatter context.
+    /// @param request Formatter request.
     /// @return Formatted localized string or `null` if not found.
-    String format(Context context);
+    /// @throws NullPointerException if `request` is `null`.
+    String format(Request request);
 
     /// Returns the preferred arguments type, if any.
     ///
@@ -43,16 +44,16 @@ public interface LocalizationFormatter {
         return null;
     }
 
-    /// Processor context to assist creation of formatted localized values.
+    /// Formatter request to produce a formatted localized values.
     ///
     /// @see Builder#of(String)
     /// @since 2.0
-    final class Context {
+    final class Request {
         private final String pattern;
         private final Arguments arguments;
         private final Locale locale;
 
-        private Context(String pattern, Arguments arguments, Locale locale) {
+        private Request(String pattern, Arguments arguments, Locale locale) {
             this.pattern = Objects.requireNonNull(pattern, "pattern must not be null");
             this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
             this.locale = Objects.requireNonNull(locale, "locale must not be null");
@@ -79,7 +80,7 @@ public interface LocalizationFormatter {
             return locale;
         }
 
-        /// Builder to create a [Context] for string formatting.
+        /// Builder to create a [Request] for string formatting.
         ///
         /// @see Builder#of(String)
         static final class Builder {
@@ -126,22 +127,22 @@ public interface LocalizationFormatter {
                 return this;
             }
 
-            /// Builds a [Context] instance.
+            /// Builds a [Request] instance.
             ///
-            /// @return Formatter context.
+            /// @return Formatter request.
             /// @throws NullPointerException If [`locale`][locale(Locale)] is `null`.
-            public Context build() {
-                return new Context(this.pattern, this.arguments, this.locale);
+            public Request build() {
+                return new Request(this.pattern, this.arguments, this.locale);
             }
         }
     }
 
-    /// The default formatter to handle converting a [Context]
+    /// The default formatter to handle converting a [Request]
     /// into a formatted localized string.
     LocalizationFormatter DEFAULT = new LocalizationFormatter() {
-        @Override public String format(Context ctx) {
-            String value = ctx.getPattern();
-            Arguments arguments = ctx.getArguments();
+        @Override public String format(Request request) {
+            String value = request.getPattern();
+            Arguments arguments = request.getArguments();
             Object[] positionalArguments = null;
 
             if (!arguments.isEmpty()) {
@@ -153,7 +154,7 @@ public interface LocalizationFormatter {
                 }
             }
 
-            return new MessageFormat(value, ctx.getLocale()).format(positionalArguments);
+            return new MessageFormat(value, request.getLocale()).format(positionalArguments);
         }
 
         private static String convertToPositionalArgs(
