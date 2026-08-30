@@ -4,6 +4,6 @@ module com.devinsterling.localize.icu4j {
 
     exports com.devinsterling.localize.icu4j;
 
-    provides com.devinsterling.localize.LocalizationFormatter
-        with com.devinsterling.localize.icu4j.IcuFormatter;
+    provides com.devinsterling.localize.spi.LocalizationFormatterProvider
+        with com.devinsterling.localize.icu4j.spi.IcuFormatterProvider;
 }
