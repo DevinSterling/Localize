@@ -36,8 +36,8 @@ public class LocalizationFormatterTest {
         Localize localize = Localize.of();
         LocalizationFormatter defaultFormatter = localize.getFormatter();
         LocalizationFormatter testFormatter = new LocalizationFormatter() {
-            @Override public String format(Context context) {
-                Arguments arguments = context.getArguments();
+            @Override public String format(Request request) {
+                Arguments arguments = request.getArguments();
 
                 // Not backed by a list
                 assertNotSame(arguments.toList(), arguments.toList());
@@ -48,7 +48,7 @@ public class LocalizationFormatterTest {
                 assertEquals(Arguments.Type.POSITIONAL, arguments.type());
                 assertEquals(List.of(0, 1, 2, 3), arguments.values().stream().toList());
 
-                return defaultFormatter.format(context);
+                return defaultFormatter.format(request);
             }
 
             @Override public Arguments.Type argumentsHint() {
@@ -64,8 +64,8 @@ public class LocalizationFormatterTest {
         Localize localize = Localize.of();
         LocalizationFormatter defaultFormatter = localize.getFormatter();
         LocalizationFormatter testFormatter = new LocalizationFormatter() {
-            @Override public String format(Context context) {
-                return defaultFormatter.format(context);
+            @Override public String format(Request request) {
+                return defaultFormatter.format(request);
             }
 
             @Override public Arguments.Type argumentsHint() {

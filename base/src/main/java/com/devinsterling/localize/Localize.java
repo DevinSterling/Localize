@@ -441,7 +441,7 @@ public abstract class Localize {
     private String formatValue(LocalizationRequestSource.Pattern source, LocalizationRequest request) {
         // Since a pattern is given, `defaultValue` is not used here as a value will always be present
         return getFormatter().format(
-            LocalizationFormatter.Context.Builder
+            LocalizationFormatter.Request.Builder
                 .of(source.value())
                 .arguments(request.getArguments())
                 .locale(getLocale())
@@ -454,7 +454,7 @@ public abstract class Localize {
         String key = source.value();
         String value = null;
 
-        LocalizationFormatter.Context.Builder contextBuilder = LocalizationFormatter.Context.Builder
+        LocalizationFormatter.Request.Builder requestBuilder = LocalizationFormatter.Request.Builder
                 .of("")
                 .arguments(request.getArguments());
 
@@ -465,7 +465,7 @@ public abstract class Localize {
 
             try {
                 value = getFormatter().format(
-                    contextBuilder
+                    requestBuilder
                         .pattern(pattern)
                         // Locale can change mid-loop, so it's always set here
                         .locale(getLocale())
