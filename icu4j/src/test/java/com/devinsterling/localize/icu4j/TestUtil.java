@@ -15,20 +15,20 @@ public final class TestUtil {
     private TestUtil() {}
 
     public static Localize getMessageFormat1Instance() {
-        return getLocalizeInstance(IcuFormatter.MESSAGE1_FORMATTER, MESSAGE_FORMAT1);
+        return getLocalizeInstance(IcuMessageFormat.MESSAGE1_FORMAT, MESSAGE_FORMAT1);
     }
 
     public static Localize getMessageFormat2Instance() {
-        return getLocalizeInstance(IcuFormatter.MESSAGE2_FORMATTER, MESSAGE_FORMAT2);
+        return getLocalizeInstance(IcuMessageFormat.MESSAGE2_FORMAT, MESSAGE_FORMAT2);
     }
 
-    private static Localize getLocalizeInstance(IcuFormatter formatter, ResourceBundleProvider provider) {
+    private static Localize getLocalizeInstance(IcuMessageFormat messageFormat, ResourceBundleProvider provider) {
         Localize localize = Localize.of(Locale.ENGLISH);
-        IcuProcessorConfig config = new IcuProcessorConfig();
-        IcuProcessor processor = new IcuProcessor(config);
+        IcuFormatterConfig config = new IcuFormatterConfig();
+        IcuFormatter formatter = new IcuFormatter(config);
 
-        config.setFormatter(formatter);
-        localize.setProcessor(processor);
+        config.setFormatter(messageFormat);
+        localize.setFormatter(formatter);
         localize.addBundleProvider(provider);
         return localize;
     }

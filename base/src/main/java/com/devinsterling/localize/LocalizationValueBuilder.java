@@ -54,7 +54,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     protected LocalizationValueBuilder(LocalizationRequestSource source, Localize localize) {
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.localize = Objects.requireNonNull(localize, "localize must not be null");
-        this.arguments = new ArgumentsHelper(localize.getProcessor().argumentsHint());
+        this.arguments = new ArgumentsHelper(localize.getFormatter().argumentsHint());
     }
 
     /// Appends named argument key-value pairings.

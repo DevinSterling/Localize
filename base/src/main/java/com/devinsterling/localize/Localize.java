@@ -1,6 +1,6 @@
 package com.devinsterling.localize;
 
-import com.devinsterling.localize.spi.RequestProcessorRegistry;
+import com.devinsterling.localize.spi.LocalizationFormatterLocator;
 
 import java.util.Collection;
 import java.util.IdentityHashMap;
@@ -24,9 +24,9 @@ import java.util.concurrent.atomic.AtomicReference;
 /// - [#of(Locale, LocalizeConfig)]
 ///
 /// ### Arguments and Pluralization
-/// By default, Localize uses a [LocalizationRequestProcessor] built around [java.text.MessageFormat],
-/// though this can be replaced [programmatically][setProcessor] or via SPI by providing a custom processor.
-/// The default processor supports both named and numbered arguments,
+/// By default, Localize uses a [LocalizationFormatter] built around [java.text.MessageFormat],
+/// though this can be replaced [programmatically][setFormatter] or via SPI by providing a custom formatter.
+/// The default formatter supports both named and numbered arguments,
 /// as well as pluralization through [java.text.ChoiceFormat] choice patterns.
 ///
 /// > For advanced message formatting, plural rules, and greater control over bundle properties,
@@ -96,7 +96,7 @@ public abstract class Localize {
     private final ProviderStore providerStore = new ProviderStore();
     private final Object providerLock = new Object();
     private final LocalizeConfig config;
-    private volatile LocalizationRequestProcessor processor = RequestProcessorRegistry.DEFAULT;
+    private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.DEFAULT;
 
     /// Creates a [Localize] instance with the desired configuration.
     ///
@@ -158,19 +158,19 @@ public abstract class Localize {
         return new LocalizeImpl(assertLocale(locale), config);
     }
 
-    /// Sets the request processor.
+    /// Sets the localization formatter.
     ///
-    /// The processor is called each time a request is made to fetch a value.
+    /// The formatter is called each time a request is made to format a value.
     ///
-    /// @param processor Processor to handle requests.
-    /// @throws NullPointerException If `processor` is `null`.
-    public void setProcessor(LocalizationRequestProcessor processor) {
-        this.processor = Objects.requireNonNull(processor, "Processor must not be null");
+    /// @param formatter Formatter to format requests.
+    /// @throws NullPointerException If `formatter` is `null`.
+    public void setFormatter(LocalizationFormatter formatter) {
+        this.formatter = Objects.requireNonNull(formatter, "Formatter must not be null");
     }
 
-    /// {@return The request processor}
-    public LocalizationRequestProcessor getProcessor() {
-        return processor;
+    /// {@return The localization formatter}
+    public LocalizationFormatter getFormatter() {
+        return formatter;
     }
 
     /// {@return The localize configuration}
@@ -440,8 +440,8 @@ public abstract class Localize {
 
     private String formatValue(LocalizationRequestSource.Pattern source, LocalizationRequest request) {
         // Since a pattern is given, `defaultValue` is not used here as a value will always be present
-        return getProcessor().process(
-            LocalizationRequestProcessor.Context.Builder
+        return getFormatter().format(
+            LocalizationFormatter.Context.Builder
                 .of(source.value())
                 .arguments(request.getArguments())
                 .locale(getLocale())
@@ -454,7 +454,7 @@ public abstract class Localize {
         String key = source.value();
         String value = null;
 
-        LocalizationRequestProcessor.Context.Builder contextBuilder = LocalizationRequestProcessor.Context.Builder
+        LocalizationFormatter.Context.Builder contextBuilder = LocalizationFormatter.Context.Builder
                 .of("")
                 .arguments(request.getArguments());
 
@@ -464,7 +464,7 @@ public abstract class Localize {
             String pattern = bundle.getString(key);
 
             try {
-                value = getProcessor().process(
+                value = getFormatter().format(
                     contextBuilder
                         .pattern(pattern)
                         // Locale can change mid-loop, so it's always set here

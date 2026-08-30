@@ -9,34 +9,34 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ProcessorTest {
+public class LocalizationFormatterTest {
 
-    @Test void testProcessor() {
+    @Test void testFormatter() {
         Localize localize = Localize.of(Locale.ENGLISH);
         String sample = "sample";
-        LocalizationRequestProcessor mock = (ctx) -> sample;
+        LocalizationFormatter mock = (ctx) -> sample;
 
-        assertEquals(LocalizationRequestProcessor.DEFAULT, localize.getProcessor());
+        assertEquals(LocalizationFormatter.DEFAULT, localize.getFormatter());
 
-        localize.setProcessor(mock);
+        localize.setFormatter(mock);
         // No bundles contained
         assertEquals("", localize.getValue(TEST_KEY_GREET));
 
         localize.putBundleProvider("key", TEST_PROVIDER);
-        assertEquals(mock, localize.getProcessor());
+        assertEquals(mock, localize.getFormatter());
         assertEquals(sample, localize.getValue(TEST_KEY_GREET));
         assertEquals(sample, localize.getValue(() -> TEST_KEY_TEST));
 
-        localize.setProcessor(LocalizationRequestProcessor.DEFAULT);
+        localize.setFormatter(LocalizationFormatter.DEFAULT);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
         assertEquals("test", localize.getValue(() -> TEST_KEY_TEST));
     }
 
     @Test void testPositionalArgumentsAreStoredAsNamed() {
         Localize localize = Localize.of();
-        LocalizationRequestProcessor defaultProcessor = localize.getProcessor();
-        LocalizationRequestProcessor testProcessor = new LocalizationRequestProcessor() {
-            @Override public String process(Context context) {
+        LocalizationFormatter defaultFormatter = localize.getFormatter();
+        LocalizationFormatter testFormatter = new LocalizationFormatter() {
+            @Override public String format(Context context) {
                 Arguments arguments = context.getArguments();
 
                 // Not backed by a list
@@ -48,7 +48,7 @@ public class ProcessorTest {
                 assertEquals(Arguments.Type.POSITIONAL, arguments.type());
                 assertEquals(List.of(0, 1, 2, 3), arguments.values().stream().toList());
 
-                return defaultProcessor.process(context);
+                return defaultFormatter.format(context);
             }
 
             @Override public Arguments.Type argumentsHint() {
@@ -56,16 +56,16 @@ public class ProcessorTest {
             }
         };
 
-        localize.setProcessor(testProcessor);
+        localize.setFormatter(testFormatter);
         localize.get(TEST_KEY_NUMBERED).args(0, 1, 2, 3).value();
     }
 
     @Test void testPositionalArgumentsStoredAsNamedDisallowMixed() {
         Localize localize = Localize.of();
-        LocalizationRequestProcessor defaultProcessor = localize.getProcessor();
-        LocalizationRequestProcessor testProcessor = new LocalizationRequestProcessor() {
-            @Override public String process(Context context) {
-                return defaultProcessor.process(context);
+        LocalizationFormatter defaultFormatter = localize.getFormatter();
+        LocalizationFormatter testFormatter = new LocalizationFormatter() {
+            @Override public String format(Context context) {
+                return defaultFormatter.format(context);
             }
 
             @Override public Arguments.Type argumentsHint() {
@@ -73,7 +73,7 @@ public class ProcessorTest {
             }
         };
 
-        localize.setProcessor(testProcessor);
+        localize.setFormatter(testFormatter);
         assertThrows(
             IllegalStateException.class,
             () -> localize.get(TEST_KEY_NUMBERED).args(0).arg("mixed", 1)

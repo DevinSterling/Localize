@@ -1,7 +1,7 @@
 package com.devinsterling.localize.icu4j;
 
 import com.devinsterling.localize.Arguments;
-import com.devinsterling.localize.LocalizationRequestProcessor;
+import com.devinsterling.localize.LocalizationFormatter;
 import com.devinsterling.localize.LocalizationValueBuilder;
 import com.devinsterling.localize.Localize;
 
@@ -18,26 +18,26 @@ import static com.devinsterling.localize.icu4j.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class IcuProcessorTest {
+public class IcuFormatterTest {
 
-    @Test void testDefaultIcuProcessorConfig(){
-        IcuProcessor processor = new IcuProcessor();
+    @Test void testDefaultIcuFormatterConfig(){
+        IcuFormatter formatter = new IcuFormatter();
 
-        assertEquals(new IcuProcessorConfig(), processor.getConfig());
+        assertEquals(new IcuFormatterConfig(), formatter.getConfig());
     }
 
-    @Test void testDefaultIsIcuProcessor(){
+    @Test void testDefaultIsIcuFormatter(){
         Localize localize = Localize.of();
-        LocalizationRequestProcessor processor = localize.getProcessor();
+        LocalizationFormatter formatter = localize.getFormatter();
 
-        assertInstanceOf(IcuProcessor.class, processor);
+        assertInstanceOf(IcuFormatter.class, formatter);
     }
 
     @Test void testArgumentHintIsNamed(){
         Localize localize = Localize.of();
-        LocalizationRequestProcessor processor = localize.getProcessor();
+        LocalizationFormatter formatter = localize.getFormatter();
 
-        assertEquals(Arguments.Type.NAMED, processor.argumentsHint());
+        assertEquals(Arguments.Type.NAMED, formatter.argumentsHint());
     }
 
     @Test void testNoKeyFound() {
@@ -50,19 +50,19 @@ public class IcuProcessorTest {
     @Test void testSetFormatterDuringRuntime() {
         Localize localize = Localize.of(Locale.ENGLISH);
         localize.putBundleProvider("main", MESSAGE_FORMAT2);
-        IcuProcessor processor = (IcuProcessor) localize.getProcessor();
+        IcuFormatter formatter = (IcuFormatter) localize.getFormatter();
 
         LocalizationValueBuilder<?> builder = localize.get(TEST_KEY_CLICK_LABEL)
                 .arg("name", "Doe")
                 .arg("click_count", 1337);
 
         // The default formatter is ICU4J's message formatter 2
-        assertEquals(IcuFormatter.MESSAGE2_FORMATTER, processor.getConfig().getFormatter());
+        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, formatter.getConfig().getMessageFormat());
         assertEquals("Doe clicked this button 1,337 times!", builder.value());
 
         // Change the resource bundle provider as the syntax between ICU4J's formatters change
         localize.putBundleProvider("main", MESSAGE_FORMAT1);
-        processor.getConfig().setFormatter(IcuFormatter.MESSAGE1_FORMATTER);
+        formatter.getConfig().setFormatter(IcuMessageFormat.MESSAGE1_FORMAT);
 
         assertEquals("Doe clicked this button 1,337 times!", builder.value());
     }

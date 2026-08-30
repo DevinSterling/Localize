@@ -4,6 +4,6 @@ module com.devinsterling.localize.icu4j {
 
     exports com.devinsterling.localize.icu4j;
 
-    provides com.devinsterling.localize.LocalizationRequestProcessor
-        with com.devinsterling.localize.icu4j.IcuProcessor;
+    provides com.devinsterling.localize.LocalizationFormatter
+        with com.devinsterling.localize.icu4j.IcuFormatter;
 }

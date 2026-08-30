@@ -6,17 +6,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-/// Processes a request to provide a formatted localized string.
+/// Formats a request into a formatted localized string.
 ///
-/// @see Localize#setProcessor
+/// @see Localize#setFormatter
 /// @since 1.0
 @FunctionalInterface
-public interface LocalizationRequestProcessor {
+public interface LocalizationFormatter {
     /// Processes the given [Context] to retrieve a formatted localized string.
     ///
-    /// @param context Processor context.
+    /// @param context Formatter context.
     /// @return Formatted localized string or `null` if not found.
-    String process(Context context);
+    String format(Context context);
 
     /// Returns the preferred arguments type, if any.
     ///
@@ -128,7 +128,7 @@ public interface LocalizationRequestProcessor {
 
             /// Builds a [Context] instance.
             ///
-            /// @return Processor context.
+            /// @return Formatter context.
             /// @throws NullPointerException If [`locale`][locale(Locale)] is `null`.
             public Context build() {
                 return new Context(this.pattern, this.arguments, this.locale);
@@ -136,10 +136,10 @@ public interface LocalizationRequestProcessor {
         }
     }
 
-    /// The default processor to handle converting a [LocalizationRequest]
+    /// The default formatter to handle converting a [Context]
     /// into a formatted localized string.
-    LocalizationRequestProcessor DEFAULT = new LocalizationRequestProcessor() {
-        @Override public String process(Context ctx) {
+    LocalizationFormatter DEFAULT = new LocalizationFormatter() {
+        @Override public String format(Context ctx) {
             String value = ctx.getPattern();
             Arguments arguments = ctx.getArguments();
             Object[] positionalArguments = null;

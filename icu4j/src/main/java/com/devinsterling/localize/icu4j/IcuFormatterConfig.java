@@ -2,12 +2,12 @@ package com.devinsterling.localize.icu4j;
 
 import java.util.Objects;
 
-/// Configuration for [IcuProcessor] instances.
+/// Configuration for [IcuFormatter] instances.
 ///
 /// ### Default Configuration
 /// | Method                            | Property                   | Default                                                                     |
 /// |-----------------------------------|----------------------------|-----------------------------------------------------------------------------|
-/// | [IcuProcessorConfig#setFormatter] | `localize.icu4j.formatter` | `com.ibm.icu.message2.MessageFormatter` ([IcuFormatter#MESSAGE2_FORMATTER]) |
+/// | [IcuFormatterConfig#setFormatter] | `localize.icu4j.formatter` | `com.ibm.icu.message2.MessageFormatter` ([IcuMessageFormat#MESSAGE2_FORMAT]) |
 ///
 /// ### Properties and Environmental Variables
 /// Properties are configurable by placing `localize.properties` in the classpath/resources
@@ -15,19 +15,19 @@ import java.util.Objects;
 /// Changing properties during runtime only affects newly created instances.
 ///
 /// @since 2.0
-public class IcuProcessorConfig {
-    private volatile IcuFormatter formatter;
+public class IcuFormatterConfig {
+    private volatile IcuMessageFormat messageFormat;
 
     /// Creates a configuration instance with all values set to their defaults.
-    public IcuProcessorConfig() {
-        formatter = IcuProperties.INSTANCE.getFormatterType();
+    public IcuFormatterConfig() {
+        messageFormat = IcuProperties.INSTANCE.getMessageFormat();
     }
 
-    /// Returns the ICU4J message formatter.
+    /// Returns the ICU4J message format.
     ///
     /// @return ICU4J message formatter version.
-    public IcuFormatter getFormatter() {
-        return formatter;
+    public IcuMessageFormat getMessageFormat() {
+        return messageFormat;
     }
 
     /// Sets which ICU4J message formatter to use.
@@ -40,17 +40,17 @@ public class IcuProcessorConfig {
     ///
     /// @param formatter The ICU4J message formatter.
     /// @throws NullPointerException If `formatter` is `null`.
-    public void setFormatter(IcuFormatter formatter) {
-        this.formatter = Objects.requireNonNull(formatter,  "formatter must not be null");
+    public void setFormatter(IcuMessageFormat formatter) {
+        this.messageFormat = Objects.requireNonNull(formatter,  "formatter must not be null");
     }
 
     @Override public boolean equals(Object obj) {
         if (obj == this) return true;
-        if (!(obj instanceof IcuProcessorConfig config)) return false;
-        return this.formatter == config.formatter;
+        if (!(obj instanceof IcuFormatterConfig config)) return false;
+        return this.messageFormat == config.messageFormat;
     }
 
     @Override public int hashCode() {
-        return formatter.hashCode();
+        return messageFormat.hashCode();
     }
 }

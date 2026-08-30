@@ -38,7 +38,7 @@ final class IcuProperties {
         return value == null ? defaultValue : value;
     }
 
-    public IcuFormatter getFormatterType() {
-        return IcuFormatter.from(get(FORMATTER_PROPERTY, DEFAULT_FORMATTER));
+    public IcuMessageFormat getMessageFormat() {
+        return IcuMessageFormat.from(get(FORMATTER_PROPERTY, DEFAULT_FORMATTER));
     }
 }

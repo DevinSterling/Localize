@@ -1,44 +1,58 @@
 package com.devinsterling.localize.icu4j;
 
-/// The ICU formatter of an [IcuProcessor].
+import com.devinsterling.localize.Arguments;
+import com.devinsterling.localize.LocalizationFormatter;
+
+import com.ibm.icu.message2.MessageFormatter;
+import com.ibm.icu.text.MessageFormat;
+
+import java.util.Map;
+import java.util.Objects;
+
+/// Processes a request to provide an ICU formatted localized string.
 ///
 /// @since 2.0
-public final class IcuFormatter {
-    private final static String V1_PATH = "com.ibm.icu.text.MessageFormat";
-    private final static String V2_PATH = "com.ibm.icu.message2.MessageFormatter";
+public class IcuFormatter implements LocalizationFormatter {
+    private final IcuFormatterConfig config;
 
-    /// Legacy ICU message formatter ([com.ibm.icu.text.MessageFormat])
+    /// Creates an [IcuFormatter] instance with default configuration.
+    public IcuFormatter() {
+        this(new IcuFormatterConfig());
+    }
+
+    /// Creates an [IcuFormatter] instance with the desired configuration.
     ///
-    /// [MESSAGE2_FORMATTER] is the successor of this formatter.
-    public static final IcuFormatter MESSAGE1_FORMATTER = new IcuFormatter(FormatterType.V1_MESSAGE_FORMAT);
-
-    /// ICU message formatter ([com.ibm.icu.message2.MessageFormatter])
-    public static final IcuFormatter MESSAGE2_FORMATTER = new IcuFormatter(FormatterType.V2_MESSAGE_FORMATTER);
-
-    private final FormatterType type;
-
-    private IcuFormatter(FormatterType type) {
-        this.type = type;
+    /// @param config The configuration.
+    /// @throws NullPointerException If `config` is `null`.
+    public IcuFormatter(IcuFormatterConfig config) {
+        this.config = Objects.requireNonNull(config, "config must not be null");
     }
 
-    static IcuFormatter from(String format) {
-        return switch (format) {
-            case V1_PATH -> MESSAGE1_FORMATTER;
-            case V2_PATH -> MESSAGE2_FORMATTER;
-            default -> throw new IllegalStateException(
-                "Formatter type must be '" + V1_PATH + "' or '" + V2_PATH + "', got: " + format
-            );
+    @Override public Arguments.Type argumentsHint() {
+        return Arguments.Type.NAMED;
+    }
+
+    @Override public String format(Context context) {
+        String value = context.getPattern();
+        Map<String, Object> arguments = context.getArguments().toNamedMap();
+
+        value = switch (config.getMessageFormat().getType()) {
+            case V1_MESSAGE_FORMAT -> new MessageFormat(value, context.getLocale())
+                    .format(arguments);
+            case V2_MESSAGE_FORMAT -> MessageFormatter.builder()
+                    .setLocale(context.getLocale())
+                    .setPattern(value)
+                    .build()
+                    .formatToString(arguments);
         };
+
+        return value;
     }
 
-    FormatterType getType() {
-        return type;
-    }
-
-    // An enum is not publicly exposed because they are not forward-compatible.
-    // Using an enum here simplifies pattern matching.
-    enum FormatterType {
-        V1_MESSAGE_FORMAT,
-        V2_MESSAGE_FORMATTER,
+    /// Returns the formatter configuration.
+    ///
+    /// @return Formatter configuration.
+    public IcuFormatterConfig getConfig() {
+        return config;
     }
 }

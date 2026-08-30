@@ -50,10 +50,10 @@
 /// ## Plurals and Arguments
 ///
 /// By default, Localize uses a
-/// [`LocalizationRequestProcessor`][com.devinsterling.localize.LocalizationRequestProcessor]
+/// [`LocalizationFormatter`][com.devinsterling.localize.LocalizationFormatter]
 /// built around [java.text.MessageFormat], though this can be replaced
-/// [programmatically][com.devinsterling.localize.Localize#setProcessor] or via SPI by providing a custom processor.
-/// The default processor supports both named and numbered arguments,
+/// [programmatically][com.devinsterling.localize.Localize#setFormatter] or via SPI by providing a custom formatter.
+/// The default formatter supports both named and numbered arguments,
 /// as well as pluralization through [java.text.ChoiceFormat] choice patterns.
 ///
 /// > For advanced message formatting, plural rules, and greater control over bundle properties,
@@ -95,5 +95,5 @@ module com.devinsterling.localize {
     exports com.devinsterling.localize;
 
     // Service Provider Interface (SPI)
-    uses com.devinsterling.localize.LocalizationRequestProcessor;
+    uses com.devinsterling.localize.LocalizationFormatter;
 }

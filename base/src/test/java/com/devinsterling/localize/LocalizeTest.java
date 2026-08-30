@@ -141,7 +141,7 @@ class LocalizeTest {
 
         Localize localize = Localize.of();
         assertThrows(NullPointerException.class, () -> localize.setLocale(null));
-        assertThrows(NullPointerException.class, () -> localize.setProcessor(null));
+        assertThrows(NullPointerException.class, () -> localize.setFormatter(null));
     }
 
     @Test void testReplaceBundleProvider() {

@@ -80,7 +80,7 @@ class LocalizeConfigTest {
         Localize localize = getLocalizeInstance();
         LocalizeConfig config = localize.getConfig();
 
-        localize.setProcessor(ctx -> {
+        localize.setFormatter(ctx -> {
             throw new TestException();
         });
 
