@@ -3,10 +3,6 @@ package com.devinsterling.localize.icu4j;
 import com.devinsterling.localize.Arguments;
 import com.devinsterling.localize.LocalizationFormatter;
 
-import com.ibm.icu.message2.MessageFormatter;
-import com.ibm.icu.text.MessageFormat;
-
-import java.util.Map;
 import java.util.Objects;
 
 /// Processes a request to provide an ICU formatted localized string.
@@ -33,20 +29,7 @@ public class IcuFormatter implements LocalizationFormatter {
     }
 
     @Override public String format(Request request) {
-        String value = request.getPattern();
-        Map<String, Object> arguments = request.getArguments().toNamedMap();
-
-        value = switch (getConfig().getMessageFormat().getType()) {
-            case V1_MESSAGE_FORMAT -> new MessageFormat(value, request.getLocale())
-                    .format(arguments);
-            case V2_MESSAGE_FORMAT -> MessageFormatter.builder()
-                    .setLocale(request.getLocale())
-                    .setPattern(value)
-                    .build()
-                    .formatToString(arguments);
-        };
-
-        return value;
+        return getConfig().getMessageFormat().getStrategy().format(request);
     }
 
     /// Returns the formatter configuration.
