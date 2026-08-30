@@ -21,6 +21,7 @@ tasks {
         options.encoding = "UTF-8"
         (options as StandardJavadocDocletOptions).tags(
             "apiNote:a:API Note:",
+            "implNote:a:Implementation Note:",
             "implSpec:a:Implementation Requirements:",
         )
     }
