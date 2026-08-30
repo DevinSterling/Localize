@@ -1,7 +1,5 @@
 package com.devinsterling.localize;
 
-import com.devinsterling.localize.spi.LocalizationFormatterLocator;
-
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Locale;
@@ -96,7 +94,7 @@ public abstract class Localize {
     private final ProviderStore providerStore = new ProviderStore();
     private final Object providerLock = new Object();
     private final LocalizeConfig config;
-    private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.DEFAULT;
+    private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
 
     /// Creates a [Localize] instance with the desired configuration.
     ///
