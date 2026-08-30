@@ -10,15 +10,15 @@ public final class IcuMessageFormat {
     /// Legacy ICU message format ([com.ibm.icu.text.MessageFormat]).
     ///
     /// [MESSAGE2_FORMAT] is the successor of this format.
-    public static final IcuMessageFormat MESSAGE1_FORMAT = new IcuMessageFormat(FormatType.V1_MESSAGE_FORMAT);
+    public static final IcuMessageFormat MESSAGE1_FORMAT = new IcuMessageFormat(IcuMessageFormatStrategy.FORMAT1);
 
     /// ICU message format 2 ([com.ibm.icu.message2.MessageFormatter]).
-    public static final IcuMessageFormat MESSAGE2_FORMAT = new IcuMessageFormat(FormatType.V2_MESSAGE_FORMAT);
+    public static final IcuMessageFormat MESSAGE2_FORMAT = new IcuMessageFormat(IcuMessageFormatStrategy.FORMAT2);
 
-    private final FormatType type;
+    private final IcuMessageFormatStrategy strategy;
 
-    private IcuMessageFormat(FormatType type) {
-        this.type = type;
+    private IcuMessageFormat(IcuMessageFormatStrategy strategy) {
+        this.strategy = strategy;
     }
 
     static IcuMessageFormat from(String format) {
@@ -31,14 +31,7 @@ public final class IcuMessageFormat {
         };
     }
 
-    FormatType getType() {
-        return type;
-    }
-
-    // An enum is not publicly exposed because they are not forward-compatible.
-    // Using an enum here simplifies pattern matching.
-    enum FormatType {
-        V1_MESSAGE_FORMAT,
-        V2_MESSAGE_FORMAT,
+    IcuMessageFormatStrategy getStrategy() {
+        return strategy;
     }
 }
