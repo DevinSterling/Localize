@@ -13,7 +13,7 @@ interface IcuMessageFormatStrategy {
 
         MessageFormat formatter = new MessageFormat(request.getPattern(), request.getLocale());
 
-        // Prefer named arguments over positional (see IcuFormater#argumentsHint)
+        // Prefer named arguments over positional (see IcuFormatter#argumentsHint)
         return formatter.format(request.getArguments().toNamedMap());
     };
 
