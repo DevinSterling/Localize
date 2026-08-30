@@ -4,4 +4,11 @@ pluginManagement {
     includeBuild("build-logic")
 }
 
+// Include examples
+file("examples").listFiles()?.forEach {
+    if (it.isDirectory) {
+        include(":examples:${it.name}")
+    }
+}
+
 include("base", "javafx", "icu4j")
