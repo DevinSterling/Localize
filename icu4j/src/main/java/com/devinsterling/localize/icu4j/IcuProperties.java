@@ -22,6 +22,11 @@ final class IcuProperties {
         Properties properties = new Properties();
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
 
+        // `getContextClassLoader` can return `null`, so fallback if needed
+        if (loader == null) {
+            loader = IcuProperties.class.getClassLoader();
+        }
+
         try (InputStream input = loader.getResourceAsStream(propertiesFile)) {
             if (input != null) {
                 properties.load(input);
