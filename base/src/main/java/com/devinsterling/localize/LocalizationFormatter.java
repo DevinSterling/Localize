@@ -152,9 +152,11 @@ public interface LocalizationFormatter {
                     positionalArguments = new Object[arguments.size()];
                     value = convertToPositionalArgs(value, arguments.toNamedMap(), positionalArguments);
                 }
+
+                value = new MessageFormat(value, request.getLocale()).format(positionalArguments);
             }
 
-            return new MessageFormat(value, request.getLocale()).format(positionalArguments);
+            return value;
         }
 
         private static String convertToPositionalArgs(
