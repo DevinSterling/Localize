@@ -6,8 +6,8 @@ plugins {
 }
 
 application {
-    mainModule = "com.devinsterling.localize.examples"
-    mainClass = "com.devinsterling.localize.examples.Start"
+    mainModule = "com.devinsterling.localize.example"
+    mainClass = "com.devinsterling.localize.example.Start"
 }
 
 javafx {
@@ -16,7 +16,10 @@ javafx {
 }
 
 dependencies {
-    implementation(project(":LocalizeFX"))
+    // implementation("com.devinsterling:localize-javafx:2.0.0")
+    implementation(project(":javafx"))
+    // implementation("com.devinsterling:localize-icu4j:2.0.0")
+    implementation(project(":icu4j"))
 }
 
 tasks {

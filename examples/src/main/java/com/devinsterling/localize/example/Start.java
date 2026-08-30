@@ -1,4 +1,4 @@
-package com.devinsterling.localize.examples;
+package com.devinsterling.localize.example;
 
 import javafx.application.Application;
 
