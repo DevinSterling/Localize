@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-/// An emitter that runs subscribed tasks whenever a trigger occurs.
+/// An event emitter that runs subscribed tasks whenever a trigger occurs.
 ///
 /// Triggers can range from [click events][action] to
 /// [property change events][propertyChange(String, Component)].

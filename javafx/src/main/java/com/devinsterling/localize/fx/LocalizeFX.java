@@ -24,20 +24,19 @@ import java.util.concurrent.atomic.AtomicReference;
 /// - [#of(LocalizeConfig)]
 /// - [#of(Locale, LocalizeConfig)]
 ///
-/// This class provides an observable string binding
-/// to reflect changes automatically whenever the
-/// locale or any arguments change.
+/// This class provides an observable string binding to reflect
+/// changes automatically whenever the locale or any arguments change.
 ///
 /// ### Example
 /// Properties file (`messages_en.properties`):
 /// ```
 /// MyApp.buttonClick = Click to increment
-/// MyApp.clickCount = Clicked {click_count, plural, 0={zero times} 1={one time} other{# times}}!
+/// MyApp.clickCount = Clicked {click_count, choice, 0 #zero times| 1 #one time| 1 <{click_count} times}!
 /// ```
 /// JavaFX code:
 /// ```
 /// LocalizeFX localize = LocalizeFX.of();
-/// localize.addBundleProvider(locale -> ResourceBundle.getBundle("messages", locale));
+/// localize.addBundleProvider("messages");
 ///
 /// Button button = new Button();
 /// Label label = new Label();
@@ -45,16 +44,16 @@ import java.util.concurrent.atomic.AtomicReference;
 /// ...
 /// button.textProperty().bind(localize.getBinding("MyApp.buttonClick"));
 /// label.textProperty().bind(localize.get("MyApp.clickCount")
-///                                   .argument("click_count", clickCount)
+///                                   .arg("click_count", clickCount)
 ///                                   .binding());
 ///
 /// ```
 /// @since 1.0
 public abstract class LocalizeFX extends Localize {
 
-    /// Creates a [LocalizeFX] instance with the desired configuration.
+    /// Creates a [LocalizeFX] instance with the given configuration.
     ///
-    /// @param config The configuration.
+    /// @param config Main localize configuration.
     /// @throws NullPointerException If `config` is `null`.
     protected LocalizeFX(LocalizeConfig config) {
         super(config);
@@ -81,7 +80,7 @@ public abstract class LocalizeFX extends Localize {
     /// @implSpec This method must be thread-safe, dispatching to the JavaFX application thread when needed.
     protected abstract void notifyListeners();
 
-    /// Equivalent to [#of(Locale, LocalizeConfig)] with the
+    /// Creates a new [LocalizeFX] instance with the
     /// initial locale set as [Locale#getDefault()] and default configuration.
     ///
     /// @return **Thread-safe** LocalizeFX instance.
@@ -89,8 +88,7 @@ public abstract class LocalizeFX extends Localize {
         return of(Locale.getDefault());
     }
 
-    /// Equivalent to [#of(Locale, LocalizeConfig)] with a given
-    /// [Locale] and default configuration.
+    /// Creates a new [LocalizeFX] instance with the given [Locale] and default configuration.
     ///
     /// @param locale Initial locale.
     /// @return       **Thread-safe** LocalizeFX instance.
@@ -99,8 +97,8 @@ public abstract class LocalizeFX extends Localize {
         return of(locale, new LocalizeConfig());
     }
 
-    /// Equivalent to [#of(Locale, LocalizeConfig)] with a given
-    /// [LocalizeConfig] and initial locale set as [Locale#getDefault()].
+    /// Creates a new [LocalizeFX] instance with the given [LocalizeConfig]
+    /// and initial locale set as [Locale#getDefault].
     ///
     /// @param config Initial Configuration.
     /// @return       **Thread-safe** LocalizeFX instance.
@@ -110,7 +108,7 @@ public abstract class LocalizeFX extends Localize {
         return of(Locale.getDefault(), config);
     }
 
-    /// Creates a new [LocalizeFX] instance with a given [Locale] and [LocalizeConfig].
+    /// Creates a new [LocalizeFX] instance with the given [Locale] and [LocalizeConfig].
     ///
     /// @param locale Initial locale.
     /// @param config Initial Configuration.
@@ -181,7 +179,7 @@ public abstract class LocalizeFX extends Localize {
         return get(key.getKey());
     }
 
-    /// Retrieves an observable string binding.
+    /// Retrieves an observable string bound to the associated resource value.
     ///
     /// **This method is intended to be called on the JavaFX Application thread only.**
     ///
@@ -191,21 +189,22 @@ public abstract class LocalizeFX extends Localize {
     /// button.textProperty().bind(localize.getBinding("MyApp.button"));
     /// ```
     ///
-    /// @param key Resource bundle key.
-    /// @return    String binding that is updated whenever
-    ///            a refresh occurs or the locale changes.
+    /// @param key Resource bundle key associated with the value to bind.
+    /// @return    String binding that is updated whenever a refresh occurs or the locale changes.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(String)
     public StringBinding getBinding(String key) {
         return get(key).binding();
     }
 
-    /// Equivalent to [#getBinding(String)].
+    /// Retrieves an observable string bound to the associated resource value.
+    ///
+    /// This method is equivalent to [getBinding(String)].
     ///
     /// **This method is intended to be called on the JavaFX Application thread only.**
     ///
-    /// @param  key Resource bundle key.
-    /// @return     Observable string binding.
+    /// @param key Resource bundle key associated with the value to bind.
+    /// @return    String binding that is updated whenever a refresh occurs or the locale changes.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(LocalizationKey)
     public StringBinding getBinding(LocalizationKey key) {
