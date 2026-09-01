@@ -8,6 +8,11 @@ import java.util.function.Supplier;
 ///
 /// **Builder instances are not thread-safe.**
 ///
+/// ### Arguments Resolution
+/// todo!
+///
+/// ### Positional and Named Arguments
+///
 /// Support for both named and numbered arguments is included.
 /// Note that mixing such calls will throw an [IllegalStateException].
 ///
