@@ -5,7 +5,7 @@ A simple-to-use Java/FX localization library (Supports Java 17+).
 [![Base Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-base/javadoc.svg?logo=&style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-base)
 
 ## Usage with Maven and Gradle
-- Base functionality:
+- Base functionality only:
   ```xml
   <dependency>
     <groupId>com.devinsterling</groupId>
@@ -16,17 +16,10 @@ A simple-to-use Java/FX localization library (Supports Java 17+).
   ```kts
   implementation("com.devinsterling:localize-base:2.0.0")
   ```
-- Base functionality *and* JavaFX integration:
-  ```xml
-  <dependency>
-    <groupId>com.devinsterling</groupId>
-    <artifactId>localize-javafx</artifactId>
-    <version>2.0.0</version>
-  </dependency>
-  ```
-  ```kts
-  implementation("com.devinsterling:localize-javafx:2.0.0")
-  ```
+
+- [Base functionality + JavaFX integration](#localizefx--javafx-integration)
+- [Base functionality + Swing integration](#localizeswing--swing-integration)
+- [ICU4J integration](#icu4j-integration)
 
 ___
 
@@ -49,6 +42,7 @@ It’s designed to be straightforward to set up and use.
 3. Retrieve localized values by key:
    ```java
    String en = localize.getValue("MyProgram.clickButton"); // Returns "Click!"
+
    // Dynamically changing the locale
    localize.setLocale(Locale.JAPANESE);
    String ja = localize.getValue("MyProgram.clickButton"); // Returns "クリック！"
@@ -63,9 +57,11 @@ Configuration can control scenarios such as where no value or when a resource bu
 localize.putBundleProvider("Provider1", locale -> ResourceBundle.getBundle("i18n.sample", locale));
 localize.addBundleProvider("i18n.other");
 ...
+
 // Removing a provider when no longer needed:
 localize.removeBundleProvider("Provider1");
-// If a value is not found in all providers, return the following instead:
+
+// If a value is not found in any provider, configure a global fallback:
 localize.getConfig().setDefaultMissingValue("Missing value");
 ```
 
@@ -88,39 +84,58 @@ choice patterns.
 
 Here is a look inside the contents of a sample properties file:
 ```properties
-MyApp.clickMessage={name} clicked this button {click_count, choice,\
-0 #zero times|\
-1 #one time|\
-1 <{click_count} times}!
 MyApp.numberedArguments={0} clicked this button {1, choice,\
 0 #zero times|\
 1 #one time|\
 1 <{1} times}!
+MyApp.clickMessage={name} clicked this button {click_count, choice,\
+0 #zero times|\
+1 #one time|\
+1 <{click_count} times}!
 ```
-- Named Arguments:
-  ```java
-  localize.get("MyApp.clickMessage")
-          .arg("click_count", 1)
-          .arg("name", "John Doe")
-          .value(); // Returns "John Doe clicked this button one time."
-  ```
 - Numbered Arguments:
   ```java
   localize.get("MyApp.numberedArguments")
           .arg("John Doe") // Argument 0
           .arg(55) // Argument 1
-          .value(); // Returns "John Doe clicked this button 55 times."
+          .value(); // Returns "John Doe clicked this button 55 times!"
   ```
+- Named Arguments:
+  ```java
+  localize.get("MyApp.clickMessage")
+          .arg("click_count", 1)
+          .arg("name", "John Doe")
+          .value(); // Returns "John Doe clicked this button one time!"
+  ```
+- Direct Formatting with Named Arguments:
+  ```java
+  localize.format("{name}, you've clicked {count} times!")
+          .arg("name", "Jane Doe")
+          .arg("count", 1337)
+          .value(); // Returns "Jane Doe, you've clicked 1,337 times!"
+  ```
+---
 
 ## LocalizeFX — JavaFX Integration
 
 [![LocalizeFX Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-javafx/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-javafx)
 
+The JavaFX integration module is self-contained and includes all base functionality:
+```xml
+<dependency>
+  <groupId>com.devinsterling</groupId>
+  <artifactId>localize-javafx</artifactId>
+  <version>2.0.0</version>
+</dependency>
+```
+```kts
+implementation("com.devinsterling:localize-javafx:2.0.0")
+```
 
-Through an integration module, Localize integrates with JavaFX observables to automatically 
-reflect changes in UI components when the locale or observable arguments change without manual intervention.
+JavaFX integration to automatically reflect changes in UI components
+when the locale or observable arguments change without manual intervention.
 
-### Mouse clicker example
+### Mouse Clicker Example
 Each time the `Button` is clicked or the `TextField` is edited, 
 the associated localized values are updated:
 ```java
@@ -143,6 +158,53 @@ clickDetails.textProperty().bind(localize.get("MyApp.clickMessage")
                                   .binding());
 ```
 
+---
+
+## LocalizeSwing — Swing Integration
+
+[![LocalizeSwing Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-swing/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-swing)
+
+The Swing integration module is self-contained and includes all base functionality:
+```xml
+<dependency>
+  <groupId>com.devinsterling</groupId>
+  <artifactId>localize-swing</artifactId>
+  <version>2.0.0</version>
+</dependency>
+```
+```kts
+implementation("com.devinsterling:localize-swing:2.0.0")
+```
+
+Swing integration to automatically reflect changes in UI components
+when the locale or arguments change using reactive-like bindings.
+
+### Mouse Clicker Example
+Each time the `JButton` is clicked or the `JTextField` is edited,
+the associated localized values are updated:
+```java
+LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
+localize.addBundleProvider("messages");
+
+AtomicInteger clickCount = new AtomicInteger();
+JLabel clickDetails = new JLabel();
+JButton clickButton = new JButton();
+JTextField textField = new JTextField("Snowball");
+
+clickButton.addActionListener(_ -> clickCount.getAndIncrement());
+
+// Binding
+localize.bind(clickButton, "MyApp.clickMe");
+localize.get("MyApp.clickMessage")
+        .arg("click_count", clickCount::get)
+        .arg("name", textField)
+        .on(Trigger.action(clickButton))
+        .defaultValue("N/A")
+        .bind(clickDetails);
+```
+
+---
+
 ## ICU4J Integration
 
 [![Localize ICU4J Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-icu4j/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-icu4j)
@@ -151,9 +213,9 @@ The ICU4J integration module requires at least one of the
 [concrete Localize modules listed above](#usage-with-maven-and-gradle) (e.g., `localize-base`, `localize-javafx`):
 ```xml
 <dependency>
-<groupId>com.devinsterling</groupId>
-<artifactId>localize-icu4j</artifactId>
-<version>2.0.0</version>
+  <groupId>com.devinsterling</groupId>
+  <artifactId>localize-icu4j</artifactId>
+  <version>2.0.0</version>
 </dependency>
 ```
 ```kts

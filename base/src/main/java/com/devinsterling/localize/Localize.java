@@ -96,9 +96,9 @@ public abstract class Localize {
     private final LocalizeConfig config;
     private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
 
-    /// Creates a [Localize] instance with the desired configuration.
+    /// Creates a [Localize] instance with the given configuration.
     ///
-    /// @param config The configuration.
+    /// @param config Main localize configuration.
     /// @throws NullPointerException If `config` is `null`.
     protected Localize(LocalizeConfig config) {
         this.config = Objects.requireNonNull(config, "config must not be null");
@@ -106,7 +106,7 @@ public abstract class Localize {
 
     /// Sets the locale and updates all resource bundles.
     ///
-    /// Changing the locale will trigger a [#refresh()]
+    /// Changing the locale will trigger a [refresh][refresh()].
     ///
     /// @param locale Locale to fetch associated resource bundles.
     /// @throws NullPointerException If locale is `null`.
@@ -117,7 +117,7 @@ public abstract class Localize {
     /// @return The current locale.
     public abstract Locale getLocale();
 
-    /// Equivalent to [#of(Locale, LocalizeConfig)] with the
+    /// Creates a new [Localize] instance with the
     /// initial locale set as [Locale#getDefault()] and default configuration.
     ///
     /// @return **Thread-safe** Localize instance.
@@ -125,8 +125,7 @@ public abstract class Localize {
         return of(Locale.getDefault());
     }
 
-    /// Equivalent to [#of(Locale, LocalizeConfig)] with a given
-    /// [Locale] and default configuration.
+    /// Creates a new [Localize] instance with the given [Locale] and default configuration.
     ///
     /// @param locale Initial locale.
     /// @return       **Thread-safe** Localize instance.
@@ -135,8 +134,8 @@ public abstract class Localize {
         return of(locale, new LocalizeConfig());
     }
 
-    /// Equivalent to [#of(Locale, LocalizeConfig)] with a given
-    /// [LocalizeConfig] and initial locale set as [Locale#getDefault()].
+    /// Creates a new [Localize] instance with the given [LocalizeConfig]
+    /// and initial locale set as [Locale#getDefault].
     ///
     /// @param config Initial Configuration.
     /// @return       **Thread-safe** Localize instance.
@@ -359,7 +358,7 @@ public abstract class Localize {
     ///
     /// assert value.equals("Hello John Doe!");
     /// ```
-    /// @param key Key associated with the resource value to retrieve.
+    /// @param key Resource bundle key associated with the value to retrieve.
     /// @return    **Non-thread-safe** builder instance to format the requested value.
     /// @throws NullPointerException If `key` is `null`.
     /// @see LocalizationValueBuilder#value
@@ -368,9 +367,11 @@ public abstract class Localize {
         return new LocalizationValueBuilder<>(new LocalizationRequestSource.Key(key), this);
     }
 
-    /// Equivalent to [#get(String)].
+    /// Returns a builder for formatting a localized value retrieved from the given resource key.
     ///
-    /// @param key Key associated with the resource value to retrieve.
+    /// This method is equivalent to [get(String)].
+    ///
+    /// @param key Resource bundle key associated with the value to retrieve.
     /// @return    **Non-thread-safe** builder instance to format the requested value.
     /// @throws NullPointerException If `key` is `null`.
     /// @see LocalizationValueBuilder#value
@@ -378,20 +379,22 @@ public abstract class Localize {
         return get(key.getKey());
     }
 
-    /// Retrieves the value associated with a resource bundle key.
+    /// Retrieves the value associated with the given resource bundle key.
     ///
-    /// @param key Key associated with the resource value to retrieve.
-    /// @return    Resource bundle value or an empty string if not found.
+    /// @param key Resource bundle key associated with the value to retrieve.
+    /// @return    Resource bundle value or the [default value][LocalizeConfig#getDefaultMissingValue] if not found.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(LocalizationKey)
     public String getValue(String key) {
         return get(key).value();
     }
 
-    /// Equivalent to [#getValue(String)].
+    /// Retrieves the value associated with the given resource bundle key.
     ///
-    /// @param key Key associated with the resource value to retrieve.
-    /// @return    Resource bundle value or an empty string if not found.
+    /// This method is equivalent to [getValue(String)].
+    ///
+    /// @param key Resource bundle key associated with the value to retrieve.
+    /// @return    Resource bundle value or the [default value][LocalizeConfig#getDefaultMissingValue] if not found.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(String)
     public String getValue(LocalizationKey key) {

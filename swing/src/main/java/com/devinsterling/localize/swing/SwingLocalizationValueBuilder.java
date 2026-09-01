@@ -157,7 +157,9 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
     }
 
 
-    /// Adds a trigger
+    /// Adds an event trigger that triggers bound components to recompute and update their text.
+    ///
+    /// Triggers are installed when methods such as [bind(Component)] are called.
     ///
     /// ### Example Usage
     /// ```
@@ -171,7 +173,7 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
     ///         .bind(label);
     /// ```
     ///
-    /// @param trigger Trigger to add.
+    /// @param trigger Event trigger to add.
     /// @return        This builder instance.
     /// @throws NullPointerException If `trigger` is `null`.
     public B on(Trigger trigger) {

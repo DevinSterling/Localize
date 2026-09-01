@@ -7,7 +7,7 @@
 ///   [https://javadoc.io/doc/com.devinsterling/localize-base](https://javadoc.io/doc/com.devinsterling/localize-base)
 /// ___
 /// LocalizeFX integrates with JavaFX observables to automatically
-/// reflect changes in UI components when the locale or observable
+/// reflect changes in UI components whenever the locale or observable
 /// arguments change without manual intervention.
 ///
 /// ### Mouse clicker example
