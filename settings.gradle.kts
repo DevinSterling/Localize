@@ -11,4 +11,4 @@ file("examples").listFiles()?.forEach {
     }
 }
 
-include("base", "javafx", "icu4j")
+include("base", "javafx", "swing", "icu4j")
