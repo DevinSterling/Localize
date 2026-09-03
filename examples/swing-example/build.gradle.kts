@@ -1,7 +1,10 @@
 plugins {
     java
     application
-    id("subproject-convention")
+}
+
+repositories {
+    mavenCentral()
 }
 
 application {
@@ -9,12 +12,12 @@ application {
     mainClass = "com.devinsterling.localize.example.ClickCount"
 }
 
-dependencies {
-    implementation(project(":swing"))
+java {
+    sourceCompatibility = JavaVersion.VERSION_22
+    targetCompatibility = JavaVersion.VERSION_22
 }
 
-tasks {
-    withType<Javadoc>().configureEach {
-        enabled = false
-    }
+dependencies {
+    // implementation("com.devinsterling:localize-swing:2.0.0")
+    implementation(project(":swing"))
 }
