@@ -11,7 +11,7 @@ repositories {
 
 application {
     mainModule = "com.devinsterling.localize.example"
-    mainClass = "com.devinsterling.localize.example.Start"
+    mainClass = "com.devinsterling.localize.example.ClickCount"
 }
 
 java {
