@@ -9,7 +9,7 @@ repositories {
 
 application {
     mainModule = "com.devinsterling.localize.example"
-    mainClass = "com.devinsterling.localize.example.ClickCount"
+    mainClass = "com.devinsterling.localize.example.Example"
 }
 
 java {
