@@ -43,10 +43,11 @@ public class ClickCount extends Application {
                                           .binding());
 
         // Actions
-        clickButton.setOnAction(event -> clickCount.set(clickCount.get() + 1));
-        changeLocale.setOnAction(
-                event -> localize.setLocale(localize.getLocale() == Locale.ENGLISH ? Locale.JAPANESE : Locale.ENGLISH));
-        resetButton.setOnAction(event -> {
+        clickButton.setOnAction(_ -> clickCount.set(clickCount.get() + 1));
+        changeLocale.setOnAction(_ -> localize.setLocale(
+            localize.getLocale() == Locale.ENGLISH ? Locale.JAPANESE : Locale.ENGLISH
+        ));
+        resetButton.setOnAction(_ -> {
             clickCount.set(0);
             textField.setText("");
         });
@@ -63,5 +64,9 @@ public class ClickCount extends Application {
 
         stage.setScene(new Scene(container, 400, 150));
         stage.show();
+    }
+
+    public static void main(String[] args) {
+        Application.launch(ClickCount.class, args);
     }
 }
