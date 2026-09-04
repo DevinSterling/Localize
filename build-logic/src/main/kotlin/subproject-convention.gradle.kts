@@ -7,8 +7,7 @@ repositories {
 }
 
 java {
-    sourceCompatibility = ProjectInfo.JAVA_VERSION
-    targetCompatibility = ProjectInfo.JAVA_VERSION
+    toolchain.languageVersion = ProjectInfo.JAVA_VERSION
     withJavadocJar()
     withSourcesJar()
 }
