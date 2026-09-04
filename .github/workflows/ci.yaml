@@ -22,8 +22,11 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
-          java-version: '17'
           distribution: 'temurin'
+          # Main modules use 17, examples use 25
+          java-version: |
+            17
+            25
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Build
