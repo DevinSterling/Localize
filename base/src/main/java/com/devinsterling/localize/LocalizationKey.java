@@ -1,6 +1,6 @@
 package com.devinsterling.localize;
 
-/// Utility to pass implementors directly to a [Localize] instance to request a value.
+/// Utility to pass implementers directly to a [Localize] instance to request a value.
 ///
 /// ### Example Usage
 /// ```

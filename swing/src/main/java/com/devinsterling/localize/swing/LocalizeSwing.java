@@ -20,10 +20,10 @@ import java.util.concurrent.atomic.AtomicReference;
 ///
 /// It is recommended to create a thread-safe [LocalizeSwing]
 /// instance through the static factory methods listed here:
-/// - [#of()]
-/// - [#of(Locale)]
-/// - [#of(LocalizeConfig)]
-/// - [#of(Locale, LocalizeConfig)]
+/// - [of()]
+/// - [of(Locale)]
+/// - [of(LocalizeConfig)]
+/// - [of(Locale, LocalizeConfig)]
 ///
 /// This class provides reactive bindings to reflect changes
 /// automatically whenever the locale or arguments change.
@@ -239,7 +239,7 @@ public abstract class LocalizeSwing extends Localize {
     /// {@inheritDoc}
     ///
     /// ### Note
-    /// Adding providers will update any active text bindings (e.g., from [#bind(String, Component)]).
+    /// Adding providers will update any active text bindings (e.g., from [bind(String, Component)]).
     @Override public boolean putBundleProvider(String key, ResourceBundleProvider provider) {
         boolean isNewProvider = super.putBundleProvider(key, provider);
         notifyListeners();
@@ -249,7 +249,7 @@ public abstract class LocalizeSwing extends Localize {
     /// {@inheritDoc}
     ///
     /// ### Note
-    /// Adding providers will update any active text bindings (e.g., from [#bind(String, Component)]).
+    /// Adding providers will update any active text bindings (e.g., from [bind(String, Component)]).
     @Override public String addBundleProvider(ResourceBundleProvider provider) {
         String key = super.addBundleProvider(provider);
         notifyListeners();
@@ -259,7 +259,7 @@ public abstract class LocalizeSwing extends Localize {
     /// {@inheritDoc}
     ///
     /// ### Note
-    /// Removing providers will update any active text bindings (e.g., from [#bind(String, Component)]).
+    /// Removing providers will update any active text bindings (e.g., from [bind(String, Component)]).
     @Override public boolean removeBundleProvider(String key) {
         boolean isRemoved = super.removeBundleProvider(key);
 
@@ -316,7 +316,7 @@ public abstract class LocalizeSwing extends Localize {
 
     /// Binds the given component to the associated resource value.
     ///
-    /// This method is equivalent to [#bind(String, Component)].
+    /// This method is equivalent to [bind(String, Component)].
     /// For a list of supported components, see [SwingLocalizationValueBuilder#bind(Component)].
     ///
     /// **This method is intended to be called on the Swing UI (EDT) thread only.**
@@ -347,7 +347,7 @@ public abstract class LocalizeSwing extends Localize {
 
     /// Binds the given component's [tooltip][JComponent#setToolTipText] to the associated resource value.
     ///
-    /// This method is equivalent to [#bindTooltip(String, JComponent)].
+    /// This method is equivalent to [bindTooltip(String, JComponent)].
     ///
     /// **This method is intended to be called on the Swing UI (EDT) thread only.**
     ///

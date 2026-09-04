@@ -8,7 +8,13 @@ import java.util.Objects;
 
 /// Formats a request into a formatted localized string.
 ///
+/// The default formatter for [Localize] instances can be set using SPI,
+/// avoiding explicit calls to [Localize#setFormatter].
+/// For more details see
+/// [`LocalizationFormatterProvider`][com.devinsterling.localize.spi.LocalizationFormatterProvider].
+///
 /// @see Localize#setFormatter
+/// @see com.devinsterling.localize.spi.LocalizationFormatterProvider
 /// @since 1.0
 @FunctionalInterface
 public interface LocalizationFormatter {

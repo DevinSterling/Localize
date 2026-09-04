@@ -16,7 +16,7 @@ public interface Binding<T> extends Subscription {
     ///
     /// **This method is intended to be called on the Swing UI (EDT) thread only.**
     ///
-    /// If [#isActive] is `false`, the last value computed while active is returned.
+    /// If [isActive] is `false`, the last value computed while active is returned.
     ///
     /// @return Current value.
     T get();
