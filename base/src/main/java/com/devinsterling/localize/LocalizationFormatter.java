@@ -52,6 +52,11 @@ public interface LocalizationFormatter {
 
     /// Formatter request to produce a formatted localized values.
     ///
+    /// **This is a value-based class**.
+    /// Programmers should treat instances that are equal as interchangeable,
+    /// avoid identity checks (`==`), and never use instances for synchronization,
+    /// or unpredictable behavior may occur. For example, in a future release, synchronization may fail.
+    ///
     /// @see Builder#of(String)
     /// @since 2.0
     final class Request {
@@ -84,6 +89,19 @@ public interface LocalizationFormatter {
         /// @return Locale to format by.
         public Locale getLocale() {
             return locale;
+        }
+
+        // When value classes become stable, equals and hashcode will be removed here
+        @Override public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (!(obj instanceof Request other)) return false;
+            return pattern.equals(other.pattern)
+                    && arguments.equals(other.arguments)
+                    && locale.equals(other.locale);
+        }
+
+        @Override public int hashCode() {
+            return Objects.hash(pattern, arguments, locale);
         }
 
         /// Builder to create a [Request] for string formatting.

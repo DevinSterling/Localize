@@ -4,6 +4,11 @@ import java.util.Objects;
 
 /// A request to format an associated localized value with.
 ///
+/// **This is a value-based class**.
+/// Programmers should treat instances that are equal as interchangeable,
+/// avoid identity checks (`==`), and never use instances for synchronization,
+/// or unpredictable behavior may occur. For example, in a future release, synchronization may fail.
+///
 /// @since 1.0
 public final class LocalizationRequest {
     private final LocalizationRequestSource source;
@@ -47,6 +52,19 @@ public final class LocalizationRequest {
     /// @since 1.1
     public boolean hasDefaultValue() {
         return defaultValue != null;
+    }
+
+    // When value classes become stable, equals and hashcode will be removed here
+    @Override public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (!(obj instanceof LocalizationRequest other)) return false;
+        return source.equals(other.source)
+                && Objects.equals(defaultValue, other.defaultValue)
+                && arguments.equals(other.arguments);
+    }
+
+    @Override public int hashCode() {
+        return Objects.hash(source, defaultValue, arguments);
     }
 
     /// Builder to create a [LocalizationRequest] for retrieval of a formatted localized value.
