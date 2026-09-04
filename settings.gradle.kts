@@ -7,7 +7,7 @@ pluginManagement {
 // Include examples
 file("examples").listFiles()?.forEach {
     if (it.isDirectory) {
-        include(":examples:${it.name}")
+        include("examples:${it.name}")
     }
 }
 
