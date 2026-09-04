@@ -60,7 +60,7 @@ final class BindingsManager implements BindingRegistry {
         // INVARIANT NOTE: `dispose` is not called here as it's guaranteed to be an internal `WeakStringBinding`,
         // so if a binding is inactive, it is effectively already disposed.
         // In the future, if something other than WeakStringBinding's `weakComponent` must be disposed,
-        // it must be updated to call `dispose` here and in `notifyListeners` whenever encountering inactive bindings.
+        // it must be updated to call `dispose` here whenever encountering inactive bindings.
         bindings.removeIf(binding -> !binding.isActive());
     }
 }

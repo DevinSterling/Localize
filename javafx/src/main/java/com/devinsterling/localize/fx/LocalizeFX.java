@@ -19,10 +19,10 @@ import java.util.concurrent.atomic.AtomicReference;
 ///
 /// It is recommended to create a thread-safe [LocalizeFX]
 /// instance through the static factory methods listed here:
-/// - [#of()]
-/// - [#of(Locale)]
-/// - [#of(LocalizeConfig)]
-/// - [#of(Locale, LocalizeConfig)]
+/// - [of()]
+/// - [of(Locale)]
+/// - [of(LocalizeConfig)]
+/// - [of(Locale, LocalizeConfig)]
 ///
 /// This class provides an observable string binding to reflect
 /// changes automatically whenever the locale or any arguments change.
@@ -64,14 +64,13 @@ public abstract class LocalizeFX extends Localize {
     /// Each time the locale is changed, all providers are refreshed.
     ///
     /// **This method is intended to be called on the JavaFX Application thread only.**
-    /// When not on that thread, it is recommended
-    /// to use [#getLocale()] and [#setLocale(Locale)] instead,
+    /// When not on that thread, it is recommended to use [getLocale] and [setLocale] instead,
     /// which are thread-safe.
     ///
     /// @return **Non-thread-safe** observable locale property.
-    /// @see #setLocale(Locale)
-    /// @see #getLocale()
-    /// @see #refresh()
+    /// @see setLocale
+    /// @see getLocale
+    /// @see refresh()
     public abstract ObjectProperty<Locale> localeProperty();
 
     /// Triggers the locale property to emit an invalidation event
@@ -121,7 +120,7 @@ public abstract class LocalizeFX extends Localize {
     /// {@inheritDoc}
     ///
     /// ### Note
-    /// Adding providers will update any active string bindings (e.g., from [#getBinding(String)]).
+    /// Adding providers will update any active string bindings (e.g., from [getBinding(String)]).
     @Override public boolean putBundleProvider(String key, ResourceBundleProvider provider) {
         boolean isNewProvider = super.putBundleProvider(key, provider);
         notifyListeners();
@@ -131,7 +130,7 @@ public abstract class LocalizeFX extends Localize {
     /// {@inheritDoc}
     ///
     /// ### Note
-    /// Adding providers will update any active string bindings (e.g., from [#getBinding(String)]).
+    /// Adding providers will update any active string bindings (e.g., from [getBinding(String)]).
     @Override public String addBundleProvider(ResourceBundleProvider provider) {
         String key = super.addBundleProvider(provider);
         notifyListeners();
@@ -141,7 +140,7 @@ public abstract class LocalizeFX extends Localize {
     /// {@inheritDoc}
     ///
     /// ### Note
-    /// Removing providers will update any active string bindings (e.g., from [#getBinding(String)]).
+    /// Removing providers will update any active string bindings (e.g., from [getBinding(String)]).
     @Override public boolean removeBundleProvider(String key) {
         boolean isRemoved = super.removeBundleProvider(key);
 
@@ -289,7 +288,7 @@ public abstract class LocalizeFX extends Localize {
             /// Marks the internal [SimpleObjectProperty] private field `valid` to `true`.
             ///
             /// - Ensures locale changes are eagerly propagated when calling `super.set`.
-            /// - Avoids firing duplicate events compared to [#forceFireValueChanged] (if already marked valid).
+            /// - Avoids firing duplicate events compared to [forceFireValueChanged] (if already marked valid).
             private void markValid() {
                 // Force SimpleObjectProperty to be valid, internally does `valid = true;`
                 get();

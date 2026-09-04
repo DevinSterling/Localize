@@ -19,9 +19,9 @@ import java.util.Objects;
 ///
 /// ### Creation
 /// Instances are created using the static factory methods listed here:
-/// - [#of(Object...)] or [#of(List)] for positional arguments.
-/// - [#of(Map)] for named arguments.
-/// - [#of()] for no arguments ([neither named nor positional][Type#NONE]).
+/// - [of(Object...)] or [of(List)] for positional arguments.
+/// - [of(Map)] for named arguments.
+/// - [of()] for no arguments ([neither named nor positional][Type#NONE]).
 ///
 /// @see Type
 /// @see Resolver
@@ -91,7 +91,7 @@ public interface Arguments {
     /// @see toArray
     /// @see toNamedMap
     default List<Object> toList() {
-        // Implementors can override to return an unmodifiable view instead (e.g., DynamicArguments.Positional)
+        // Implementers can override to return an unmodifiable view instead (e.g., DynamicArguments.Positional)
         // noinspection Java9CollectionFactory - `List.copyOf` is not used here as argument values can be `null`
         return Collections.unmodifiableList(new ArrayList<>(values()));
     }

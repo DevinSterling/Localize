@@ -16,10 +16,10 @@ import java.util.concurrent.atomic.AtomicReference;
 ///
 /// It is recommended to create a thread-safe [Localize]
 /// instance through the static factory methods listed here:
-/// - [#of()]
-/// - [#of(Locale)]
-/// - [#of(LocalizeConfig)]
-/// - [#of(Locale, LocalizeConfig)]
+/// - [of()]
+/// - [of(Locale)]
+/// - [of(LocalizeConfig)]
+/// - [of(Locale, LocalizeConfig)]
 ///
 /// ### Arguments and Pluralization
 /// By default, Localize uses a [LocalizationFormatter] built around [java.text.MessageFormat],
@@ -217,7 +217,7 @@ public abstract class Localize {
         return isNewEntry;
     }
 
-    /// Shorthand for [#putBundleProvider(String, ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
+    /// Shorthand for [putBundleProvider(String, ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
     ///
     /// This method is equivalent to:
     /// ```
@@ -237,13 +237,13 @@ public abstract class Localize {
 
     /// Adds the given provider and returns the generated unique key linked to it.
     ///
-    /// This method is equivalent to [#putBundleProvider(String, ResourceBundleProvider)]
+    /// This method is equivalent to [putBundleProvider(String, ResourceBundleProvider)]
     /// without the need to manually specify a key.
     ///
     /// @apiNote        It is recommended to **not** make any assumptions on the length or format
     ///                 of the returned generated unique key as it could change in between versions.
     /// @param provider Called upon calling refresh to get a ResourceBundle instance.
-    /// @return         The generated key, if needed for calls to [#removeBundleProvider(String)] or [#refresh(String)].
+    /// @return         The generated key, if needed for calls to [removeBundleProvider] or [refresh(String)].
     /// @throws NullPointerException If `provider` is `null`.
     /// @see addBundleProvider(String)
     /// @see putBundleProvider(String, ResourceBundleProvider)
@@ -267,7 +267,7 @@ public abstract class Localize {
         return uniqueKey;
     }
 
-    /// Shorthand for [#addBundleProvider(ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
+    /// Shorthand for [addBundleProvider(ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
     ///
     /// This method is equivalent to:
     /// ```
@@ -275,7 +275,7 @@ public abstract class Localize {
     /// ```
     /// @param resourceBundleBaseName Resource bundle base name.
     /// @return                       The generated key, if needed for calls to
-    ///                               [#removeBundleProvider(String)] or [#refresh(String)].
+    ///                               [removeBundleProvider] or [refresh(String)].
     /// @throws NullPointerException If `provider` is `null`.
     /// @see addBundleProvider(ResourceBundleProvider)
     /// @see putBundleProvider(String, String)
