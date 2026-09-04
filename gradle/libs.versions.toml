@@ -6,6 +6,7 @@ javafx-plugin-dep = '0.1.0'
 jreleaser-plugin-dep = '1.25.0'
 javafx-dep = '17.0.20'
 junit-dep = '6.1.2'
+equalsverifier-dep = '4.5.2'
 icu4j-dep = '78.3'
 
 [plugins]
@@ -16,4 +17,5 @@ jreleaser = { id = 'org.jreleaser', version.ref = 'jreleaser-plugin-dep' }
 [libraries]
 junit-jupiter = { module = 'org.junit.jupiter:junit-jupiter', version.ref = 'junit-dep' }
 junit-launcher = { module = 'org.junit.platform:junit-platform-launcher', version.ref = 'junit-dep' }
+equalsverifier = { module = 'nl.jqno.equalsverifier:equalsverifier', version.ref = 'equalsverifier-dep' }
 icu4j = { module = 'com.ibm.icu:icu4j', version.ref = 'icu4j-dep' }

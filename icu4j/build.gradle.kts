@@ -10,6 +10,10 @@ publishConvention {
     displayName = "Localize ICU4J"
 }
 
+testConvention {
+    reflectiveTestImplementation(libs.equalsverifier)
+}
+
 dependencies {
     api(project(":base"))
     implementation(libs.icu4j)

@@ -9,3 +9,7 @@ description = "A simple-to-use Java localization library."
 publishConvention {
     displayName = "Localize"
 }
+
+testConvention {
+    reflectiveTestImplementation(libs.equalsverifier)
+}
