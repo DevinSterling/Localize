@@ -18,6 +18,11 @@ public sealed interface LocalizationRequestSource permits LocalizationRequestSou
 
     /// A resource key used to perform lookup from a [`ResourceBundle`][java.util.ResourceBundle].
     ///
+    /// **This is a value-based class**.
+    /// Programmers should treat instances that are equal as interchangeable,
+    /// avoid identity checks (`==`), and never use instances for synchronization,
+    /// or unpredictable behavior may occur. For example, in a future release, synchronization may fail.
+    ///
     /// @param value Resource key (e.g., `MyApp.welcome`).
     record Key(String value) implements LocalizationRequestSource {
         /// Creates a request source key.
@@ -30,6 +35,11 @@ public sealed interface LocalizationRequestSource permits LocalizationRequestSou
     }
 
     /// A pattern to format directly.
+    ///
+    /// **This is a value-based class**.
+    /// Programmers should treat instances that are equal as interchangeable,
+    /// avoid identity checks (`==`), and never use instances for synchronization,
+    /// or unpredictable behavior may occur. For example, in a future release, synchronization may fail.
     ///
     /// @param value Pattern (e.g., `Hi {name}!`).
     record Pattern(String value) implements LocalizationRequestSource {
