@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     jacoco
+    id("test-convention")
 }
 
 group = providers.gradleProperty("group").get()
