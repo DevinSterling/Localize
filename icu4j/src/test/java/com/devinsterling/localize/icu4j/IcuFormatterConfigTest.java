@@ -1,5 +1,7 @@
 package com.devinsterling.localize.icu4j;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,20 +27,11 @@ public class IcuFormatterConfigTest {
         assertThrows(NullPointerException.class, () -> config.setFormatter(null));
     }
 
-    @Test void testEqualityAndHashCode() {
-        IcuFormatterConfig config1 = new IcuFormatterConfig();
-        IcuFormatterConfig config2 = new IcuFormatterConfig();
-
-        assertEquals(config1, config2);
-        assertEquals(config1.hashCode(), config2.hashCode());
-
-        config1.setFormatter(IcuMessageFormat.MESSAGE1_FORMAT);
-
-        // - `config1` must be placed before null, else `IcuFormatterConfig#equal(null)` is never called here.
-        // noinspection MisorderedAssertEqualsArguments
-        assertNotEquals(config1, null);
-        assertNotEquals(config1, config2);
-        assertNotEquals(config1.hashCode(), config2.hashCode());
+    @Test void testIcuFormatterConfigEquality() {
+        EqualsVerifier.simple()
+                      .forClass(IcuFormatterConfig.class)
+                      .withNonnullFields("messageFormat")
+                      .verify();
     }
 
     @Test void testFormatterSystemProperty() {
