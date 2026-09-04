@@ -1,5 +1,7 @@
 package com.devinsterling.localize;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
@@ -12,29 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class LocalizeConfigTest {
 
-    @Test public void testLocalizeConfigEquals() {
-        LocalizeConfig config1 = new LocalizeConfig();
-        LocalizeConfig config2 = new LocalizeConfig();
-
-        assertEquals(config1, config2);
-        assertEquals(config1.hashCode(), config2.hashCode());
-    }
-
-    @Test public void testLocalizeConfigNotEquals() {
-        LocalizeConfig config1 = new LocalizeConfig();
-        LocalizeConfig config2 = new LocalizeConfig();
-        config2.setDefaultMissingValue("missing");
-
-        // - `config1` must be placed before null, else `LocalizeConfig#equal(null)` is never called here.
-        // noinspection MisorderedAssertEqualsArguments
-        assertNotEquals(config1, null);
-        assertNotEquals(config1, config2);
-        assertNotEquals(config1.hashCode(), config2.hashCode());
-    }
-
-    @Test public void testLocalizeConfigNullEquality() {
-        LocalizeConfig config = new LocalizeConfig();
-        assertNotEquals(null, config);
+    @Test public void testLocalizeConfigEquality() {
+        EqualsVerifier.simple().forClass(LocalizeConfig.class).verify();
     }
 
     @Test void testDefaultMissingValue() {
