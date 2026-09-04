@@ -90,7 +90,7 @@ public class LocalizeConfig {
         return this.isIgnoreMissingResourceBundles == config.isIgnoreMissingResourceBundles
                 && this.isIgnoreProcessingExceptions == config.isIgnoreProcessingExceptions
                 && this.isThrowWhenNoValueFound == config.isThrowWhenNoValueFound
-                && this.defaultMissingValue.equals(config.defaultMissingValue);
+                && Objects.equals(this.defaultMissingValue, config.defaultMissingValue);
     }
 
     @Override public int hashCode() {
