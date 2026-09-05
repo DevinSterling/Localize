@@ -64,4 +64,59 @@ public class SubscriptionTest {
 
         assertEquals(0, count.get());
     }
+
+    @Test void testSubscriptionAnd() {
+        Subscription a = Subscription.of(() -> {});
+        Subscription b = Subscription.of(() -> {});
+        Subscription ab = a.and(b);
+
+        assertTrue(ab.isActive());
+
+        b.dispose();
+        assertTrue(ab.isActive());
+
+        a.dispose();
+        assertFalse(ab.isActive());
+
+        Subscription c = Subscription.of(() -> {});
+        Subscription d = Subscription.of(() -> {});
+        Subscription cd = c.and(d);
+        Subscription cd2 = c.and(d);
+
+        cd.dispose();
+        assertFalse(cd.isActive());
+        assertFalse(cd2.isActive());
+        assertFalse(c.isActive());
+        assertFalse(d.isActive());
+
+    }
+
+    @Test void testSubscriptionCombine() {
+        Subscription a = Subscription.EMPTY;
+        Subscription b = Subscription.of(() -> {});
+        Subscription ab = Subscription.combine(a, b);
+
+        assertTrue(ab.isActive());
+
+        b.dispose();
+        assertFalse(ab.isActive());
+
+        Subscription c = Subscription.of(() -> {});
+        Subscription d = Subscription.of(() -> {});
+        Subscription cd = Subscription.combine(c, d);
+        Subscription cd2 = Subscription.combine(c, d);
+
+        cd.dispose();
+        assertFalse(cd.isActive());
+        assertFalse(cd2.isActive());
+        assertFalse(c.isActive());
+        assertFalse(d.isActive());
+    }
+
+    @Test void testSubscriptionAndCombineNonNull() {
+        assertThrows(NullPointerException.class, () -> Subscription.EMPTY.and(null));
+        assertThrows(NullPointerException.class, () -> Subscription.combine((Subscription[]) null));
+        assertThrows(NullPointerException.class, () -> Subscription.combine(Subscription.EMPTY, null));
+    }
+
 }
