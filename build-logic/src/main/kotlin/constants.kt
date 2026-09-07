@@ -2,6 +2,7 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 object ProjectInfo {
     val JAVA_VERSION = JavaLanguageVersion.of(17)
+    val JAVADOC_VERSION = JavaLanguageVersion.of(25)
 
     const val REPO_NAME = "Localize"
     const val AUTHOR = "Devin Sterling"
