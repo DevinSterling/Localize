@@ -23,5 +23,8 @@ tasks {
             "implNote:a:Implementation Note:",
             "implSpec:a:Implementation Requirements:",
         )
+        javadocTool = javaToolchains.javadocToolFor {
+            languageVersion = ProjectInfo.JAVADOC_VERSION
+        }
     }
 }
