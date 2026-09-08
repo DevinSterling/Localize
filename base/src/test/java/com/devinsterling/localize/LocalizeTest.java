@@ -144,6 +144,22 @@ class LocalizeTest {
         assertThrows(NullPointerException.class, () -> localize.setFormatter(null));
     }
 
+    @Test void testContainsBundleProvider() {
+        Localize localize = Localize.of();
+        Function<String, Boolean> contains = localize::containsBundleProvider;
+
+        assertFalse(contains.apply("key"));
+
+        localize.putBundleProvider("key", TEST_PROVIDER);
+        assertFalse(contains.apply("Key"));
+        assertFalse(contains.apply("other"));
+        assertTrue(contains.apply("key"));
+        assertThrows(NullPointerException.class, () -> contains.apply(null));
+
+        localize.removeBundleProvider("key");
+        assertFalse(contains.apply("key"));
+    }
+
     @Test void testReplaceBundleProvider() {
         Localize localize = Localize.of(Locale.JAPANESE);
 
