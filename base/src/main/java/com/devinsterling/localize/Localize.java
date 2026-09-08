@@ -154,6 +154,21 @@ public abstract class Localize {
         return new LocalizeImpl(assertLocale(locale), config);
     }
 
+    /// A hook triggered whenever providers are added, removed, or refreshed.
+    ///
+    /// When overriding, subclasses *should* call `super.onProvidersChanged` to preserve intermediate parent behavior.
+    /// ```java
+    /// @Override protected void onProvidersChanged() {
+    ///     super.onProvidersChanged();
+    ///     ...
+    /// }
+    /// ```
+    /// @implSpec This method is thread-safe.
+    /// @since 2.0
+    protected void onProvidersChanged() {
+        // no-op
+    }
+
     /// Sets the localization formatter.
     ///
     /// The formatter is called each time a request is made to format a value.
@@ -219,6 +234,7 @@ public abstract class Localize {
         ProviderEntry entry = new ProviderEntry(key, provider);
         boolean isNewEntry = providerStore.put(entry);
         refresh(entry);
+        onProvidersChanged();
         return isNewEntry;
     }
 
@@ -358,7 +374,13 @@ public abstract class Localize {
     /// @see ResourceBundleProvider.Key#of(String)
     /// @since 2.0
     public boolean removeBundleProvider(ResourceBundleProvider.Key key) {
-        return providerStore.remove(key);
+        boolean removed = providerStore.remove(key);
+
+        if (removed) {
+            onProvidersChanged();
+        }
+
+        return removed;
     }
 
     /// Removes the [ResourceBundleProvider] associated with the given key.
@@ -391,6 +413,7 @@ public abstract class Localize {
 
         if (isFound) {
             refresh(entry);
+            onProvidersChanged();
         }
 
         return isFound;
@@ -415,6 +438,7 @@ public abstract class Localize {
     /// after their contents have changed during runtime.
     public void refresh() {
         refresh(getLocale());
+        onProvidersChanged();
     }
 
     /// Returns a builder for formatting a localized value from the given pattern.

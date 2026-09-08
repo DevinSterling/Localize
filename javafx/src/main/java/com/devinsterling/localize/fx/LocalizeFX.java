@@ -4,7 +4,6 @@ import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
-import com.devinsterling.localize.ResourceBundleProvider;
 
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
@@ -117,42 +116,7 @@ public abstract class LocalizeFX extends Localize {
         return new LocalizeFXImpl(assertLocale(locale), config);
     }
 
-    /// {@inheritDoc}
-    ///
-    /// ### Note
-    /// Adding providers will update any active string bindings (e.g., from [getBinding(String)]).
-    @Override public boolean putBundleProvider(ResourceBundleProvider.Key key, ResourceBundleProvider provider) {
-        boolean isNewProvider = super.putBundleProvider(key, provider);
-        notifyListeners();
-        return isNewProvider;
-    }
-
-    /// {@inheritDoc}
-    ///
-    /// ### Note
-    /// Removing providers will update any active string bindings (e.g., from [getBinding(String)]).
-    @Override public boolean removeBundleProvider(ResourceBundleProvider.Key key) {
-        boolean isRemoved = super.removeBundleProvider(key);
-
-        if (isRemoved) {
-            notifyListeners();
-        }
-
-        return isRemoved;
-    }
-
-    @Override public boolean refresh(ResourceBundleProvider.Key key) {
-        boolean isRefreshed = super.refresh(key);
-
-        if (isRefreshed) {
-            notifyListeners();
-        }
-
-        return isRefreshed;
-    }
-
-    @Override public void refresh() {
-        super.refresh();
+    @Override protected void onProvidersChanged() {
         notifyListeners();
     }
 
