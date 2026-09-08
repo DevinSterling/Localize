@@ -324,6 +324,32 @@ public abstract class Localize {
         return addBundleProvider(locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
     }
 
+    /// Returns `true` if the provider associated with the given key is present.
+    ///
+    /// @param key Key to check if the associated provider is present.
+    /// @return    `true` if the associated provider is present.
+    /// @throws NullPointerException If `key` is `null`.
+    /// @see containsBundleProvider(String)
+    /// @see ResourceBundleProvider.Key#of(String)
+    /// @since 2.0
+    public boolean containsBundleProvider(ResourceBundleProvider.Key key) {
+        return providerStore.contains(Objects.requireNonNull(key, "key must not be null"));
+    }
+
+    /// Returns `true` if the provider associated with the given key is present.
+    ///
+    /// This is a convenience method, equivalent to calling [containsBundleProvider(ResourceBundleProvider.Key)]
+    /// with [ResourceBundleProvider.Key#of(String)].
+    ///
+    /// @param key Key to check if the associated provider is present.
+    /// @return    `true` if the associated provider is present.
+    /// @see ResourceBundleProvider.Key#of(String)
+    /// @throws NullPointerException If `key` is `null`.
+    /// @since 2.0
+    public boolean containsBundleProvider(String key) {
+        return containsBundleProvider(ResourceBundleProvider.Key.of(key));
+    }
+
     /// Removes the [ResourceBundleProvider] associated with the given key.
     ///
     /// @param key Key associated with the provider to remove.
@@ -705,6 +731,15 @@ public abstract class Localize {
                 }
             }
             return null;
+        }
+
+        public boolean contains(ResourceBundleProvider.Key key) {
+            for (ProviderEntry entry : this) {
+                if (entry.getKey().equals(key)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Synchronized to ensure that no modifications occur during iteration
