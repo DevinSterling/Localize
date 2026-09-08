@@ -4,7 +4,6 @@ import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
-import com.devinsterling.localize.ResourceBundleProvider;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -236,42 +235,7 @@ public abstract class LocalizeSwing extends Localize {
         return new LocalizeSwingImpl(assertLocale(locale), config);
     }
 
-    /// {@inheritDoc}
-    ///
-    /// ### Note
-    /// Adding providers will update any active text bindings (e.g., from [bind(String, Component)]).
-    @Override public boolean putBundleProvider(ResourceBundleProvider.Key key, ResourceBundleProvider provider) {
-        boolean isNewProvider = super.putBundleProvider(key, provider);
-        notifyListeners();
-        return isNewProvider;
-    }
-
-    /// {@inheritDoc}
-    ///
-    /// ### Note
-    /// Removing providers will update any active text bindings (e.g., from [bind(String, Component)]).
-    @Override public boolean removeBundleProvider(ResourceBundleProvider.Key key) {
-        boolean isRemoved = super.removeBundleProvider(key);
-
-        if (isRemoved) {
-            notifyListeners();
-        }
-
-        return isRemoved;
-    }
-
-    @Override public boolean refresh(ResourceBundleProvider.Key key) {
-        boolean isRefreshed = super.refresh(key);
-
-        if (isRefreshed) {
-            notifyListeners();
-        }
-
-        return isRefreshed;
-    }
-
-    @Override public void refresh() {
-        super.refresh();
+    @Override protected void onProvidersChanged() {
         notifyListeners();
     }
 
