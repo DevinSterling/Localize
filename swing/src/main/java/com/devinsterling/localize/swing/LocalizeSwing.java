@@ -240,7 +240,7 @@ public abstract class LocalizeSwing extends Localize {
     ///
     /// ### Note
     /// Adding providers will update any active text bindings (e.g., from [bind(String, Component)]).
-    @Override public boolean putBundleProvider(String key, ResourceBundleProvider provider) {
+    @Override public boolean putBundleProvider(ResourceBundleProvider.Key key, ResourceBundleProvider provider) {
         boolean isNewProvider = super.putBundleProvider(key, provider);
         notifyListeners();
         return isNewProvider;
@@ -249,18 +249,8 @@ public abstract class LocalizeSwing extends Localize {
     /// {@inheritDoc}
     ///
     /// ### Note
-    /// Adding providers will update any active text bindings (e.g., from [bind(String, Component)]).
-    @Override public String addBundleProvider(ResourceBundleProvider provider) {
-        String key = super.addBundleProvider(provider);
-        notifyListeners();
-        return key;
-    }
-
-    /// {@inheritDoc}
-    ///
-    /// ### Note
     /// Removing providers will update any active text bindings (e.g., from [bind(String, Component)]).
-    @Override public boolean removeBundleProvider(String key) {
+    @Override public boolean removeBundleProvider(ResourceBundleProvider.Key key) {
         boolean isRemoved = super.removeBundleProvider(key);
 
         if (isRemoved) {
@@ -270,7 +260,7 @@ public abstract class LocalizeSwing extends Localize {
         return isRemoved;
     }
 
-    @Override public boolean refresh(String key) {
+    @Override public boolean refresh(ResourceBundleProvider.Key key) {
         boolean isRefreshed = super.refresh(key);
 
         if (isRefreshed) {
