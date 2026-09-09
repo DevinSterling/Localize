@@ -657,10 +657,11 @@ public abstract class Localize {
 
     private void refresh(ProviderEntry entry) {
         long version = entry.version.incrementAndGet();
-        ResourceBundle bundle = getResourceBundle(entry, getLocale());
+        Locale locale = getLocale();
+        ResourceBundle bundle = getResourceBundle(entry, locale);
 
         synchronized (providerLock) {
-            if (version == entry.version.get()) {
+            if (locale.equals(getLocale()) && version == entry.version.get()) {
                 entry.bundle = bundle;
             }
         }
