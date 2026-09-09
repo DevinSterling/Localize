@@ -437,8 +437,9 @@ public abstract class Localize {
     /// Useful for reloading bundles from external sources (e.g., disk)
     /// after their contents have changed during runtime.
     public void refresh() {
-        refresh(getLocale());
-        onProvidersChanged();
+        if (refresh(getLocale())) {
+            onProvidersChanged();
+        }
     }
 
     /// Returns a builder for formatting a localized value from the given pattern.
@@ -623,17 +624,22 @@ public abstract class Localize {
         return value;
     }
 
-    /// Triggers all providers to refresh and fetch new [ResourceBundle] instances with a given [Locale].
+    /// Triggers all providers to refresh and fetch new [ResourceBundle] instances with a given [Locale],
+    /// returning `true` if any providers were refreshed.
     ///
     /// @param locale Locale to refresh all providers with.
-    protected void refresh(Locale locale) {
+    /// @return       `true` if any providers were refreshed.
+    protected boolean refresh(Locale locale) {
         record VersionBundle(long version, ResourceBundle bundle) {}
 
+        boolean isAnyRefreshed = false;
         Map<ProviderEntry, VersionBundle> newBundles = new IdentityHashMap<>();
 
         for (ProviderEntry entry : providerStore) {
             // Stop early if the locale changes mid-way or the thread is interrupted
-            if (!locale.equals(getLocale()) || Thread.currentThread().isInterrupted()) return;
+            if (!locale.equals(getLocale()) || Thread.currentThread().isInterrupted()) {
+                return false;
+            }
 
             long version = entry.version.incrementAndGet();
             ResourceBundle bundle = getResourceBundle(entry, locale);
@@ -646,13 +652,22 @@ public abstract class Localize {
                 for (Map.Entry<ProviderEntry, VersionBundle> mapEntry : newBundles.entrySet()) {
                     ProviderEntry entry = mapEntry.getKey();
                     VersionBundle versionBundle = mapEntry.getValue();
+                    ResourceBundle previousBundle = entry.bundle;
+                    ResourceBundle newBundle = versionBundle.bundle;
 
                     if (entry.version.get() == versionBundle.version) {
-                        entry.bundle = versionBundle.bundle;
+                        entry.bundle = newBundle;
+
+                        // A refresh occurs if the 2 bundles are not *null*
+                        if (previousBundle != null || newBundle != null) {
+                            isAnyRefreshed = true;
+                        }
                     }
                 }
             }
         }
+
+        return isAnyRefreshed;
     }
 
     private void refresh(ProviderEntry entry) {
