@@ -32,15 +32,15 @@ class LocalizeTest {
         String key = "key";
 
         assertTrue(localize.getResourceBundles().isEmpty());
-        assertTrue(localize.putBundleProvider(key, TEST_PROVIDER));
-        assertFalse(localize.putBundleProvider(key, TEST_PROVIDER));
+        assertNull(localize.putBundleProvider(key, TEST_PROVIDER));
+        assertSame(TEST_PROVIDER, localize.putBundleProvider(key, TEST2_PROVIDER));
         assertEquals(1, localize.getResourceBundles().size());
 
-        assertTrue(localize.removeBundleProvider(key));
+        assertSame(TEST2_PROVIDER, localize.removeBundleProvider(key));
         assertTrue(localize.getResourceBundles().isEmpty());
 
-        assertTrue(localize.putBundleProvider(key, TEST_PROVIDER));
-        assertTrue(localize.putBundleProvider("other", TEST_PROVIDER));
+        assertNull(localize.putBundleProvider(key, TEST_PROVIDER));
+        assertNull(localize.putBundleProvider("other", TEST_PROVIDER));
         assertEquals(2, localize.getResourceBundles().size());
     }
 
@@ -58,14 +58,14 @@ class LocalizeTest {
     @Test void testAddProvider() {
         Localize localize = Localize.of();
 
-        ResourceBundleProvider.Key key1 = localize.addBundleProvider(TEST_PROVIDER);
-        ResourceBundleProvider.Key key2 = localize.addBundleProvider(TEST2_PROVIDER);
+        Localize.ProviderEntry entry1 = localize.addBundleProvider(TEST_PROVIDER);
+        Localize.ProviderEntry entry2 = localize.addBundleProvider(TEST2_PROVIDER);
         assertEquals(2, localize.getResourceBundles().size());
 
-        localize.removeBundleProvider(key1);
+        entry1.remove();
         assertEquals(1, localize.getResourceBundles().size());
 
-        localize.putBundleProvider(key2, TEST_PROVIDER);
+        localize.putBundleProvider(entry2.getKey(), TEST_PROVIDER);
         assertEquals(1, localize.getResourceBundles().size());
     }
 
@@ -89,13 +89,13 @@ class LocalizeTest {
     @Test void testRemoveProvider() {
         Localize localize = Localize.of();
 
-        assertFalse(localize.removeBundleProvider("key"));
-        assertFalse(localize.removeBundleProvider("key4"));
+        assertNull(localize.removeBundleProvider("key"));
+        assertNull(localize.removeBundleProvider("key4"));
 
         localize.putBundleProvider("key", TEST_PROVIDER);
-        assertTrue(localize.removeBundleProvider("key"));
+        assertSame(TEST_PROVIDER, localize.removeBundleProvider("key"));
         localize.putBundleProvider("key3", TEST_PROVIDER);
-        assertTrue(localize.removeBundleProvider("key3"));
+        assertSame(TEST_PROVIDER, localize.removeBundleProvider("key3"));
     }
 
     @Test void testLocale() {
