@@ -341,7 +341,7 @@ public abstract class LocalizeSwing extends Localize {
                 SwingUtilities.invokeLater(() -> {
                     if (this.locale.isCurrent(setResult)) {
                         notifyListeners();
-                        propertyChangeManager.notifyChangeListeners(this, locale, locale);
+                        propertyChangeManager.notifyChangeListeners(this, setResult.previous, locale);
                     }
                 });
             }
