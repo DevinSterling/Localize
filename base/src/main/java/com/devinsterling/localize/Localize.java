@@ -3,7 +3,9 @@ package com.devinsterling.localize;
 import com.devinsterling.localize.event.LocaleChangeEvent;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -594,10 +596,11 @@ public class Localize {
     ///
     /// @return Immutable snapshot of all resource bundles at the time of calling.
     public Collection<ResourceBundle> getResourceBundles() {
-        return providerStore.stream()
-                      .map(ProviderEntry::getBundle)
-                      .filter(Objects::nonNull)
-                      .toList();
+        return providerStore.unmodifiableView
+                            .stream()
+                            .map(ProviderEntry::getBundle)
+                            .filter(Objects::nonNull)
+                            .toList();
     }
 
     /// Formats the request as-is into a localized value.
@@ -934,9 +937,16 @@ public class Localize {
 
     // Uses a list instead of Map as the number of providers is typically small (1~15).
     // Reads/iteration are **far greater** than writes
-    private static final class ProviderStore extends CopyOnWriteArrayList<ProviderEntry> {
+    private static final class ProviderStore implements Iterable<ProviderEntry> {
+        CopyOnWriteArrayList<ProviderEntry> providers = new CopyOnWriteArrayList<>();
+        Collection<ProviderEntry> unmodifiableView = Collections.unmodifiableCollection(providers);
+
+        @Override public Iterator<ProviderEntry> iterator() {
+            return providers.iterator();
+        }
+
         private ProviderEntry get(ProviderKey key) {
-            for (ProviderEntry entry : this) {
+            for (ProviderEntry entry : providers) {
                 if (entry.getKey().equals(key)) {
                     return entry;
                 }
@@ -946,7 +956,7 @@ public class Localize {
         }
 
         private boolean contains(ProviderKey key) {
-            for (ProviderEntry entry : this) {
+            for (ProviderEntry entry : providers) {
                 if (entry.getKey().equals(key)) {
                     return true;
                 }
@@ -958,29 +968,29 @@ public class Localize {
         // Synchronized to ensure that no modifications occur during iteration
         // (e.g., if `remove` is called, then it'll wait until this method completes)
         private synchronized ProviderEntry put(ProviderEntry newEntry) {
-            for (int i = 0; i < size(); i++) {
-                ProviderEntry entry = get(i);
+            for (int i = 0; i < providers.size(); i++) {
+                ProviderEntry entry = providers.get(i);
 
                 if (entry.getKey().equals(newEntry.getKey())) {
+                    providers.set(i, newEntry);
                     // When an entry is removed, it must be marked inactive by disposing it.
                     entry.dispose();
-                    set(i, newEntry);
                     return entry;
                 }
             }
 
-            add(newEntry);
+            providers.add(newEntry);
             return null;
         }
 
         private synchronized ResourceBundleProvider remove(ProviderKey key) {
-            for (int i = 0; i < size(); i++) {
-                ProviderEntry entry = get(i);
+            for (int i = 0; i < providers.size(); i++) {
+                ProviderEntry entry = providers.get(i);
 
                 if (entry.getKey().equals(key)) {
+                    providers.remove(i);
                     // When an entry is removed, it must be marked inactive by disposing it.
                     entry.dispose();
-                    remove(i);
                     return entry.getProvider();
                 }
             }
@@ -988,8 +998,8 @@ public class Localize {
             return null;
         }
 
-        private boolean remove(ProviderEntry entry) {
-            boolean removed = super.remove(entry);
+        private synchronized boolean remove(ProviderEntry entry) {
+            boolean removed = providers.remove(entry);
 
             if (removed) {
                 entry.dispose();
