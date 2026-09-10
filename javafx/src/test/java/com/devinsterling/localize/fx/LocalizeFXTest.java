@@ -1,11 +1,13 @@
 package com.devinsterling.localize.fx;
 
 import com.devinsterling.localize.LocalizeConfig;
+import com.devinsterling.localize.fx.junit.JavaFXExtension;
 
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.ListResourceBundle;
 import java.util.Locale;
@@ -17,6 +19,7 @@ import static com.devinsterling.localize.fx.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(JavaFXExtension.class)
 class LocalizeFXTest {
 
     @Test void testDefaultLocale() {
