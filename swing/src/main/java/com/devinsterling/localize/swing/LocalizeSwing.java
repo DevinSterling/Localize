@@ -1,5 +1,6 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.event.LocaleChangeEvent;
 import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
@@ -11,9 +12,6 @@ import javax.swing.SwingUtilities;
 import java.awt.Component;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /// Java Swing [LocalizeSwing] class.
 ///
@@ -49,14 +47,53 @@ import java.util.concurrent.atomic.AtomicReference;
 ///         .bind(label));
 /// ```
 /// @since 2.0
-public abstract class LocalizeSwing extends Localize {
+public class LocalizeSwing extends Localize {
+    private final PropertyChangeManager propertyChangeManager = new PropertyChangeManager();
+    private final BindingsManager bindings = new BindingsManager();
 
-    /// Creates a [LocalizeSwing] instance with the given configuration.
+    /// Creates a [LocalizeSwing] instance with the given locale and configuration.
     ///
     /// @param config Main localize configuration.
     /// @throws NullPointerException If `config` is `null`.
-    protected LocalizeSwing(LocalizeConfig config) {
-        super(config);
+    protected LocalizeSwing(Locale locale, LocalizeConfig config) {
+        super(locale, config);
+    }
+
+    /// Creates a new [LocalizeSwing] instance with the
+    /// initial locale set as [Locale#getDefault()] and default configuration.
+    ///
+    /// @return **Thread-safe** LocalizeSwing instance.
+    public static LocalizeSwing of() {
+        return of(Locale.getDefault());
+    }
+
+    /// Creates a new [LocalizeSwing] instance with the given [Locale] and default configuration.
+    ///
+    /// @param locale Initial locale.
+    /// @return       **Thread-safe** LocalizeSwing instance.
+    /// @throws NullPointerException If `locale` is `null`.
+    public static LocalizeSwing of(Locale locale) {
+        return of(locale, new LocalizeConfig());
+    }
+
+    /// Creates a new [LocalizeSwing] instance with the given [LocalizeConfig]
+    /// and initial locale set as [Locale#getDefault].
+    ///
+    /// @param config Initial Configuration.
+    /// @return       **Thread-safe** LocalizeSwing instance.
+    /// @throws NullPointerException If `config` is `null`.
+    public static LocalizeSwing of(LocalizeConfig config) {
+        return of(Locale.getDefault(), config);
+    }
+
+    /// Creates a new [LocalizeSwing] instance with the given [Locale] and [LocalizeConfig].
+    ///
+    /// @param locale Initial locale.
+    /// @param config Initial Configuration.
+    /// @return       **Thread-safe** LocalizeSwing instance.
+    /// @throws NullPointerException If `locale` or `config` is `null`.
+    public static LocalizeSwing of(Locale locale, LocalizeConfig config) {
+        return new LocalizeSwing(locale, config);
     }
 
     /// Adds a listener that is notified whenever the locale changes.
@@ -109,7 +146,9 @@ public abstract class LocalizeSwing extends Localize {
     /// @return         Subscription to remove the added listener.
     /// @see #addLocaleListener(LocaleChangeListener)
     // An NPE is not thrown to match Swing's patterns regarding potentially null arguments.
-    public abstract Subscription addPropertyChangeListener(PropertyChangeListener listener);
+    public Subscription addPropertyChangeListener(PropertyChangeListener listener) {
+        return propertyChangeManager.addPropertyChangeListener(listener);
+    }
 
     /// Removes a listener that was [previously added][addPropertyChangeListener].
     ///
@@ -118,7 +157,9 @@ public abstract class LocalizeSwing extends Localize {
     /// If the given listener is `null`, no action is performed.
     ///
     /// @param listener Listener to remove.
-    public abstract void removePropertyChangeListener(PropertyChangeListener listener);
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeManager.removePropertyChangeListener(listener);
+    }
 
     /// Adds a listener that is notified whenever the locale changes.
     ///
@@ -191,48 +232,37 @@ public abstract class LocalizeSwing extends Localize {
     /// Returns the registry that updates all registered bindings whenever the locale changes.
     ///
     /// @return Locale binding registry.
-    protected abstract BindingRegistry getBindingRegistry();
+    protected BindingRegistry getBindingRegistry() {
+        return bindings;
+    }
 
     /// Triggers all property listeners to fire and string bindings to update whenever the locale changes.
     ///
-    /// @implSpec This method must be thread-safe, dispatching to the Swing UI (EDT) thread when needed.
-    protected abstract void notifyListeners();
-
-    /// Creates a new [LocalizeSwing] instance with the
-    /// initial locale set as [Locale#getDefault()] and default configuration.
-    ///
-    /// @return **Thread-safe** LocalizeSwing instance.
-    public static LocalizeSwing of() {
-        return of(Locale.getDefault());
+    /// This method is thread-safe, dispatching to the Swing UI (EDT) thread when needed.
+    protected void notifyListeners() {
+        if (SwingUtilities.isEventDispatchThread()) {
+            bindings.notifyListeners();
+        } else {
+            SwingUtilities.invokeLater(bindings::notifyListeners);
+        }
     }
 
-    /// Creates a new [LocalizeSwing] instance with the given [Locale] and default configuration.
-    ///
-    /// @param locale Initial locale.
-    /// @return       **Thread-safe** LocalizeSwing instance.
-    /// @throws NullPointerException If `locale` is `null`.
-    public static LocalizeSwing of(Locale locale) {
-        return of(locale, new LocalizeConfig());
+    @Override protected void onLocaleChanged(LocaleChangeEvent change) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            onLocaleChangedEdtThread(change);
+        } else {
+            SwingUtilities.invokeLater(() -> onLocaleChangedEdtThread(change));
+        }
     }
 
-    /// Creates a new [LocalizeSwing] instance with the given [LocalizeConfig]
-    /// and initial locale set as [Locale#getDefault].
-    ///
-    /// @param config Initial Configuration.
-    /// @return       **Thread-safe** LocalizeSwing instance.
-    /// @throws NullPointerException If `config` is `null`.
-    public static LocalizeSwing of(LocalizeConfig config) {
-        return of(Locale.getDefault(), config);
-    }
-
-    /// Creates a new [LocalizeSwing] instance with the given [Locale] and [LocalizeConfig].
-    ///
-    /// @param locale Initial locale.
-    /// @param config Initial Configuration.
-    /// @return       **Thread-safe** LocalizeSwing instance.
-    /// @throws NullPointerException If `locale` or `config` is `null`.
-    public static LocalizeSwing of(Locale locale, LocalizeConfig config) {
-        return new LocalizeSwingImpl(assertLocale(locale), config);
+    private void onLocaleChangedEdtThread(LocaleChangeEvent change) {
+        if (change.isValid()) {
+            notifyListeners();
+        }
+        // After notifying all listeners, recheck if the held locale is still the current one
+        if (change.isValid()) {
+            propertyChangeManager.notifyChangeListeners(this, change.getOld(), change.getNew());
+        }
     }
 
     @Override protected void onProvidersChanged() {
@@ -311,105 +341,5 @@ public abstract class LocalizeSwing extends Localize {
     /// @throws NullPointerException If `component` is null.
     public StringBinding bindTooltip(LocalizationKey key, JComponent component) {
         return get(key).bindTooltip(component);
-    }
-
-    private static Locale assertLocale(Locale locale) {
-        return Objects.requireNonNull(locale, "locale must not be null");
-    }
-
-    private static final class LocalizeSwingImpl extends LocalizeSwing {
-        private final PropertyChangeManager propertyChangeManager = new PropertyChangeManager();
-        private final BindingsManager bindings = new BindingsManager();
-        private final VersionedLocale locale;
-
-        public LocalizeSwingImpl(Locale locale, LocalizeConfig config) {
-            super(config);
-            this.locale = new VersionedLocale(locale);
-        }
-
-        @Override public void setLocale(Locale locale) {
-            VersionedLocale.SetResult setResult = this.locale.set(locale);
-            // If unchanged, the locale is equivalent.
-            if (setResult.isUnchanged()) return;
-
-            refresh(locale);
-
-            if (SwingUtilities.isEventDispatchThread() && this.locale.isCurrent(setResult)) {
-                notifyListeners();
-                propertyChangeManager.notifyChangeListeners(this, setResult.previous, locale);
-            } else {
-                SwingUtilities.invokeLater(() -> {
-                    if (this.locale.isCurrent(setResult)) {
-                        notifyListeners();
-                        propertyChangeManager.notifyChangeListeners(this, setResult.previous, locale);
-                    }
-                });
-            }
-        }
-
-        @Override public Locale getLocale() {
-            return locale.get();
-        }
-
-        @Override public Subscription addPropertyChangeListener(PropertyChangeListener changeListener) {
-            return propertyChangeManager.addPropertyChangeListener(changeListener);
-        }
-
-        @Override public void removePropertyChangeListener(PropertyChangeListener changeListener) {
-            propertyChangeManager.removePropertyChangeListener(changeListener);
-        }
-
-        @Override protected BindingRegistry getBindingRegistry() {
-            return bindings;
-        }
-
-        @Override protected void notifyListeners() {
-            if (SwingUtilities.isEventDispatchThread()) {
-                bindings.notifyListeners();
-            } else {
-                SwingUtilities.invokeLater(bindings::notifyListeners);
-            }
-        }
-
-        private static final class VersionedLocale {
-            private final AtomicLong version = new AtomicLong();
-            private final AtomicReference<Locale> locale;
-
-            private VersionedLocale(Locale locale) {
-                this.locale = new AtomicReference<>(assertLocale(locale));
-            }
-
-            private synchronized SetResult set(Locale newLocale) {
-                Locale current = locale.get();
-
-                // If the given `newLocale` is equivalent to the current `locale`,
-                // no replacement is performed, matching `LocalizeImpl#setLocale`.
-                if (current.equals(assertLocale(newLocale))) {
-                    // version is `-1` if the given locale is equivalent.
-                    return SetResult.unchanged(current);
-                } else {
-                    locale.set(newLocale);
-                    return new SetResult(current, version.incrementAndGet());
-                }
-            }
-
-            private Locale get() {
-                return locale.get();
-            }
-
-            private boolean isCurrent(SetResult version) {
-                return version.version == this.version.get();
-            }
-
-            private record SetResult(Locale previous, long version) {
-                static SetResult unchanged(Locale previous) {
-                    return new SetResult(previous, -1);
-                }
-
-                private boolean isUnchanged() {
-                    return version == -1;
-                }
-            }
-        }
     }
 }

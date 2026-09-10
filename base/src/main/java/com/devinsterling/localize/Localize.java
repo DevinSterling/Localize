@@ -1,5 +1,7 @@
 package com.devinsterling.localize;
 
+import com.devinsterling.localize.event.LocaleChangeEvent;
+
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Locale;
@@ -87,34 +89,23 @@ import java.util.concurrent.atomic.AtomicReference;
 ///                .value()
 ///                .equals("There are 100 people on campus.");
 /// ```
-/// @implSpec Implementations must ensure that locale updates are thread-safe.
 /// @since 1.0
-public abstract class Localize {
+public class Localize {
+    private final VersionedLocale locale;
     private final ProviderStore providerStore = new ProviderStore();
     private final Object providerLock = new Object();
     private final LocalizeConfig config;
     private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
 
-    /// Creates a [Localize] instance with the given configuration.
+    /// Creates a [Localize] instance with the given locale and configuration.
     ///
+    /// @param locale Initial locale.
     /// @param config Main localize configuration.
     /// @throws NullPointerException If `config` is `null`.
-    protected Localize(LocalizeConfig config) {
+    protected Localize(Locale locale, LocalizeConfig config) {
+        this.locale = new VersionedLocale(locale);
         this.config = Objects.requireNonNull(config, "config must not be null");
     }
-
-    /// Sets the locale and updates all resource bundles.
-    ///
-    /// Changing the locale will trigger a [refresh][refresh()].
-    ///
-    /// @param locale Locale to fetch associated resource bundles.
-    /// @throws NullPointerException If locale is `null`.
-    public abstract void setLocale(Locale locale);
-
-    /// The current locale.
-    ///
-    /// @return The current locale.
-    public abstract Locale getLocale();
 
     /// Creates a new [Localize] instance with the
     /// initial locale set as [Locale#getDefault()] and default configuration.
@@ -151,7 +142,26 @@ public abstract class Localize {
     /// @return       **Thread-safe** Localize instance.
     /// @throws NullPointerException If `locale` or `config` is `null`.
     public static Localize of(Locale locale, LocalizeConfig config) {
-        return new LocalizeImpl(assertLocale(locale), config);
+        return new Localize(locale, config);
+    }
+
+    /// A hook triggered whenever the locale is changed.
+    ///
+    /// When overriding, subclasses *should* call `super.onLocaleChanged` to preserve intermediate parent behavior.
+    /// ```java
+    /// @Override protected void onLocaleChanged(LocaleChanged change) {
+    ///     super.onLocaleChanged(change);
+    ///
+    ///     // Checking if the change is still fresh
+    ///     if (change.isValid()) {
+    ///         ...
+    ///     }
+    /// }
+    /// ```
+    /// @implSpec This method is thread-safe.
+    /// @since 2.0
+    protected void onLocaleChanged(LocaleChangeEvent change) {
+        // no-op
     }
 
     /// A hook triggered whenever providers are added, removed, or refreshed.
@@ -167,6 +177,42 @@ public abstract class Localize {
     /// @since 2.0
     protected void onProvidersChanged() {
         // no-op
+    }
+
+    /// Sets the locale and updates all resource bundles.
+    ///
+    /// Changing the locale will trigger a [refresh][refresh()].
+    ///
+    /// @param locale Locale to fetch associated resource bundles.
+    /// @throws NullPointerException If locale is `null`.
+    public void setLocale(Locale locale) {
+        record Change(VersionedLocale locale, VersionedLocale.Snapshot snapshot) implements LocaleChangeEvent {
+            @Override public Locale getOld() {
+                return snapshot.previous;
+            }
+
+            @Override public Locale getNew() {
+                return snapshot.current;
+            }
+
+            @Override public boolean isValid() {
+                return locale.isCurrent(snapshot);
+            }
+        }
+
+        VersionedLocale.Snapshot snapshot = this.locale.set(locale);
+
+        if (!snapshot.isUnchanged()) {
+            refresh(locale);
+            onLocaleChanged(new Change(this.locale, snapshot));
+        }
+    }
+
+    /// The current locale.
+    ///
+    /// @return The current locale.
+    public Locale getLocale() {
+        return locale.get();
     }
 
     /// Sets the localization formatter.
@@ -650,7 +696,7 @@ public abstract class Localize {
     ///
     /// @param locale Locale to refresh all providers with.
     /// @return       `true` if any providers were refreshed.
-    protected boolean refresh(Locale locale) {
+    private boolean refresh(Locale locale) {
         record VersionBundle(long version, ResourceBundle bundle) {}
 
         boolean isAnyRefreshed = false;
@@ -735,30 +781,6 @@ public abstract class Localize {
 
     private static Locale assertLocale(Locale locale) {
         return Objects.requireNonNull(locale, "locale must not be null");
-    }
-
-    private static final class LocalizeImpl extends Localize {
-        private final AtomicReference<Locale> locale;
-
-        private LocalizeImpl(Locale locale, LocalizeConfig config) {
-            super(config);
-            this.locale = new AtomicReference<>(locale);
-        }
-
-        @Override public void setLocale(Locale locale) {
-            assertLocale(locale);
-            // If the given new `locale` is equivalent to the current locale,
-            // no replacement is performed, matching `LocalizeFXImpl#setLocale`.
-            Locale previous = this.locale.getAndUpdate(old -> old.equals(locale) ? old : locale);
-
-            if (!locale.equals(previous)) {
-                refresh(locale);
-            }
-        }
-
-        @Override public Locale getLocale() {
-            return locale.get();
-        }
     }
 
     /// A unique key associated with a [ResourceBundleProvider] [entry][ProviderEntry].
@@ -974,6 +996,46 @@ public abstract class Localize {
             }
 
             return removed;
+        }
+    }
+
+    private static final class VersionedLocale {
+        private final AtomicLong version = new AtomicLong();
+        private final AtomicReference<Locale> locale;
+
+        private VersionedLocale(Locale locale) {
+            this.locale = new AtomicReference<>(assertLocale(locale));
+        }
+
+        private synchronized Snapshot set(Locale newLocale) {
+            Locale current = locale.get();
+
+            // If the given `newLocale` is equivalent to the current `locale`, no replacement is performed.
+            if (current.equals(assertLocale(newLocale))) {
+                // version is `-1` if the given locale is equivalent.
+                return Snapshot.unchanged(current);
+            } else {
+                locale.set(newLocale);
+                return new Snapshot(current, newLocale, version.incrementAndGet());
+            }
+        }
+
+        private Locale get() {
+            return locale.get();
+        }
+
+        private boolean isCurrent(Snapshot snapshot) {
+            return snapshot.version == this.version.get();
+        }
+
+        private record Snapshot(Locale previous, Locale current, long version) {
+            static Snapshot unchanged(Locale locale) {
+                return new Snapshot(locale, locale, -1);
+            }
+
+            private boolean isUnchanged() {
+                return version == -1;
+            }
         }
     }
 }
