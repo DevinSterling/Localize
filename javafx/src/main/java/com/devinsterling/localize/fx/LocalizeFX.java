@@ -1,18 +1,17 @@
 package com.devinsterling.localize.fx;
 
+import com.devinsterling.localize.event.LocaleChangeEvent;
 import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
 
+import javafx.application.Platform;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.Locale;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /// JavaFX [Localize] class.
 ///
@@ -48,35 +47,18 @@ import java.util.concurrent.atomic.AtomicReference;
 ///
 /// ```
 /// @since 1.0
-public abstract class LocalizeFX extends Localize {
+public class LocalizeFX extends Localize {
+    private final LocaleProperty localeProperty;
 
-    /// Creates a [LocalizeFX] instance with the given configuration.
+    /// Creates a [LocalizeFX] instance with the given locale and configuration.
     ///
+    /// @param locale Initial locale.
     /// @param config Main localize configuration.
     /// @throws NullPointerException If `config` is `null`.
-    protected LocalizeFX(LocalizeConfig config) {
-        super(config);
+    protected LocalizeFX(Locale locale, LocalizeConfig config) {
+        super(locale, config);
+        this.localeProperty = new LocaleProperty(locale);
     }
-
-    /// The current locale.
-    ///
-    /// Each time the locale is changed, all providers are refreshed.
-    ///
-    /// **This method is intended to be called on the JavaFX Application thread only.**
-    /// When not on that thread, it is recommended to use [getLocale] and [setLocale] instead,
-    /// which are thread-safe.
-    ///
-    /// @return **Non-thread-safe** observable locale property.
-    /// @see setLocale
-    /// @see getLocale
-    /// @see refresh()
-    public abstract ObjectProperty<Locale> localeProperty();
-
-    /// Triggers the locale property to emit an invalidation event
-    /// to listeners, triggering all string bindings to update.
-    ///
-    /// @implSpec This method must be thread-safe, dispatching to the JavaFX application thread when needed.
-    protected abstract void notifyListeners();
 
     /// Creates a new [LocalizeFX] instance with the
     /// initial locale set as [Locale#getDefault()] and default configuration.
@@ -113,7 +95,50 @@ public abstract class LocalizeFX extends Localize {
     /// @return       **Thread-safe** LocalizeFX instance.
     /// @throws NullPointerException If `locale` or `config` is `null`.
     public static LocalizeFX of(Locale locale, LocalizeConfig config) {
-        return new LocalizeFXImpl(assertLocale(locale), config);
+        return new LocalizeFX(locale, config);
+    }
+
+    /// The current locale.
+    ///
+    /// Each time the locale is changed, all providers are refreshed.
+    ///
+    /// **This method is intended to be called on the JavaFX Application thread only.**
+    /// When not on that thread, it is recommended to use [getLocale] and [setLocale] instead,
+    /// which are thread-safe.
+    ///
+    /// @return **Non-thread-safe** observable locale property.
+    /// @see setLocale
+    /// @see getLocale
+    /// @see refresh()
+    public ObjectProperty<Locale> localeProperty() {
+        return localeProperty;
+    }
+
+    /// Triggers the locale property to emit an invalidation event
+    /// to listeners, triggering all string bindings to update.
+    ///
+    /// This method is thread-safe, dispatching to the JavaFX application thread when needed.
+    protected void notifyListeners() {
+        if (Platform.isFxApplicationThread()) {
+            localeProperty.forceFireValueChanged();
+        } else {
+            Platform.runLater(localeProperty::forceFireValueChanged);
+        }
+    }
+
+    @Override protected void onLocaleChanged(LocaleChangeEvent change) {
+        if (Platform.isFxApplicationThread()) {
+            onLocaleChangedFxThread(change);
+        } else if (change.isValid()) {
+            Platform.runLater(() -> onLocaleChangedFxThread(change));
+        }
+    }
+
+    private void onLocaleChangedFxThread(LocaleChangeEvent change) {
+        // Avoid setting the property to a stale `Locale` by checking the version
+        if (change.isValid()) {
+            localeProperty.setInternal(change.getNew());
+        }
     }
 
     @Override protected void onProvidersChanged() {
@@ -164,116 +189,35 @@ public abstract class LocalizeFX extends Localize {
         return getBinding(key.getKey());
     }
 
-    private static Locale assertLocale(Locale locale) {
-        return Objects.requireNonNull(locale, "locale must not be null");
-    }
-
-    private static final class LocalizeFXImpl extends LocalizeFX {
-        private final LocaleProperty localeProperty;
-        private final VersionedLocale locale;
-
-        private LocalizeFXImpl(Locale locale, LocalizeConfig config) {
-            super(config);
-            this.locale = new VersionedLocale(locale);
-            this.localeProperty = new LocaleProperty(locale);
+    /// NOTE: All methods of this class must be called from the JavaFX UI thread, if available.
+    private class LocaleProperty extends SimpleObjectProperty<Locale> {
+        private LocaleProperty(Locale locale) {
+            super(locale);
         }
 
-        @Override protected void notifyListeners() {
-            if (FXThread.isUIThread()) {
-                localeProperty.forceFireValueChanged();
-            } else {
-                FXThread.onUIThread(localeProperty::forceFireValueChanged);
-            }
+        /// This method is only ever called externally.
+        /// Internal calls to set the locale property are delegated to [setInternal].
+        @Override public void set(Locale locale) {
+            // This method will delegate to `setInternal`
+            LocalizeFX.this.setLocale(locale);
         }
 
-        @Override public ObjectProperty<Locale> localeProperty() {
-            return localeProperty;
+        private void setInternal(Locale locale) {
+            markValid();
+            super.set(locale);
         }
 
-        @Override public void setLocale(Locale locale) {
-            if (FXThread.isUIThread()) {
-                // Refreshing is handled within this method
-                localeProperty.set(locale);
-                return;
-            }
-
-            long version = this.locale.set(locale);
-            // If the version is `-1`, the locale is equivalent.
-            if (version < 0) return;
-
-            refresh(locale);
-            // Avoid setting the property to a stale `Locale` by checking the version
-            FXThread.onUIThread(() -> {
-                if (this.locale.isCurrent(version)) {
-                    localeProperty.setWithoutRefresh(locale);
-                }
-            });
+        private void forceFireValueChanged() {
+            fireValueChangedEvent();
         }
 
-        @Override public Locale getLocale() {
-            return locale.get();
-        }
-
-        /// NOTE: All methods of this class must be called from the JavaFX UI thread, if available.
-        private class LocaleProperty extends SimpleObjectProperty<Locale> {
-            private LocaleProperty(Locale locale) {
-                super(locale);
-            }
-
-            @Override public void set(Locale locale) {
-                // Do not update the locale if it's equivalent to the current one
-                if (LocalizeFXImpl.this.locale.set(assertLocale(locale)) < 0) return;
-
-                // Eagerly refresh bundles first before triggering listeners
-                refresh(locale);
-                markValid();
-                super.set(locale);
-            }
-
-            private void setWithoutRefresh(Locale locale) {
-                markValid();
-                super.set(locale);
-            }
-
-            private void forceFireValueChanged() {
-                fireValueChangedEvent();
-            }
-
-            /// Marks the internal [SimpleObjectProperty] private field `valid` to `true`.
-            ///
-            /// - Ensures locale changes are eagerly propagated when calling `super.set`.
-            /// - Avoids firing duplicate events compared to [forceFireValueChanged] (if already marked valid).
-            private void markValid() {
-                // Force SimpleObjectProperty to be valid, internally does `valid = true;`
-                get();
-            }
-        }
-
-        private static final class VersionedLocale {
-            private final AtomicLong version = new AtomicLong();
-            private final AtomicReference<Locale> locale;
-
-            private VersionedLocale(Locale locale) {
-                this.locale = new AtomicReference<>(assertLocale(locale));
-            }
-
-            /// @return The new version, or `-1` if the given locale is equivalent.
-            private synchronized long set(Locale newLocale) {
-                // If the given `newLocale` is equivalent to the current `locale`,
-                // no replacement is performed, matching `LocalizeImpl#setLocale`.
-                if (locale.get().equals(assertLocale(newLocale))) return -1;
-
-                locale.set(newLocale);
-                return version.incrementAndGet();
-            }
-
-            private Locale get() {
-                return locale.get();
-            }
-
-            private boolean isCurrent(long version) {
-                return version == this.version.get();
-            }
+        /// Marks the internal [SimpleObjectProperty] private field `valid` to `true`.
+        ///
+        /// - Ensures locale changes are eagerly propagated when calling `super.set`.
+        /// - Avoids firing duplicate events compared to [forceFireValueChanged] (if already marked valid).
+        private void markValid() {
+            // Force SimpleObjectProperty to be valid, internally does `valid = true;`
+            get();
         }
     }
 }
