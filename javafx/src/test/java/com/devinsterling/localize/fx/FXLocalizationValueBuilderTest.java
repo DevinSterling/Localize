@@ -1,5 +1,7 @@
 package com.devinsterling.localize.fx;
 
+import com.devinsterling.localize.fx.junit.JavaFXExtension;
+
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -7,6 +9,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Locale;
 import java.util.function.Supplier;
@@ -15,6 +18,7 @@ import static com.devinsterling.localize.fx.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(JavaFXExtension.class)
 class FXLocalizationValueBuilderTest {
 
     @Test void testGetBindingAgainstGet() {
