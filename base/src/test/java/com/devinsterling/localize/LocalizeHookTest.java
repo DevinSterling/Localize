@@ -75,5 +75,11 @@ public class LocalizeHookTest {
         entry1.refresh();
         entry1.remove();
         assertEquals(10, counter.get());
+
+        localize.clearBundleProviders();
+        assertEquals(11, counter.get());
+
+        localize.clearBundleProviders();
+        assertEquals(11, counter.get());
     }
 }
