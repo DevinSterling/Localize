@@ -2,6 +2,7 @@ package com.devinsterling.localize;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
 import java.util.ListResourceBundle;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -29,19 +30,20 @@ class LocalizeTest {
 
     @Test void testPutProvider() {
         Localize localize = Localize.of();
+        Collection<Localize.ProviderEntry> entries = localize.getBundleProviderEntries();
         String key = "key";
 
-        assertTrue(localize.getResourceBundles().isEmpty());
+        assertTrue(entries.isEmpty());
         assertNull(localize.putBundleProvider(key, TEST_PROVIDER));
         assertSame(TEST_PROVIDER, localize.putBundleProvider(key, TEST2_PROVIDER));
-        assertEquals(1, localize.getResourceBundles().size());
+        assertEquals(1, entries.size());
 
         assertSame(TEST2_PROVIDER, localize.removeBundleProvider(key));
-        assertTrue(localize.getResourceBundles().isEmpty());
+        assertTrue(entries.isEmpty());
 
         assertNull(localize.putBundleProvider(key, TEST_PROVIDER));
         assertNull(localize.putBundleProvider("other", TEST_PROVIDER));
-        assertEquals(2, localize.getResourceBundles().size());
+        assertEquals(2, entries.size());
     }
 
     @Test void testPutProviderByBaseName() {
@@ -52,21 +54,22 @@ class LocalizeTest {
         localize.putBundleProvider(key, TEST_PROVIDER_NAME);
         localize.putBundleProvider(key, TEST2_PROVIDER_NAME);
         localize.putBundleProvider("other", TEST2_PROVIDER_NAME);
-        assertEquals(2, localize.getResourceBundles().size());
+        assertEquals(2, localize.getBundleProviderEntries().size());
     }
 
     @Test void testAddProvider() {
         Localize localize = Localize.of();
+        Collection<Localize.ProviderEntry> entries = localize.getBundleProviderEntries();
 
         Localize.ProviderEntry entry1 = localize.addBundleProvider(TEST_PROVIDER);
         Localize.ProviderEntry entry2 = localize.addBundleProvider(TEST2_PROVIDER);
-        assertEquals(2, localize.getResourceBundles().size());
+        assertEquals(2, entries.size());
 
         entry1.remove();
-        assertEquals(1, localize.getResourceBundles().size());
+        assertEquals(1, entries.size());
 
         localize.putBundleProvider(entry2.getKey(), TEST_PROVIDER);
-        assertEquals(1, localize.getResourceBundles().size());
+        assertEquals(1, entries.size());
     }
 
     @Test void testAddProviderByBaseName() {
@@ -75,7 +78,7 @@ class LocalizeTest {
         // NOTE: these methods delegate to `addBundleProvider(ResourceBundleProvider)`
         localize.addBundleProvider(TEST_PROVIDER_NAME);
         localize.addBundleProvider(TEST2_PROVIDER_NAME);
-        assertEquals(2, localize.getResourceBundles().size());
+        assertEquals(2, localize.getBundleProviderEntries().size());
     }
 
     @Test void testPutNullReturningProvider() {
@@ -218,6 +221,28 @@ class LocalizeTest {
 
         localize.refresh("nonexistent");
         assertEquals("hi", supplier.get());
+    }
+
+    @Test void testGetResourceBundles() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+
+        Collection<ResourceBundle> snapshotA = localize.getResourceBundles();
+        assertTrue(snapshotA.isEmpty());
+
+        localize.putBundleProvider("key", TEST_PROVIDER);
+        assertTrue(snapshotA.isEmpty());
+
+        Collection<ResourceBundle> snapshotB = localize.getResourceBundles();
+        assertEquals(1, snapshotB.size());
+        assertNotEquals(snapshotA, snapshotB);
+
+        localize.addBundleProvider(TEST_PROVIDER);
+        localize.addBundleProvider(TEST2_PROVIDER);
+        Collection<ResourceBundle> snapshotC = localize.getResourceBundles();
+
+        assertTrue(snapshotA.isEmpty());
+        assertEquals(1, snapshotB.size());
+        assertEquals(3, snapshotC.size());
     }
 
     @Test void testRefreshUpdatesBundle() {

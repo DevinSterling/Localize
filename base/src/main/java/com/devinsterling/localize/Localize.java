@@ -592,6 +592,15 @@ public class Localize {
         return getValue(key.getKey());
     }
 
+    /// Returns an unmodifiable live view of all provider entries,
+    /// ordered by their [priority][putBundleProvider(ProviderKey, ResourceBundleProvider)].
+    ///
+    /// @return Unmodifiable live view of all entries.
+    /// @since 2.0
+    public Collection<ProviderEntry> getBundleProviderEntries() {
+        return providerStore.unmodifiableView;
+    }
+
     /// Returns all contained resource bundles.
     ///
     /// @return Immutable snapshot of all resource bundles at the time of calling.
