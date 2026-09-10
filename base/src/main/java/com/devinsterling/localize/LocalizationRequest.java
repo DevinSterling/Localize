@@ -15,10 +15,14 @@ public final class LocalizationRequest {
     private final String defaultValue;
     private final Arguments arguments;
 
-    private LocalizationRequest(LocalizationRequestSource source, String defaultValue, Arguments arguments) {
+    private LocalizationRequest(LocalizationRequestSource source, Arguments arguments, String defaultValue) {
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
         this.defaultValue = defaultValue;
+    }
+
+    static LocalizationRequest ofKey(String key) {
+        return new LocalizationRequest(new LocalizationRequestSource.Key(key), Arguments.NONE, null);
     }
 
     /// Returns the source to derive a formatted localized value from.
@@ -113,7 +117,7 @@ public final class LocalizationRequest {
         ///
         /// @return Request to get a formatted localized value with.
         public LocalizationRequest build() {
-            return new LocalizationRequest(source, defaultValue, arguments);
+            return new LocalizationRequest(source, arguments, defaultValue);
         }
     }
 }
