@@ -517,13 +517,20 @@ public class Localize {
     }
 
     /// Triggers all providers to refresh and fetch new [ResourceBundle] instances.
+    /// Returns `true` if any providers were refreshed.
     ///
     /// Useful for reloading bundles from external sources (e.g., disk)
     /// after their contents have changed during runtime.
-    public void refresh() {
-        if (refresh(getLocale())) {
+    ///
+    /// @return `true` if any providers were refreshed, or `false` if none were refreshed.
+    public boolean refresh() {
+        boolean isAnyRefreshed = refresh(getLocale());
+
+        if (isAnyRefreshed) {
             onProvidersChanged();
         }
+
+        return isAnyRefreshed;
     }
 
     /// Returns a builder for formatting a localized value from the given pattern.
