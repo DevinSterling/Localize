@@ -484,22 +484,22 @@ public class Localize {
     /// Useful for reloading a specific bundle from an external source (e.g., disk)
     /// after its contents have changed during runtime.
     ///
+    /// ### Concurrency
+    /// If a more recent concurrent call to [setLocale] or `refresh` with the same key occurs
+    /// during this method call, the newest call takes precedence and this method returns `false`.
+    ///
     /// @param key Key associated with the provider to refresh.
     /// @return    `true` if the provider was refreshed.
-    ///            Otherwise, `false` is returned if the provider was not found.
+    ///            Otherwise, `false` is returned if the provider was not found or superseded by a newer refresh.
+    /// @throws NullPointerException If `key` is `null`.
     /// @see refresh(String)
     /// @see putBundleProvider(String, ResourceBundleProvider)
     /// @see ProviderKey#of(String)
     /// @since 2.0
     public boolean refresh(ProviderKey key) {
+        Objects.requireNonNull(key, "key must not be null");
         ProviderEntry entry = providerStore.get(key);
-        boolean isFound = entry != null;
-
-        if (isFound) {
-            refresh(entry);
-        }
-
-        return isFound;
+        return entry != null && refresh(entry);
     }
 
     /// Triggers a refresh by fetching a new [ResourceBundle] from
@@ -510,7 +510,8 @@ public class Localize {
     ///
     /// @param key Key associated with the provider to refresh.
     /// @return    `true` if the provider was refreshed.
-    ///            Otherwise, `false` is returned if the provider was not found.
+    ///            Otherwise, `false` is returned if the provider was not found or superseded by a newer refresh.
+    /// @throws NullPointerException If `key` is `null`.
     public boolean refresh(String key) {
         return refresh(ProviderKey.of(key));
     }
@@ -763,8 +764,8 @@ public class Localize {
         return isAnyRefreshed;
     }
 
-    private void refresh(ProviderEntry entry) {
-        if (!entry.isActive()) return;
+    private boolean refresh(ProviderEntry entry) {
+        if (!entry.isActive()) return false;
 
         boolean isRefreshed = false;
         long version = entry.version.incrementAndGet();
@@ -781,6 +782,8 @@ public class Localize {
         if (isRefreshed) {
             onProvidersChanged();
         }
+
+        return isRefreshed;
     }
 
     private void remove(ProviderEntry entry) {
