@@ -194,6 +194,20 @@ class LocalizeTest {
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
     }
 
+    @Test void testClearRemoveBundleProviders() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        Collection<Localize.ProviderEntry> entries = localize.getBundleProviderEntries();
+
+        assertFalse(localize.clearBundleProviders());
+
+        localize.addBundleProvider(TEST_PROVIDER);
+
+        assertFalse(entries.isEmpty());
+        assertTrue(localize.clearBundleProviders());
+        assertTrue(entries.isEmpty());
+        assertFalse(localize.clearBundleProviders());
+    }
+
     @Test void testRefreshNoProviders() {
         Localize localize = Localize.of(Locale.ENGLISH);
 

@@ -464,6 +464,20 @@ public class Localize {
         return removeBundleProvider(ProviderKey.of(key));
     }
 
+    /// Removes all provider entries and returns `true` if any were removed.
+    ///
+    /// @return `true` if any entries were removed, or `false` if there were no entries to remove.
+    /// @since 2.0
+    public boolean clearBundleProviders() {
+        boolean isAnyRemoved = providerStore.clear();
+
+        if (isAnyRemoved) {
+            onProvidersChanged();
+        }
+
+        return isAnyRemoved;
+    }
+
     /// Triggers a refresh by fetching a new [ResourceBundle] from
     /// the [ResourceBundleProvider] associated with the given key.
     ///
@@ -1015,6 +1029,20 @@ public class Localize {
             }
 
             return removed;
+        }
+
+        private synchronized boolean clear() {
+            if (providers.isEmpty()) return false;
+
+            // `CopyOnWriteArrayList` returns a snapshot that is not modified when clear is called
+            Iterator<ProviderEntry> snapshot = providers.iterator();
+            providers.clear();
+
+            while (snapshot.hasNext()) {
+                snapshot.next().dispose();
+            }
+
+            return true;
         }
     }
 
