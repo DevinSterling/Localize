@@ -599,7 +599,7 @@ public class Localize {
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(LocalizationKey)
     public String getValue(String key) {
-        return get(key).value();
+        return formatValue(LocalizationRequest.ofKey(key));
     }
 
     /// Retrieves the value associated with the given resource bundle key.

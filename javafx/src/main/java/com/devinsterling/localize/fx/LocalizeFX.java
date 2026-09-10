@@ -7,6 +7,7 @@ import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -172,7 +173,7 @@ public class LocalizeFX extends Localize {
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(String)
     public StringBinding getBinding(String key) {
-        return get(key).binding();
+        return Bindings.createStringBinding(() -> getValue(key), localeProperty());
     }
 
     /// Retrieves an observable string bound to the associated resource value.
