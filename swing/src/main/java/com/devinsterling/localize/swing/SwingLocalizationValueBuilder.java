@@ -48,27 +48,35 @@ import java.util.function.Supplier;
 /// Passing arguments:
 /// ```java
 /// JProgressBar progress = new JProgressBar();
-/// JTextField person = new JTextField();
+/// JTextField personName = new JTextField();
 ///
 /// localize.get("MyApp.progressMessage") // "Current progress for {name}: {value}%"
 ///         .arg("value", progress)       // Observes JProgressBar value changes
-///         .arg("name", person)          // Observes JTextField text changes
+///         .arg("name", personName)      // Observes JTextField text changes
 ///         .bind(progress);              // Binds formatted text to the JProgressBar string property
 /// ```
 ///
-/// ### Deferred Arguments
-/// [SwingLocalizationValueBuilder] allows [Supplier]s as arguments.
-/// To prevent memory leaks caused by suppliers holding strong references to components,
-///
+/// ### Triggers
+/// Adding [triggers][Trigger] via [on(Trigger)] allows resulting [bindings][StringBinding]
+/// to recompute independently of its arguments.
+/// Triggers are useful when events affecting the formatted value are not observable
+/// through added arguments, such as when clicking a button or resizing a component.
+/// Whenever a trigger occurs, its corresponding binding is recomputed:
 /// ```java
 /// JFrame window = new JFrame();
+/// window.setVisible(true);
 ///
-/// // Recommended
-/// localize.get("Window.status")               // "Window: x={x} y={y}"
-///         .arg("x", window, Window::getX)     // Deferred x coordinate
-///         .arg("y", window, Window::getY)     // Deferred y coordinate
-///         .on(Trigger.move(window))           // todo
-///         .bind(statusLabel);                 // Automatically pulls fresh layout values when evaluated
+/// localize.get("Window.status")        // "Window: width={w}, height={h}"
+///         .arg("w", window::getWidth)  // Deferred width
+///         .arg("h", window::getHeight) // Deferred height
+///         .on(Trigger.resize(window))  // Recomputes the biniding when the window is resized
+///         .bind(label);
+///
+/// window.setSize(100, 100);
+/// assert label.getText().equals("Window: width=100, height=100");
+///
+/// window.setSize(1920, 1080);
+/// assert label.getText().equals("Window: width=1920, height=1080");
 /// ```
 ///
 /// @param <B> Builder instance type.
@@ -158,6 +166,8 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
 
 
     /// Adds an event trigger that triggers bound components to recompute and update their text.
+    ///
+    /// **This method is intended to be called on the Swing UI (EDT) thread only.**
     ///
     /// Triggers are installed when methods such as [bind(Component)] are called.
     ///

@@ -3,7 +3,7 @@ package com.devinsterling.localize.swing;
 /// A callback to set the text of a component.
 ///
 /// ### Example Usage
-/// ```
+/// ```java
 /// SetText<JLabel> setter = JLabel::setText;
 /// JLabel label = new JLabel();
 ///

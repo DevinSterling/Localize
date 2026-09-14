@@ -9,9 +9,12 @@ import java.util.Objects;
 /// |-----------------------------------|----------------------------|-----------------------------------------------------------------------------|
 /// | [IcuFormatterConfig#setFormatter] | `localize.icu4j.formatter` | `com.ibm.icu.message2.MessageFormatter` ([IcuMessageFormat#MESSAGE2_FORMAT]) |
 ///
-/// ### Properties and Environmental Variables
-/// Properties are configurable by placing `localize.properties` in the classpath/resources
-/// or dynamically via [System#setProperty].
+/// ### Properties File and JVM System Properties
+///
+/// Properties are configurable by placing a `localize.properties` file on the classpath (e.g., resources directory),
+/// or dynamically via JVM system properties (e.g., [System#setProperty]).
+/// JVM system properties take precedence over values specified in the properties file.
+///
 /// Changing properties during runtime only affects newly created instances.
 ///
 /// @since 2.0

@@ -26,6 +26,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /// - [of(LocalizeConfig)]
 /// - [of(Locale, LocalizeConfig)]
 ///
+/// All [Localize] methods are thread-safe unless specified otherwise by an implementation
+/// (e.g., `LocalizeFX`, `LocalizeSwing`).
+///
 /// ### Arguments and Pluralization
 /// By default, Localize uses a [LocalizationFormatter] built around [java.text.MessageFormat],
 /// though this can be replaced [programmatically][setFormatter] or via SPI by providing a custom formatter.
@@ -175,7 +178,9 @@ public class Localize {
 
     /// A hook triggered whenever the locale is changed.
     ///
-    /// When overriding, subclasses *should* call `super.onLocaleChanged` to preserve intermediate parent behavior.
+    /// This method is called internally and should not be called directly by programs.
+    ///
+    /// When overriding, subclasses *should* call `super.onLocaleChanged` to preserve parent behavior:
     /// ```java
     /// @Override protected void onLocaleChanged(LocaleChanged change) {
     ///     super.onLocaleChanged(change);
@@ -187,7 +192,7 @@ public class Localize {
     /// }
     /// ```
     /// @param change Locale change event.
-    /// @implSpec This method is thread-safe.
+    /// @implSpec This method must be thread-safe.
     /// @since 2.0
     protected void onLocaleChanged(LocaleChangeEvent change) {
         // no-op
@@ -195,7 +200,9 @@ public class Localize {
 
     /// A hook triggered whenever a provider is added, removed, or refreshed.
     ///
-    /// When overriding, subclasses *should* call `super.onProvidersChanged` to preserve intermediate parent behavior.
+    /// This method is called internally and should not be called directly by programs.
+    ///
+    /// When overriding, subclasses *should* call `super.onProvidersChanged` to preserve parent behavior:
     /// ```java
     /// @Override protected void onProvidersChanged(ProviderChangeEvent event) {
     ///     super.onProvidersChanged(event);
@@ -213,7 +220,7 @@ public class Localize {
     /// }
     /// ```
     /// @param event Provider change event.
-    /// @implSpec This method is thread-safe.
+    /// @implSpec This method must be thread-safe.
     /// @since 2.0
     protected void onProvidersChanged(ProviderChangeEvent event) {
         // no-op
@@ -252,16 +259,18 @@ public class Localize {
         }
     }
 
-    /// The current locale.
+    /// Returns the current locale.
     ///
-    /// @return The current locale.
+    /// @return Current locale.
     public Locale getLocale() {
         return locale.get();
     }
 
-    /// Sets the localization formatter.
+    /// Sets the localization formatter used to format requests.
     ///
-    /// The formatter is called each time a request is made to format a value.
+    /// The formatter can be set via SPI without the need to explicitly set it here.
+    /// See [`LocalizationFormatterProvider`][com.devinsterling.localize.spi.LocalizationFormatterProvider]
+    /// for more details.
     ///
     /// @param formatter Formatter to format requests.
     /// @throws NullPointerException If `formatter` is `null`.
@@ -269,12 +278,16 @@ public class Localize {
         this.formatter = Objects.requireNonNull(formatter, "Formatter must not be null");
     }
 
-    /// {@return The localization formatter}
+    /// Returns the localization formatter.
+    ///
+    /// @return Localization formatter.
     public LocalizationFormatter getFormatter() {
         return formatter;
     }
 
-    /// {@return The localize configuration}
+    /// Returns the localize configuration.
+    ///
+    /// @return Localize configuration.
     public LocalizeConfig getConfig() {
         return config;
     }
@@ -592,8 +605,8 @@ public class Localize {
     /// Returns a builder for formatting a localized value from the given pattern.
     ///
     /// ### Example Usage
-    /// Using a pattern format with positional arguments:
-    /// ```
+    /// Using a pattern with positional arguments:
+    /// ```java
     /// String value = localize.format("Hello {0} {1}!")
     ///                        .arg("John")
     ///                        .arg("Doe")
@@ -615,11 +628,11 @@ public class Localize {
     ///
     /// ### Example Usage
     /// Within a resource bundle (e.g., `my-app-i18n.properties`):
-    /// ```
+    /// ```properties
     /// MyApp.greet=Hello {first} {last}!
     /// ```
     /// Requesting the resource value by key:
-    /// ```
+    /// ```java
     /// String value = localize.get("MyApp.greet")
     ///                        .arg("first", "John")
     ///                        .arg("last", "Doe")

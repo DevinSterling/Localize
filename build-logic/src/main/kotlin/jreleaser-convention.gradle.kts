@@ -3,7 +3,8 @@ plugins {
 }
 
 // jreleaser requires a base description
-description = "A simple-to-use Java localization library."
+description = ("An easy-to-use internationalization and localization library for Java 17+," +
+              "with JavaFX, Swing, and ICU4J integrations.")
 
 jreleaser {
     project {

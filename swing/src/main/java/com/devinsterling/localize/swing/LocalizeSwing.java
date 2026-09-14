@@ -41,11 +41,11 @@ import java.util.Locale;
 /// JLabel label = new JLabel();
 /// AtomicInteger clickCount = new AtomicInteger();
 /// ...
-/// localize.bind(button, "MyApp.buttonClick"));
+/// localize.bind("MyApp.buttonClick", button);
 /// localize.get("MyApp.clickCount")
 ///         .arg("click_count", clickCount::get)
 ///         .on(Trigger.action(button))
-///         .bind(label));
+///         .bind(label);
 /// ```
 /// @since 2.0
 public class LocalizeSwing extends Localize {
@@ -54,6 +54,7 @@ public class LocalizeSwing extends Localize {
 
     /// Creates a [LocalizeSwing] instance with the given locale and configuration.
     ///
+    /// @param locale Initial locale.
     /// @param config Main localize configuration.
     /// @throws NullPointerException If `config` is `null`.
     protected LocalizeSwing(Locale locale, LocalizeConfig config) {
@@ -116,12 +117,12 @@ public class LocalizeSwing extends Localize {
     /// call [Subscription#dispose] or [removePropertyChangeListener]:
     ///
     /// ```java
-    /// LocalizeSwing localize = new LocalizeSwing(Locale.ENGLISH);
-    /// localize.addBundleProvider("sample.text");
+    /// LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
+    /// localize.addBundleProvider("sample.messages");
     ///
-    /// PropertyChangeListener listener = evt -> {
-    ///     System.out.println(evt.getNewValue());
-    /// }
+    /// PropertyChangeListener listener = event -> {
+    ///     System.out.println("New locale: " + event.getNewValue());
+    /// };
     /// localize.addPropertyChangeListener(listener);
     ///
     /// // Trigger the listener
@@ -166,10 +167,6 @@ public class LocalizeSwing extends Localize {
     ///
     /// **This method is intended to be called on the Swing UI (EDT) thread only.**
     ///
-    /// The emitted [`PropertyChangeEvent`][java.beans.PropertyChangeEvent] has a property name of `locale`.
-    /// The old and new values are [Locale] instances.
-    /// For a typed change event without the need for casting, see [addLocaleListener].
-    ///
     /// ### Note
     /// - If the given listener is `null`, no action is performed and [Subscription#EMPTY] is returned.
     /// - If it is a duplicate, it is not re-inserted and a reference
@@ -178,15 +175,15 @@ public class LocalizeSwing extends Localize {
     /// ### Memory
     /// The given listener is stored by a strong reference.
     /// To prevent memory leaks when the listener is no longer needed,
-    /// call [Subscription#dispose] or [removePropertyChangeListener]:
+    /// call [Subscription#dispose] or [removeLocaleListener]:
     ///
     /// ```java
-    /// LocalizeSwing localize = new LocalizeSwing(Locale.ENGLISH);
-    /// localize.addBundleProvider("sample.text");
+    /// LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
+    /// localize.addBundleProvider("sample.messages");
     ///
-    /// PropertyChangeListener listener = (oldLocale, newLocale) -> {
-    ///     System.out.println(newLocale);
-    /// }
+    /// LocaleChangeListener listener = (oldLocale, newLocale) -> {
+    ///     System.out.println("New locale: " +  newLocale);
+    /// };
     /// localize.addLocaleListener(listener);
     ///
     /// // Trigger the listener

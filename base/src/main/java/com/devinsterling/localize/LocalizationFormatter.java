@@ -6,12 +6,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-/// Formats a request into a formatted localized string.
+/// Formats a [request][Request] into a localized string.
 ///
 /// The default formatter for [Localize] instances can be set using SPI,
 /// avoiding explicit calls to [Localize#setFormatter].
 /// For more details see
 /// [`LocalizationFormatterProvider`][com.devinsterling.localize.spi.LocalizationFormatterProvider].
+///
+/// If no formatter is specified via SPI, [DEFAULT] is used as the default for [Localize] instances.
 ///
 /// @see Localize#setFormatter
 /// @see com.devinsterling.localize.spi.LocalizationFormatterProvider
@@ -23,6 +25,7 @@ public interface LocalizationFormatter {
     /// @param request Formatter request.
     /// @return Formatted localized string or `null` if not found.
     /// @throws NullPointerException if `request` is `null`.
+    /// @implSpec This method must be thread-safe.
     String format(Request request);
 
     /// Returns the preferred arguments type, if any.
@@ -161,8 +164,28 @@ public interface LocalizationFormatter {
         }
     }
 
-    /// The default formatter to handle converting a [Request]
-    /// into a formatted localized string.
+    /// The standard formatter to format a [Request] into a localized string.
+    ///
+    /// The standard formatter is built around [java.text.MessageFormat] and supports all of its syntax,
+    /// including pluralization through [java.text.ChoiceFormat] choice patterns.
+    /// In addition, both named and numbered arguments are supported.
+    ///
+    /// > For advanced message formatting, plural rules, and greater control over bundle properties,
+    /// see the [ICU4J integration module](https://github.com/DevinSterling/Localize#icu4j-integration),
+    /// an optional dependency (`localize-icu4j`) providing
+    /// [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/#platform-dependencies) support.
+    ///
+    /// Examples within a properties file:
+    /// ```properties
+    /// Example.numberedArguments=Hello {0}! Welcome to {1}, {0}!
+    ///
+    /// Example.namedArguments=Yesterday was {yesterday_date} and tomorrow is {tomorrow_date}.
+    ///
+    /// Example.pluralization={name} clicked this button {click_count, choice,\
+    /// 0 #zero times|\
+    /// 1 #one time|\
+    /// 1 <{click_count} times}!
+    /// ```
     LocalizationFormatter DEFAULT = new LocalizationFormatter() {
         @Override public String format(Request request) {
             String value = request.getPattern();
