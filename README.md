@@ -1,5 +1,5 @@
 # Localize
-A simple-to-use Java/FX localization library (Supports Java 17+).
+An easy-to-use internationalization and localization library for Java 17+, with JavaFX, Swing, and ICU4J integration.
 
 [![Maven Central Version](https://img.shields.io/maven-central/v/com.devinsterling/localize-base?style=flat-square)](https://central.sonatype.com/artifact/com.devinsterling/localize-base)
 [![Base Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-base/javadoc.svg?logo=&style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-base)
@@ -16,15 +16,16 @@ A simple-to-use Java/FX localization library (Supports Java 17+).
   ```kts
   implementation("com.devinsterling:localize-base:2.0.0")
   ```
+  > [!NOTE]
+  > The base module includes zero dependencies.
 
 - [Base functionality + JavaFX integration](#localizefx--javafx-integration)
 - [Base functionality + Swing integration](#localizeswing--swing-integration)
-- [ICU4J integration](#icu4j-integration)
+- [ICU4J integration](#localizeicu4j--icu4j-integration)
 
 ___
 
-Localize is a Java localization library that simplifies internationalizing applications. 
-It’s designed to be straightforward to set up and use.
+Localize is designed to be straightforward to set up and use, simplifying internationalizing applications. 
 
 1. Create a thread-safe `Localize` instance: 
    ```java
@@ -116,7 +117,7 @@ MyApp.clickMessage={name} clicked this button {click_count, choice,\
   ```
 ---
 
-## LocalizeFX — JavaFX Integration
+## LocalizeFX ・ JavaFX Integration
 
 [![LocalizeFX Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-javafx/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-javafx)
 
@@ -160,7 +161,7 @@ clickDetails.textProperty().bind(localize.get("MyApp.clickMessage")
 
 ---
 
-## LocalizeSwing — Swing Integration
+## LocalizeSwing ・ Swing Integration
 
 [![LocalizeSwing Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-swing/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-swing)
 
@@ -205,7 +206,7 @@ localize.get("MyApp.clickMessage")
 
 ---
 
-## ICU4J Integration
+## LocalizeICU4J ・ ICU4J Integration
 
 [![Localize ICU4J Javadoc](https://javadoc.io/badge2/com.devinsterling/localize-icu4j/javadoc.svg?style=flat-square)](https://javadoc.io/doc/com.devinsterling/localize-icu4j)
 

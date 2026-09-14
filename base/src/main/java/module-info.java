@@ -1,5 +1,6 @@
 /// # Localize
-/// A simple-to-use localization library.
+/// An easy-to-use internationalization and localization library for Java 17+,
+/// with JavaFX, Swing, and ICU4J integrations.
 ///
 /// - Repository:
 ///   [https://github.com/DevinSterling/Localize](https://github.com/DevinSterling/Localize)

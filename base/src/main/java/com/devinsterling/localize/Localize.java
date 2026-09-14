@@ -26,6 +26,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /// - [of(LocalizeConfig)]
 /// - [of(Locale, LocalizeConfig)]
 ///
+/// All [Localize] methods are thread-safe unless specified otherwise by an implementation
+/// (e.g., `LocalizeFX`, `LocalizeSwing`).
+///
 /// ### Arguments and Pluralization
 /// By default, Localize uses a [LocalizationFormatter] built around [java.text.MessageFormat],
 /// though this can be replaced [programmatically][setFormatter] or via SPI by providing a custom formatter.
@@ -175,7 +178,9 @@ public class Localize {
 
     /// A hook triggered whenever the locale is changed.
     ///
-    /// When overriding, subclasses *should* call `super.onLocaleChanged` to preserve intermediate parent behavior.
+    /// This method is called internally and should not be called directly by programs.
+    ///
+    /// When overriding, subclasses *should* call `super.onLocaleChanged` to preserve parent behavior:
     /// ```java
     /// @Override protected void onLocaleChanged(LocaleChanged change) {
     ///     super.onLocaleChanged(change);
@@ -187,7 +192,7 @@ public class Localize {
     /// }
     /// ```
     /// @param change Locale change event.
-    /// @implSpec This method is thread-safe.
+    /// @implSpec This method must be thread-safe.
     /// @since 2.0
     protected void onLocaleChanged(LocaleChangeEvent change) {
         // no-op
@@ -195,7 +200,9 @@ public class Localize {
 
     /// A hook triggered whenever a provider is added, removed, or refreshed.
     ///
-    /// When overriding, subclasses *should* call `super.onProvidersChanged` to preserve intermediate parent behavior.
+    /// This method is called internally and should not be called directly by programs.
+    ///
+    /// When overriding, subclasses *should* call `super.onProvidersChanged` to preserve parent behavior:
     /// ```java
     /// @Override protected void onProvidersChanged(ProviderChangeEvent event) {
     ///     super.onProvidersChanged(event);
@@ -213,7 +220,7 @@ public class Localize {
     /// }
     /// ```
     /// @param event Provider change event.
-    /// @implSpec This method is thread-safe.
+    /// @implSpec This method must be thread-safe.
     /// @since 2.0
     protected void onProvidersChanged(ProviderChangeEvent event) {
         // no-op

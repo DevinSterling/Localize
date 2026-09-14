@@ -4,7 +4,7 @@ plugins {
     id("publish-convention")
 }
 
-description = "A simple-to-use Java localization library."
+description = "An easy-to-use internationalization and localization library."
 
 publishConvention {
     displayName = "Localize"

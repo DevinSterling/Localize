@@ -23,6 +23,7 @@ public interface LocalizationFormatter {
     /// @param request Formatter request.
     /// @return Formatted localized string or `null` if not found.
     /// @throws NullPointerException if `request` is `null`.
+    /// @implSpec This method must be thread-safe.
     String format(Request request);
 
     /// Returns the preferred arguments type, if any.

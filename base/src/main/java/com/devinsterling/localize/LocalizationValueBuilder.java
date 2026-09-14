@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 /// Note that mixing such calls will throw an [IllegalStateException].
 ///
 /// ### Example
-/// ```
+/// ```java
 /// // GOOD
 /// builder.arg("test") // Argument 0
 ///        .arg("value2") // Argument 1
@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 /// ```
 ///
 /// Arguments may be appended in bulk consecutively:
-/// ```
+/// ```java
 /// // Numbered arguments
 /// builder.args("test", "value2", "value3")
 ///        .args("value4", "value5")
