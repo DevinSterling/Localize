@@ -3,19 +3,16 @@
 ///
 /// - Repository:
 ///   [https://github.com/DevinSterling/Localize](https://github.com/DevinSterling/Localize)
-/// - Base Module:
-///   [https://javadoc.io/doc/com.devinsterling/localize-base](https://javadoc.io/doc/com.devinsterling/localize-base)
 /// ___
-/// LocalizeFX integrates with JavaFX observables to automatically
-/// reflect changes in UI components whenever the locale or observable
-/// arguments change without manual intervention.
+/// JavaFX integration to automatically reflect changes in UI components
+/// when the locale or observable arguments change without manual intervention.
 ///
 /// ### Mouse clicker example
 /// Each time the `Button` is clicked or the `TextField` is edited,
 /// the associated localized values are updated.
 /// ```java
 /// LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-/// localize.addBundleProvider(locale -> ResourceBundle.getBundle("messages", locale));
+/// localize.addProvider("messages");
 ///
 /// DoubleProperty clickCount = new SimpleDoubleProperty();
 /// Label clickDetails = new Label();
@@ -26,11 +23,14 @@
 ///
 /// // Binding
 /// clickButton.textProperty().bind(localize.getBinding("MyApp.clickMe"));
-/// label.textProperty().bind(localize.get("MyApp.clickMessage")
-///                                   .arg("click_count", clickCount)
-///                                   .arg("name", textField.textProperty())
-///                                   .binding());
+/// clickDetails.textProperty().bind(localize.get("MyApp.clickMessage")
+///                            .arg("click_count", clickCount)
+///                            .arg("name", textField.textProperty())
+///                            .defaultValue("N/A")
+///                            .binding());
 /// ```
+/// @see com.devinsterling.localize.fx.LocalizeFX
+/// @since 1.0
 module com.devinsterling.localize.fx {
     requires transitive com.devinsterling.localize;
     requires javafx.graphics;

@@ -15,6 +15,7 @@ import java.util.Set;
 /// Builder to provide an observable string binding of a formatted localized value.
 ///
 /// @param <B> Builder instance type.
+/// @see FXArgumentsResolver
 /// @since 1.0
 public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>> extends LocalizationValueBuilder<B> {
 

@@ -30,6 +30,8 @@ import java.util.function.Function;
 public interface Trigger {
     /// Subscribes the given task to this trigger.
     ///
+    /// **This method is intended to be called on the Swing UI (EDT) thread only.**
+    ///
     /// @param task Task to run whenever the trigger occurs.
     /// @return     Subscription to cancel listening to the trigger, if needed.
     /// @throws NullPointerException If `task` is `null`.

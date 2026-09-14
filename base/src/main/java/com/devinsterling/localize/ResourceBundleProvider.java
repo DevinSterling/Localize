@@ -12,6 +12,6 @@ public interface ResourceBundleProvider {
     /// Retrieves the [ResourceBundle] associated with the given [Locale].
     ///
     /// @param locale Locale for the produced resource bundle to be based upon.
-    /// @return       The produced resource bundle.
+    /// @return       The produced resource bundle, or `null` if not available.
     ResourceBundle getBundle(Locale locale);
 }

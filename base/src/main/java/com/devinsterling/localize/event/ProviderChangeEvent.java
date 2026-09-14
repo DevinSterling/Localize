@@ -17,7 +17,7 @@ import java.util.List;
 ///
 ///  ### Example Usage
 /// Inspecting events using pattern matching:
-/// ```
+/// ```java
 /// @Override protected void onProviderChanged(ProviderChangeEvent event) {
 ///     super.onProviderChanged(event);
 ///

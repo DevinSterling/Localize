@@ -6,7 +6,7 @@ import java.util.Objects;
 ///
 /// @since 2.0
 public interface Subscription {
-    /// An empty subscription that is always inactive.
+    /// An empty subscription that is always inactive and does nothing when disposed.
     Subscription EMPTY = new Subscription() {
         @Override public void dispose() {
             // no-op

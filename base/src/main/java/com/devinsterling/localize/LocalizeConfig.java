@@ -3,7 +3,7 @@ package com.devinsterling.localize;
 import java.util.MissingResourceException;
 import java.util.Objects;
 
-/// Configuration to change how [Localize] handles operations.
+/// Configuration to control how [Localize] handles operations.
 ///
 /// ### Default Configuration
 /// - [isThrowWhenNoValueFound][LocalizeConfig#setThrowWhenNoValueFound] = `false`
@@ -21,15 +21,14 @@ public class LocalizeConfig {
     /// Creates a configuration instance with all values set to their defaults.
     public LocalizeConfig() {}
 
-    /// When set to `true`, a [MissingResourceException] is thrown
-    /// when:
-    /// - **All** bundles contain no value for a specified key.
-    /// - [LocalizationRequest#getDefaultValue()] is `null`
-    ///   (Set by [LocalizationValueBuilder#defaultValue(String)]).
+    /// Sets whether to throw a [MissingResourceException] when no value is found for a specified key.
     ///
-    /// The initial value is `false`.
+    /// When set to `true`, a [MissingResourceException] is thrown when all the conditions are met:
+    /// 1. **All** bundles contain no value for a specified key.
+    /// 2. [LocalizationRequest#getDefaultValue] is `null` (Set by [LocalizationValueBuilder#defaultValue(String)]).
     ///
-    /// @param isThrowWhenNoValueFound Flag to throw an exception.
+    /// Default: `false`
+    /// @param isThrowWhenNoValueFound `true` to throw an exception, or `false` to ignore.
     public void setThrowWhenNoValueFound(boolean isThrowWhenNoValueFound) {
         this.isThrowWhenNoValueFound = isThrowWhenNoValueFound;
     }
@@ -55,16 +54,21 @@ public class LocalizeConfig {
         this.isIgnoreMissingResourceBundles = isIgnoreMissingResourceBundles;
     }
 
-    /// The default value to return if no value for a specified key was found.
+    /// Sets the default value to use when no value is found for a specified key.
     ///
-    /// The initial value is an empty string.
+    /// [LocalizationRequest#getDefaultValue()] takes precedence over the default value set here.
+    /// If it is `null`, then default value set here is used.
     ///
-    /// @param defaultMissingValue Default value for missing pairings.
-    public void setDefaultMissingValue(String defaultMissingValue) {
-        this.defaultMissingValue = defaultMissingValue;
+    /// Default: `""` (Empty string)
+    /// @param defaultValue Default value.
+    public void setDefaultMissingValue(String defaultValue) {
+        this.defaultMissingValue = defaultValue;
     }
 
-    /// {@return `true`, if an exception is to be thrown.}
+    /// Returns `true` if a [MissingResourceException] is thrown when no value is found for a specified key.
+    ///
+    /// Default: `false`
+    /// @return `true` if an exception is thrown, or `false` if ignored.
     public boolean isThrowWhenNoValueFound() {
         return isThrowWhenNoValueFound;
     }
@@ -79,7 +83,10 @@ public class LocalizeConfig {
         return isIgnoreMissingResourceBundles;
     }
 
-    /// {@return Default value for missing pairings.}
+    /// Returns the default value to use when no value is found for a specified key.
+    ///
+    /// Default: `""` (Empty string)
+    /// @return Default value.
     public String getDefaultMissingValue() {
         return defaultMissingValue;
     }

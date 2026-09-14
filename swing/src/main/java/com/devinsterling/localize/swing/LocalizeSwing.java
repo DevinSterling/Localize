@@ -54,6 +54,7 @@ public class LocalizeSwing extends Localize {
 
     /// Creates a [LocalizeSwing] instance with the given locale and configuration.
     ///
+    /// @param locale Initial locale.
     /// @param config Main localize configuration.
     /// @throws NullPointerException If `config` is `null`.
     protected LocalizeSwing(Locale locale, LocalizeConfig config) {

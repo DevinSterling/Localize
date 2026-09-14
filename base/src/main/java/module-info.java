@@ -1,21 +1,22 @@
 /// # Localize
-/// A simple-to-use localization library.
+/// An easy-to-use internationalization and localization library for Java 17+,
+/// with JavaFX, Swing, and ICU4J integration.
 ///
 /// - Repository:
 ///   [https://github.com/DevinSterling/Localize](https://github.com/DevinSterling/Localize)
-/// - Integration Modules:
+/// - Formatter Integration Modules:
 ///   - [ICU4J](https://github.com/DevinSterling/Localize#icu4j-integration)
+/// - UI Integration Modules (to automatically reflect changes in the UI):
 ///   - [JavaFX](https://github.com/DevinSterling/Localize#localizefx--javafx-integration)
 ///   - [Swing](https://github.com/DevinSterling/Localize#localizeswing--swing-integration)
 /// ___
-/// Localize is a Java localization library that simplifies internationalizing applications.
-/// It’s designed to be straightforward to set up and use.
+/// Localize is designed to be straightforward to set up and use, simplifying internationalizing applications.
 ///
-/// 1. Create a thread-safe `Localize` instance:
+/// 1. Create a thread-safe [`Localize`][com.devinsterling.localize.Localize] instance:
 ///    ```java
 ///    Localize localize = Localize.of(Locale.ENGLISH);
 ///    ```
-/// 2. Add a provider for resource bundles:
+/// 2. Add a [`ResourceBundleProvider`][com.devinsterling.localize.ResourceBundleProvider]:
 ///    ```java
 ///    // Insert using a unique key
 ///    localize.putBundleProvider("ProviderKey", locale -> ResourceBundle.getBundle("i18n.sample", locale));
@@ -34,8 +35,8 @@
 ///
 /// ## Resource Bundles
 ///
-/// A `Localize` instance accepts multiple providers as additional sources or fallbacks,
-/// which can be removed dynamically.
+/// A [`Localize`][com.devinsterling.localize.Localize] instance accepts multiple
+/// providers as additional sources or fallbacks, which can be removed dynamically.
 /// Configuration can control scenarios such as where no value or when a resource bundle is not found.
 /// ```java
 /// localize.putBundleProvider("Provider1", locale -> ResourceBundle.getBundle("i18n.sample", locale));
@@ -86,11 +87,8 @@
 ///           .arg(55) // Argument 1
 ///           .value(); // Returns "John Doe clicked this button 55 times."
 ///   ```
-/// ___
-///
-/// Localize also features an
-/// [integration module for JavaFX, **LocalizeFX**](https://javadoc.io/doc/com.devinsterling/localize-javafx),
-/// to automatically reflect changes in the UI.
+/// @see com.devinsterling.localize.Localize
+/// @since 1.0
 module com.devinsterling.localize {
     exports com.devinsterling.localize;
     exports com.devinsterling.localize.event;

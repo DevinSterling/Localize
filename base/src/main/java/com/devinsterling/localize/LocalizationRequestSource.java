@@ -7,7 +7,7 @@ import java.util.Objects;
 ///
 /// ### Note
 /// The source can be handled using exhaustive pattern matching:
-/// ```
+/// ```java
 /// switch (source) {
 ///     case Key(String key) -> { ... }
 ///     case Pattern(String pattern) -> { ... }

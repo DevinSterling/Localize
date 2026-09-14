@@ -18,6 +18,9 @@ import javafx.beans.value.ObservableValue;
 public class FXArgumentsResolver extends DefaultArgumentsResolver {
     static final FXArgumentsResolver INSTANCE = new FXArgumentsResolver();
 
+    /// Creates a LocalizeFX default arguments resolver.
+    public FXArgumentsResolver() {}
+
     @Override public Object resolve(Object value) {
         value = super.resolve(value);
 

@@ -16,6 +16,9 @@ import java.util.function.Supplier;
 public class DefaultArgumentsResolver implements Arguments.Resolver {
     static final DefaultArgumentsResolver INSTANCE = new DefaultArgumentsResolver();
 
+    /// Creates a default arguments resolver.
+    public DefaultArgumentsResolver() {}
+
     @Override public Object resolve(Object value) {
         if (value instanceof Supplier<?> supplier) {
             value = supplier.get();
