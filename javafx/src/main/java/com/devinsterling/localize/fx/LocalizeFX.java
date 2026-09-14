@@ -1,10 +1,11 @@
 package com.devinsterling.localize.fx;
 
-import com.devinsterling.localize.event.LocaleChangeEvent;
 import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
+import com.devinsterling.localize.event.LocaleChangeEvent;
+import com.devinsterling.localize.event.ProviderChangeEvent;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -138,12 +139,18 @@ public class LocalizeFX extends Localize {
     private void onLocaleChangedFxThread(LocaleChangeEvent change) {
         // Avoid setting the property to a stale `Locale` by checking the version
         if (change.isValid()) {
-            localeProperty.setInternal(change.getNew());
+            localeProperty.setInternal(change.getNewLocale());
         }
     }
 
-    @Override protected void onProvidersChanged() {
-        notifyListeners();
+    // In a future release, events will be used to optimize provider-scoped listeners (uncommon case)
+    @Override protected void onProvidersChanged(ProviderChangeEvent event) {
+        // Optimization NOTE:
+        // Ignore any events caused by a locale change; it is already handled on `onLocaleChanged`.
+        // This avoids unnecessarily recomputing bindings more than once in quick succession.
+        if (event.getCause() != ProviderChangeEvent.Cause.LOCALE_CHANGE) {
+            notifyListeners();
+        }
     }
 
     @Override public FXLocalizationValueBuilder<?> format(String pattern) {
