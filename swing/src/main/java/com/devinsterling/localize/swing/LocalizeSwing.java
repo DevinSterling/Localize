@@ -1,10 +1,11 @@
 package com.devinsterling.localize.swing;
 
-import com.devinsterling.localize.event.LocaleChangeEvent;
 import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
+import com.devinsterling.localize.event.LocaleChangeEvent;
+import com.devinsterling.localize.event.ProviderChangeEvent;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -261,12 +262,18 @@ public class LocalizeSwing extends Localize {
         }
         // After notifying all listeners, recheck if the held locale is still the current one
         if (change.isValid()) {
-            propertyChangeManager.notifyChangeListeners(this, change.getOld(), change.getNew());
+            propertyChangeManager.notifyChangeListeners(this, change.getOldLocale(), change.getNewLocale());
         }
     }
 
-    @Override protected void onProvidersChanged() {
-        notifyListeners();
+    // In a future release, events will be used to optimize provider-scoped listeners (uncommon case)
+    @Override protected void onProvidersChanged(ProviderChangeEvent event) {
+        // Optimization NOTE:
+        // Ignore any events caused by a locale change; it is already handled on `onLocaleChanged`.
+        // This avoids unnecessarily recomputing bindings more than once in quick succession.
+        if (event.getCause() != ProviderChangeEvent.Cause.LOCALE_CHANGE) {
+            notifyListeners();
+        }
     }
 
     @Override public SwingLocalizationValueBuilder<?> format(String pattern) {

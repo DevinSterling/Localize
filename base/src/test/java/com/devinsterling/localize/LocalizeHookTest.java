@@ -1,6 +1,7 @@
 package com.devinsterling.localize;
 
 import com.devinsterling.localize.event.LocaleChangeEvent;
+import com.devinsterling.localize.event.ProviderChangeEvent;
 
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +42,7 @@ public class LocalizeHookTest {
     @Test void testOnProvidersChange() {
         AtomicInteger counter = new AtomicInteger(0);
         Localize localize = new Localize(Locale.ENGLISH, new LocalizeConfig()) {
-            @Override protected void onProvidersChanged() {
+            @Override protected void onProvidersChanged(ProviderChangeEvent event) {
                 counter.incrementAndGet();
             }
         };

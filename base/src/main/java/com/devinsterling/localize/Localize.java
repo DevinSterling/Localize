@@ -1,19 +1,21 @@
 package com.devinsterling.localize;
 
 import com.devinsterling.localize.event.LocaleChangeEvent;
+import com.devinsterling.localize.event.LocalizeEvent;
+import com.devinsterling.localize.event.ProviderChangeEvent;
+import com.devinsterling.localize.event.impl.ProviderChangeEventImpls;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /// Base class to handle localization.
 ///
@@ -95,7 +97,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Localize {
     private final VersionedLocale locale;
     private final ProviderStore providerStore = new ProviderStore();
-    private final Object providerLock = new Object();
+    /// Lock to synchronize [ProviderEntry#bundle] replacements
+    private final Object providerEntryBundleLock = new Object();
     private final LocalizeConfig config;
     private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
 
@@ -147,6 +150,29 @@ public class Localize {
         return new Localize(locale, config);
     }
 
+    /// A hook triggered whenever an event occurs.
+    ///
+    /// This method is called internally and should not be called directly by programs.
+    ///
+    /// When overriding, subclasses *should* call `super.onEvent` to preserve parent behavior:
+    /// ```java
+    /// @Override protected void onEvent(LocalizeEvent event) {
+    ///     super.onEvent(event);
+    ///     ...
+    /// }
+    /// ```
+    /// @implSpec This method must be thread-safe.
+    /// @see fireEvent
+    /// @since 2.0
+    protected void onEvent(LocalizeEvent event) {
+        // In Java 21, this will be replaced with a switch
+        if (event instanceof LocaleChangeEvent change) {
+            onLocaleChanged(change);
+        } else if (event instanceof ProviderChangeEvent change) {
+            onProvidersChanged(change);
+        }
+    }
+
     /// A hook triggered whenever the locale is changed.
     ///
     /// When overriding, subclasses *should* call `super.onLocaleChanged` to preserve intermediate parent behavior.
@@ -160,24 +186,36 @@ public class Localize {
     ///     }
     /// }
     /// ```
+    /// @param change Locale change event.
     /// @implSpec This method is thread-safe.
     /// @since 2.0
     protected void onLocaleChanged(LocaleChangeEvent change) {
         // no-op
     }
 
-    /// A hook triggered whenever providers are added, removed, or refreshed.
+    /// A hook triggered whenever a provider is added, removed, or refreshed.
     ///
     /// When overriding, subclasses *should* call `super.onProvidersChanged` to preserve intermediate parent behavior.
     /// ```java
-    /// @Override protected void onProvidersChanged() {
-    ///     super.onProvidersChanged();
-    ///     ...
+    /// @Override protected void onProvidersChanged(ProviderChangeEvent event) {
+    ///     super.onProvidersChanged(event);
+    ///
+    ///     // Inspecting the event
+    ///     switch (event) {
+    ///         case ProviderChangeEvent.Added added -> {
+    ///             logger.info("Added provider {}", added.getEntry().getKey());
+    ///         }
+    ///         case ProviderChangeEvent.Refreshed refreshed -> {
+    ///             // ...
+    ///         }
+    ///         default -> {}
+    ///     }
     /// }
     /// ```
+    /// @param event Provider change event.
     /// @implSpec This method is thread-safe.
     /// @since 2.0
-    protected void onProvidersChanged() {
+    protected void onProvidersChanged(ProviderChangeEvent event) {
         // no-op
     }
 
@@ -188,25 +226,29 @@ public class Localize {
     /// @param locale Locale to fetch associated resource bundles.
     /// @throws NullPointerException If locale is `null`.
     public void setLocale(Locale locale) {
-        record Change(VersionedLocale locale, VersionedLocale.Snapshot snapshot) implements LocaleChangeEvent {
-            @Override public Locale getOld() {
+        record Change(Localize localize, VersionedLocale.Snapshot snapshot) implements LocaleChangeEvent {
+            @Override public Locale getOldLocale() {
                 return snapshot.previous;
             }
 
-            @Override public Locale getNew() {
+            @Override public Locale getNewLocale() {
                 return snapshot.current;
             }
 
             @Override public boolean isValid() {
-                return locale.isCurrent(snapshot);
+                return localize.locale.isCurrent(snapshot);
+            }
+
+            @Override public Localize getSource() {
+                return localize;
             }
         }
 
         VersionedLocale.Snapshot snapshot = this.locale.set(locale);
 
         if (!snapshot.isUnchanged()) {
-            refresh(locale);
-            onLocaleChanged(new Change(this.locale, snapshot));
+            refresh(snapshot, LocalizeEvent.Cause.LOCALE_CHANGE);
+            fireEvent(new Change(this, snapshot));
         }
     }
 
@@ -281,6 +323,13 @@ public class Localize {
         ProviderEntry entry = new ProviderEntry(this, key, provider);
         ProviderEntry previous = providerStore.put(entry);
         refresh(entry);
+
+        fireEvent(
+            previous == null
+                ? new ProviderChangeEventImpls.Added(this, entry)
+                : new ProviderChangeEventImpls.Replaced(this, previous, entry)
+        );
+
         return previous != null ? previous.getProvider() : null;
     }
 
@@ -363,6 +412,7 @@ public class Localize {
         ProviderEntry entry = new ProviderEntry(this, ProviderKey.of(), provider);
         providerStore.put(entry);
         refresh(entry);
+        fireEvent(new ProviderChangeEventImpls.Added(this, entry));
         return entry;
     }
 
@@ -443,13 +493,13 @@ public class Localize {
     /// @since 2.0
     public ResourceBundleProvider removeBundleProvider(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
-        ResourceBundleProvider removed = providerStore.remove(key);
+        ProviderEntry removed = providerStore.remove(key);
 
         if (removed != null) {
-            onProvidersChanged();
+            fireEvent(new ProviderChangeEventImpls.Removed(this, removed));
         }
 
-        return removed;
+        return removed == null ? null : removed.getProvider();
     }
 
     /// Removes the [ResourceBundleProvider] associated with the given key.
@@ -469,10 +519,16 @@ public class Localize {
     /// @return `true` if any entries were removed, or `false` if there were no entries to remove.
     /// @since 2.0
     public boolean clearBundleProviders() {
-        boolean isAnyRemoved = providerStore.clear();
+        List<ProviderEntry> removed = providerStore.clear();
+        boolean isAnyRemoved = !removed.isEmpty();
 
         if (isAnyRemoved) {
-            onProvidersChanged();
+            fireEvent(
+                removed.size() > 1
+                    ? new ProviderChangeEventImpls.BulkRemoved(this, removed)
+                    // If one entry was removed, no need to fire a bulk refresh event
+                    : new ProviderChangeEventImpls.Removed(this, removed.get(0))
+            );
         }
 
         return isAnyRemoved;
@@ -499,7 +555,13 @@ public class Localize {
     public boolean refresh(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
         ProviderEntry entry = providerStore.get(key);
-        return entry != null && refresh(entry);
+        boolean isRefreshed = entry != null && refresh(entry);
+
+        if (isRefreshed) {
+            fireEvent(new ProviderChangeEventImpls.Refreshed(this, entry));
+        }
+
+        return isRefreshed;
     }
 
     /// Triggers a refresh by fetching a new [ResourceBundle] from
@@ -524,13 +586,7 @@ public class Localize {
     ///
     /// @return `true` if any providers were refreshed, or `false` if none were refreshed.
     public boolean refresh() {
-        boolean isAnyRefreshed = refresh(getLocale());
-
-        if (isAnyRefreshed) {
-            onProvidersChanged();
-        }
-
-        return isAnyRefreshed;
+        return refresh(locale.snapshot(), LocalizeEvent.Cause.EXTERNAL);
     }
 
     /// Returns a builder for formatting a localized value from the given pattern.
@@ -728,47 +784,55 @@ public class Localize {
     /// Triggers all providers to refresh and fetch new [ResourceBundle] instances with a given [Locale],
     /// returning `true` if any providers were refreshed.
     ///
-    /// @param locale Locale to refresh all providers with.
+    /// @param snapshot Snapshot locale to refresh all providers with.
     /// @return       `true` if any providers were refreshed.
-    private boolean refresh(Locale locale) {
-        record VersionBundle(long version, ResourceBundle bundle) {}
+    private boolean refresh(VersionedLocale.Snapshot snapshot, LocalizeEvent.Cause cause) {
+        record VersionEntryBundle(ProviderEntry entry, ResourceBundle bundle, long version) {}
 
-        boolean isAnyRefreshed = false;
-        Map<ProviderEntry, VersionBundle> newBundles = new IdentityHashMap<>();
+        int sizeHint = providerStore.providers.size();
+        List<VersionEntryBundle> newBundles = new ArrayList<>(sizeHint);
 
         for (ProviderEntry entry : providerStore) {
             // Stop early if the locale changes mid-way or the thread is interrupted
-            if (!locale.equals(getLocale()) || Thread.currentThread().isInterrupted()) {
+            if (!locale.isCurrent(snapshot) || Thread.currentThread().isInterrupted()) {
                 return false;
             }
 
             long version = entry.version.incrementAndGet();
-            ResourceBundle bundle = getResourceBundle(entry, locale);
-            newBundles.put(entry, new VersionBundle(version, bundle));
+            ResourceBundle bundle = getResourceBundle(entry, snapshot.current);
+            newBundles.add(new VersionEntryBundle(entry, bundle, version));
         }
 
+        List<ProviderEntry> refreshed = new ArrayList<>(sizeHint);
+
         // Apply the new bundles
-        synchronized (providerLock) {
-            if (locale.equals(getLocale())) {
-                for (Map.Entry<ProviderEntry, VersionBundle> mapEntry : newBundles.entrySet()) {
-                    ProviderEntry entry = mapEntry.getKey();
-                    VersionBundle versionBundle = mapEntry.getValue();
-                    ResourceBundle previousBundle = entry.bundle;
-                    ResourceBundle newBundle = versionBundle.bundle;
+        synchronized (providerEntryBundleLock) {
+            if (locale.isCurrent(snapshot)) {
+                for (VersionEntryBundle versionEntryBundle : newBundles) {
+                    ProviderEntry entry = versionEntryBundle.entry;
+                    ResourceBundle newBundle = versionEntryBundle.bundle;
 
-                    if (entry.isActive() && entry.version.get() == versionBundle.version) {
+                    if (// A refresh occurs if at least one of the bundles is non-null.
+                        (entry.bundle != null || newBundle != null)
+                        && entry.isActive()
+                        && entry.version.get() == versionEntryBundle.version
+                    ) {
                         entry.bundle = newBundle;
-
-                        // A refresh occurs if the 2 bundles are not *null*
-                        if (previousBundle != null || newBundle != null) {
-                            isAnyRefreshed = true;
-                        }
+                        refreshed.add(entry);
                     }
                 }
             }
         }
 
-        return isAnyRefreshed;
+        if (!refreshed.isEmpty()) {
+            fireEvent(
+                refreshed.size() > 1
+                    ? new ProviderChangeEventImpls.BulkRefreshed(this, cause, refreshed)
+                    : new ProviderChangeEventImpls.Refreshed(this, cause, refreshed.get(0))
+            );
+        }
+
+        return !refreshed.isEmpty();
     }
 
     private boolean refresh(ProviderEntry entry) {
@@ -776,18 +840,19 @@ public class Localize {
 
         boolean isRefreshed = false;
         long version = entry.version.incrementAndGet();
-        Locale locale = getLocale();
-        ResourceBundle bundle = getResourceBundle(entry, locale);
+        VersionedLocale.Snapshot snapshot = locale.snapshot();
+        ResourceBundle newBundle = getResourceBundle(entry, snapshot.current);
 
-        synchronized (providerLock) {
-            if (entry.isActive() && locale.equals(getLocale()) && version == entry.version.get()) {
+        synchronized (providerEntryBundleLock) {
+            if (// A refresh occurs if at least one of the bundles is non-null.
+                (entry.bundle != null || newBundle != null)
+                && entry.isActive()
+                && locale.isCurrent(snapshot)
+                && version == entry.version.get()
+            ) {
+                entry.bundle = newBundle;
                 isRefreshed = true;
-                entry.bundle = bundle;
             }
-        }
-
-        if (isRefreshed) {
-            onProvidersChanged();
         }
 
         return isRefreshed;
@@ -795,7 +860,7 @@ public class Localize {
 
     private void remove(ProviderEntry entry) {
         if (entry.isActive() && providerStore.remove(entry)) {
-            onProvidersChanged();
+            fireEvent(new ProviderChangeEventImpls.Removed(this, entry));
         }
     }
 
@@ -817,6 +882,32 @@ public class Localize {
 
     private static Locale assertLocale(Locale locale) {
         return Objects.requireNonNull(locale, "locale must not be null");
+    }
+
+    /// Fires the given event and propagates it to all attached [Localize] instances.
+    ///
+    /// The event is dispatched to the [onEvent] hook of each attached instance.
+    ///
+    /// @param event Event to fire and propagate.
+    /// @throws NullPointerException If `event` is `null`.
+    /// @see #onEvent
+    /// @since 2.0
+    protected final void fireEvent(LocalizeEvent event) {
+        Objects.requireNonNull(event, "event must not be null");
+        boolean needsCleanup = false;
+
+        for (WeakReference<Localize> weak : data.instances) {
+            Localize instance = weak.get();
+            if (instance != null) {
+                instance.onEvent(event);
+            } else {
+                needsCleanup = true;
+            }
+        }
+
+        if (needsCleanup) {
+            data.instances.removeIf(weak -> weak.get() == null);
+        }
     }
 
     /// A unique key associated with a [ResourceBundleProvider] [entry][ProviderEntry].
@@ -943,8 +1034,8 @@ public class Localize {
         public void refresh() {
             Localize localize = this.localize;
 
-            if (localize != null) {
-                localize.refresh(this);
+            if (localize != null && localize.refresh(this)) {
+                localize.fireEvent(new ProviderChangeEventImpls.Refreshed(localize, this));
             }
         }
 
@@ -989,13 +1080,7 @@ public class Localize {
         }
 
         private boolean contains(ProviderKey key) {
-            for (ProviderEntry entry : providers) {
-                if (entry.getKey().equals(key)) {
-                    return true;
-                }
-            }
-
-            return false;
+            return get(key) != null;
         }
 
         // Synchronized to ensure that no modifications occur during iteration
@@ -1016,7 +1101,7 @@ public class Localize {
             return null;
         }
 
-        private synchronized ResourceBundleProvider remove(ProviderKey key) {
+        private synchronized ProviderEntry remove(ProviderKey key) {
             for (int i = 0; i < providers.size(); i++) {
                 ProviderEntry entry = providers.get(i);
 
@@ -1024,7 +1109,7 @@ public class Localize {
                     providers.remove(i);
                     // When an entry is removed, it must be marked inactive by disposing it.
                     entry.dispose();
-                    return entry.getProvider();
+                    return entry;
                 }
             }
 
@@ -1041,48 +1126,51 @@ public class Localize {
             return removed;
         }
 
-        private synchronized boolean clear() {
-            if (providers.isEmpty()) return false;
+        /// @return Snapshot of the removed and disposed entries.
+        private synchronized List<ProviderEntry> clear() {
+            if (providers.isEmpty()) return List.of();
 
-            // `CopyOnWriteArrayList` returns a snapshot that is not modified when clear is called
-            Iterator<ProviderEntry> snapshot = providers.iterator();
+            List<ProviderEntry> removed = List.copyOf(providers);
             providers.clear();
 
-            while (snapshot.hasNext()) {
-                snapshot.next().dispose();
+            for (ProviderEntry entry : removed) {
+                entry.dispose();
             }
 
-            return true;
+            return removed;
         }
     }
 
     private static final class VersionedLocale {
-        private final AtomicLong version = new AtomicLong();
-        private final AtomicReference<Locale> locale;
+        private volatile long version = 0;
+        private volatile Locale locale;
 
         private VersionedLocale(Locale locale) {
-            this.locale = new AtomicReference<>(assertLocale(locale));
+            this.locale = assertLocale(locale);
         }
 
         private synchronized Snapshot set(Locale newLocale) {
-            Locale current = locale.get();
+            Locale current = locale;
 
             // If the given `newLocale` is equivalent to the current `locale`, no replacement is performed.
             if (current.equals(assertLocale(newLocale))) {
                 // version is `-1` if the given locale is equivalent.
                 return Snapshot.unchanged(current);
             } else {
-                locale.set(newLocale);
-                return new Snapshot(current, newLocale, version.incrementAndGet());
+                return new Snapshot(current, locale = newLocale, ++version);
             }
         }
 
+        private synchronized Snapshot snapshot() {
+            return new Snapshot(locale, locale, version);
+        }
+
         private Locale get() {
-            return locale.get();
+            return locale;
         }
 
         private boolean isCurrent(Snapshot snapshot) {
-            return snapshot.version == this.version.get();
+            return snapshot.version == this.version;
         }
 
         private record Snapshot(Locale previous, Locale current, long version) {

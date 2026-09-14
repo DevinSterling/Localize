@@ -5,15 +5,15 @@ import java.util.Locale;
 /// An event representing a [Locale] change in a [`Localize`][com.devinsterling.localize.Localize] instance.
 ///
 /// In multithreaded applications, events may be propagated asynchronously across threads.
-/// Handlers should check [isValid] to discard stale updates before processing [getNew].
+/// Handlers should check [isValid] to discard stale updates before processing [getNewLocale].
 ///
 /// @see com.devinsterling.localize.Localize#setLocale
 /// @since 2.0
-public interface LocaleChangeEvent {
+public interface LocaleChangeEvent extends LocalizeEvent {
     /// Returns the locale that was set before this change.
     ///
     /// @return Old locale **(never `null`)**.
-    Locale getOld();
+    Locale getOldLocale();
 
     /// Returns the new locale associated with this change.
     ///
@@ -25,11 +25,11 @@ public interface LocaleChangeEvent {
     /// Callers should check [isValid] to discard stale updates.
     ///
     /// @return New locale **(never `null`)**.
-    Locale getNew();
+    Locale getNewLocale();
 
     /// Returns `true` if this event has **not** been superseded by a newer locale change.
     ///
-    /// If this method returns `false`, [getNew] is stale.
+    /// If this method returns `false`, [getNewLocale] is stale.
     ///
     /// @return `true` if this event is still current, or `false` if superseded.
     boolean isValid();
