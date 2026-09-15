@@ -5,6 +5,7 @@ import com.devinsterling.localize.event.LocalizeEvent;
 import com.devinsterling.localize.event.ProviderChangeEvent;
 import com.devinsterling.localize.event.impl.ProviderChangeEventImpls;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -96,14 +97,89 @@ import java.util.concurrent.atomic.AtomicLong;
 ///                .value()
 ///                .equals("There are 100 people on campus.");
 /// ```
+///
+/// ### Attaching and Shared State
+/// [Localize] instances can be attached to adapt to specific environments while sharing the same underlying state.
+///
+/// Attached instances share the same [locale][getLocale], [formatter][getFormatter],
+/// [providers][getProviderEntries], [configuration][getConfig], [listeners][addListener],
+/// and are [notified of events made by either][fireEvent].
+/// Associated changes are reflected in all other instances sharing the same state.
+///
+/// **Attaching does not use the source as a delegate. Method calls will not be routed through it.**
+/// Aside from the shared internal state, instances are independent:
+/// ```java
+/// Localize localize = Localize.of(Locale.ENGLISH);
+/// LocalizeFX javaFX = LocalizeFX.attach(localize); // JavaFX integration: localize-fx
+/// LocalizeSwing swing = LocalizeSwing.attach(localize); // Swing integration: localize-swing
+///
+/// // Changes made to one are reflected to all instances:
+/// javaFX.setLocale(Locale.JAPANESE);
+/// assert swing.getLocale().equals(Locale.JAPANESE); // true
+///
+/// swing.setLocale(Locale.KOREAN);
+/// assert localize.getLocale().equals(Locale.KOREAN); // true
+/// ```
+///
+/// Independent instances can also be created directly when shared state is not needed:
+/// ```java
+/// Localize localize = Localize.of(Locale.ENGLISH);
+/// LocalizeFX javaFX = LocalizeFX.of(Locale.ENGLISH);
+/// LocalizeSwing swing = LocalizeSwing.of(Locale.ENGLISH);
+/// ```
 /// @since 1.0
 public class Localize {
-    private final VersionedLocale locale;
-    private final ProviderStore providerStore = new ProviderStore();
-    /// Lock to synchronize [ProviderEntry#bundle] replacements
-    private final Object providerEntryBundleLock = new Object();
-    private final LocalizeConfig config;
-    private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
+    private static final class Data {
+        /// All [Localize] instances attached to this [Data].
+        /// This avoids having to go through the [listeners] registry,
+        /// allowing to notify attached instances without indirection.
+        private final CopyOnWriteArrayList<WeakReference<Localize>> attached = new CopyOnWriteArrayList<>();
+        /// Lock to synchronize [ProviderEntry#bundle] replacements
+        private final Object providerEntryBundleLock = new Object();
+        private final ProviderStore providers = new ProviderStore();
+        private final VersionedLocale locale;
+        private final LocalizeConfig config;
+        private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
+
+        private Data(Locale locale, LocalizeConfig config) {
+            this.locale = new VersionedLocale(locale);
+            this.config = Objects.requireNonNull(config, "config must not be null");
+        }
+    }
+
+    private final Data data;
+    /// Keeps the wrapped instance from being garbage collected.
+    /// Without this, it can lead to subtle bugs:
+    /// ```
+    /// // LocalizeLogger can be GC'd too early if the wrapper doesn't keep a reference.
+    /// Localize a = LocalizeFX.attach(
+    ///     LocalizeLogger.attach(
+    ///         Localize.of()
+    ///     )
+    /// );
+    /// ```
+    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
+    private final Localize parent;
+
+    private Localize(Localize parent, Data data) {
+        this.parent = parent;
+        this.data = data;
+        data.attached.add(new WeakReference<>(this));
+    }
+
+    /// Creates a [Localize] instance attached to the same internal state as the given source,
+    /// sharing the same [locale][getLocale], [formatter][getFormatter], [providers][getProviderEntries],
+    /// [configuration][getConfig], [listeners][addListener], and is [notified of events made by either][fireEvent].
+    ///
+    /// **The given source is not used as a delegate. Method calls will not be routed through it.**
+    /// Aside from the shared internal state, both instances are independent.
+    ///
+    /// @param source Instance with the internal state to attach to.
+    /// @throws NullPointerException If `source` is `null`.
+    /// @since 2.0
+    protected Localize(Localize source) {
+        this(Objects.requireNonNull(source, "source must not be null"), source.data);
+    }
 
     /// Creates a [Localize] instance with the given locale and configuration.
     ///
@@ -111,8 +187,7 @@ public class Localize {
     /// @param config Main localize configuration.
     /// @throws NullPointerException If `config` is `null`.
     protected Localize(Locale locale, LocalizeConfig config) {
-        this.locale = new VersionedLocale(locale);
-        this.config = Objects.requireNonNull(config, "config must not be null");
+        this(null, new Data(locale, config));
     }
 
     /// Creates a new [Localize] instance with the
@@ -243,7 +318,7 @@ public class Localize {
             }
 
             @Override public boolean isValid() {
-                return localize.locale.isCurrent(snapshot);
+                return localize.data.locale.isCurrent(snapshot);
             }
 
             @Override public Localize getSource() {
@@ -251,7 +326,7 @@ public class Localize {
             }
         }
 
-        VersionedLocale.Snapshot snapshot = this.locale.set(locale);
+        VersionedLocale.Snapshot snapshot = this.data.locale.set(locale);
 
         if (!snapshot.isUnchanged()) {
             refresh(snapshot, LocalizeEvent.Cause.LOCALE_CHANGE);
@@ -263,7 +338,7 @@ public class Localize {
     ///
     /// @return The current locale.
     public Locale getLocale() {
-        return locale.get();
+        return data.locale.get();
     }
 
     /// Sets the localization formatter.
@@ -273,17 +348,17 @@ public class Localize {
     /// @param formatter Formatter to format requests.
     /// @throws NullPointerException If `formatter` is `null`.
     public void setFormatter(LocalizationFormatter formatter) {
-        this.formatter = Objects.requireNonNull(formatter, "Formatter must not be null");
+        data.formatter = Objects.requireNonNull(formatter, "Formatter must not be null");
     }
 
     /// {@return The localization formatter}
     public LocalizationFormatter getFormatter() {
-        return formatter;
+        return data.formatter;
     }
 
     /// {@return The localize configuration}
     public LocalizeConfig getConfig() {
-        return config;
+        return data.config;
     }
 
     /// Adds the given provider to retrieve localized values from.
@@ -328,7 +403,7 @@ public class Localize {
     /// @since 2.0
     public ResourceBundleProvider putBundleProvider(ProviderKey key, ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(this, key, provider);
-        ProviderEntry previous = providerStore.put(entry);
+        ProviderEntry previous = data.providers.put(entry);
         refresh(entry);
 
         fireEvent(
@@ -417,7 +492,7 @@ public class Localize {
     /// @since 1.3
     public ProviderEntry addBundleProvider(ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(this, ProviderKey.of(), provider);
-        providerStore.put(entry);
+        data.providers.put(entry);
         refresh(entry);
         fireEvent(new ProviderChangeEventImpls.Added(this, entry));
         return entry;
@@ -448,7 +523,7 @@ public class Localize {
     /// @see ProviderKey#of(String)
     /// @since 2.0
     public ProviderEntry getBundleProviderEntry(ProviderKey key) {
-        return providerStore.get(Objects.requireNonNull(key, "key must not be null"));
+        return data.providers.get(Objects.requireNonNull(key, "key must not be null"));
     }
 
     /// Returns the entry associated with the given key, or `null` if not present.
@@ -473,7 +548,7 @@ public class Localize {
     /// @see ProviderKey#of(String)
     /// @since 2.0
     public boolean containsBundleProvider(ProviderKey key) {
-        return providerStore.contains(Objects.requireNonNull(key, "key must not be null"));
+        return data.providers.contains(Objects.requireNonNull(key, "key must not be null"));
     }
 
     /// Returns `true` if the provider associated with the given key is present.
@@ -500,7 +575,7 @@ public class Localize {
     /// @since 2.0
     public ResourceBundleProvider removeBundleProvider(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
-        ProviderEntry removed = providerStore.remove(key);
+        ProviderEntry removed = data.providers.remove(key);
 
         if (removed != null) {
             fireEvent(new ProviderChangeEventImpls.Removed(this, removed));
@@ -526,7 +601,7 @@ public class Localize {
     /// @return `true` if any entries were removed, or `false` if there were no entries to remove.
     /// @since 2.0
     public boolean clearBundleProviders() {
-        List<ProviderEntry> removed = providerStore.clear();
+        List<ProviderEntry> removed = data.providers.clear();
         boolean isAnyRemoved = !removed.isEmpty();
 
         if (isAnyRemoved) {
@@ -561,7 +636,7 @@ public class Localize {
     /// @since 2.0
     public boolean refresh(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
-        ProviderEntry entry = providerStore.get(key);
+        ProviderEntry entry = data.providers.get(key);
         boolean isRefreshed = entry != null && refresh(entry);
 
         if (isRefreshed) {
@@ -593,7 +668,7 @@ public class Localize {
     ///
     /// @return `true` if any providers were refreshed, or `false` if none were refreshed.
     public boolean refresh() {
-        return refresh(locale.snapshot(), LocalizeEvent.Cause.EXTERNAL);
+        return refresh(data.locale.snapshot(), LocalizeEvent.Cause.EXTERNAL);
     }
 
     /// Returns a builder for formatting a localized value from the given pattern.
@@ -683,18 +758,19 @@ public class Localize {
     /// @return Unmodifiable live view of all entries.
     /// @since 2.0
     public Collection<ProviderEntry> getBundleProviderEntries() {
-        return providerStore.unmodifiableView;
+        return data.providers.unmodifiableView;
     }
 
     /// Returns all contained resource bundles.
     ///
     /// @return Immutable snapshot of all resource bundles at the time of calling.
     public Collection<ResourceBundle> getResourceBundles() {
-        return providerStore.unmodifiableView
-                            .stream()
-                            .map(ProviderEntry::getBundle)
-                            .filter(Objects::nonNull)
-                            .toList();
+        return data.providers
+                   .unmodifiableView
+                   .stream()
+                   .map(ProviderEntry::getBundle)
+                   .filter(Objects::nonNull)
+                   .toList();
     }
 
     /// Formats the request as-is into a localized value.
@@ -741,19 +817,16 @@ public class Localize {
         String key = source.value();
         String value = null;
 
-        LocalizationFormatter.Request.Builder requestBuilder = LocalizationFormatter.Request.Builder
-                .of("")
-                .arguments(request.getArguments());
-
-        for (ProviderEntry entry : providerStore) {
+        for (ProviderEntry entry : data.providers) {
             if ((bundle = entry.getBundle()) == null || !bundle.containsKey(key)) continue;
 
             String pattern = bundle.getString(key);
 
             try {
                 value = getFormatter().format(
-                    requestBuilder
-                        .pattern(pattern)
+                    LocalizationFormatter.Request.Builder
+                        .of(pattern)
+                        .arguments(request.getArguments())
                         // Locale can change mid-loop, so it's always set here
                         .locale(getLocale())
                         .build()
@@ -796,12 +869,12 @@ public class Localize {
     private boolean refresh(VersionedLocale.Snapshot snapshot, LocalizeEvent.Cause cause) {
         record VersionEntryBundle(ProviderEntry entry, ResourceBundle bundle, long version) {}
 
-        int sizeHint = providerStore.providers.size();
+        int sizeHint = data.providers.providers.size();
         List<VersionEntryBundle> newBundles = new ArrayList<>(sizeHint);
 
-        for (ProviderEntry entry : providerStore) {
+        for (ProviderEntry entry : data.providers) {
             // Stop early if the locale changes mid-way or the thread is interrupted
-            if (!locale.isCurrent(snapshot) || Thread.currentThread().isInterrupted()) {
+            if (!data.locale.isCurrent(snapshot) || Thread.currentThread().isInterrupted()) {
                 return false;
             }
 
@@ -813,8 +886,8 @@ public class Localize {
         List<ProviderEntry> refreshed = new ArrayList<>(sizeHint);
 
         // Apply the new bundles
-        synchronized (providerEntryBundleLock) {
-            if (locale.isCurrent(snapshot)) {
+        synchronized (data.providerEntryBundleLock) {
+            if (data.locale.isCurrent(snapshot)) {
                 for (VersionEntryBundle versionEntryBundle : newBundles) {
                     ProviderEntry entry = versionEntryBundle.entry;
                     ResourceBundle newBundle = versionEntryBundle.bundle;
@@ -847,14 +920,14 @@ public class Localize {
 
         boolean isRefreshed = false;
         long version = entry.version.incrementAndGet();
-        VersionedLocale.Snapshot snapshot = locale.snapshot();
+        VersionedLocale.Snapshot snapshot = data.locale.snapshot();
         ResourceBundle newBundle = getResourceBundle(entry, snapshot.current);
 
-        synchronized (providerEntryBundleLock) {
+        synchronized (data.providerEntryBundleLock) {
             if (// A refresh occurs if at least one of the bundles is non-null.
                 (entry.bundle != null || newBundle != null)
                 && entry.isActive()
-                && locale.isCurrent(snapshot)
+                && data.locale.isCurrent(snapshot)
                 && version == entry.version.get()
             ) {
                 entry.bundle = newBundle;
@@ -866,7 +939,7 @@ public class Localize {
     }
 
     private void remove(ProviderEntry entry) {
-        if (entry.isActive() && providerStore.remove(entry)) {
+        if (entry.isActive() && data.providers.remove(entry)) {
             fireEvent(new ProviderChangeEventImpls.Removed(this, entry));
         }
     }
@@ -897,13 +970,12 @@ public class Localize {
     ///
     /// @param event Event to fire and propagate.
     /// @throws NullPointerException If `event` is `null`.
-    /// @see #onEvent
     /// @since 2.0
     protected final void fireEvent(LocalizeEvent event) {
         Objects.requireNonNull(event, "event must not be null");
         boolean needsCleanup = false;
 
-        for (WeakReference<Localize> weak : data.instances) {
+        for (WeakReference<Localize> weak : data.attached) {
             Localize instance = weak.get();
             if (instance != null) {
                 instance.onEvent(event);
@@ -913,7 +985,7 @@ public class Localize {
         }
 
         if (needsCleanup) {
-            data.instances.removeIf(weak -> weak.get() == null);
+            data.attached.removeIf(weak -> weak.get() == null);
         }
     }
 
