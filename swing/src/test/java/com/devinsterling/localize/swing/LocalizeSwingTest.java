@@ -1,5 +1,6 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.swing.junit.SwingEdtExtension;
 
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
 public class LocalizeSwingTest {
+
+    @Test void testCompositionConstructor() {
+        Localize localize = Localize.of();
+        LocalizeSwing swingA = LocalizeSwing.attach(localize);
+        LocalizeSwing swingB = LocalizeSwing.attach(localize);
+
+        assertNotEquals(localize, swingA);
+        assertNotEquals(swingA, swingB);
+    }
 
     @Test void testNullPropertyChangeListener() {
         LocalizeSwing localize = LocalizeSwing.of();
