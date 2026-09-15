@@ -17,14 +17,25 @@ tasks {
         options.encoding = "UTF-8"
     }
     withType<Javadoc>().configureEach {
-        options.encoding = "UTF-8"
-        (options as StandardJavadocDocletOptions).tags(
-            "apiNote:a:API Note:",
-            "implNote:a:Implementation Note:",
-            "implSpec:a:Implementation Requirements:",
-        )
         javadocTool = javaToolchains.javadocToolFor {
             languageVersion = ProjectInfo.JAVADOC_VERSION
+        }
+        options {
+            this as StandardJavadocDocletOptions
+            encoding = "UTF-8"
+            tags(
+                "apiNote:a:API Note:",
+                "implNote:a:Implementation Note:",
+                "implSpec:a:Implementation Requirements:",
+            )
+
+            // By default, Gradle shows non-exported modules in the generated Javadoc.
+            // The following is a fix that only shows exported modules:
+            // https://github.com/gradle/gradle/issues/19726
+            val sourceSetDirectories = sourceSets.main.get().java.sourceDirectories.joinToString(":")
+            addStringOption("-source-path", sourceSetDirectories)
+            // Internal modules to not show
+            exclude("**/impl/**")
         }
     }
 }
