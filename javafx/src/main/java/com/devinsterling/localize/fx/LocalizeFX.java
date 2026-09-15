@@ -17,6 +17,9 @@ import java.util.Locale;
 
 /// JavaFX [Localize] class.
 ///
+/// This class provides an observable string binding to reflect
+/// changes automatically whenever the locale or any arguments change.
+///
 /// It is recommended to create a thread-safe [LocalizeFX]
 /// instance through the static factory methods listed here:
 /// - [of()]
@@ -24,8 +27,12 @@ import java.util.Locale;
 /// - [of(LocalizeConfig)]
 /// - [of(Locale, LocalizeConfig)]
 ///
-/// This class provides an observable string binding to reflect
-/// changes automatically whenever the locale or any arguments change.
+/// If a shared-state instance is preferred over an independent instance, [attach] can be used alternatively:
+/// ```java
+/// Localize localize = Localize.of();
+/// LocalizeFX fx = LocalizeFX.attach(localize);
+/// LocalizeSwing swing = LocalizeSwing.attach(localize); // Swing integration: localize-swing
+/// ```
 ///
 /// ### Example
 /// Properties file (`messages_en.properties`):
@@ -52,6 +59,22 @@ import java.util.Locale;
 public class LocalizeFX extends Localize {
     private final LocaleProperty localeProperty;
 
+    /// Creates a [LocalizeFX] instance attached to the same internal state as the given source,
+    /// sharing the same [locale][getLocale], [formatter][getFormatter], [providers][getProviderEntries],
+    /// [configuration][getConfig], [core event listeners][addListener],
+    /// and is [notified of events made by either][fireEvent].
+    ///
+    /// **The given source is not used as a delegate. Method calls will not be routed through it.**
+    /// Aside from the shared internal state, both instances are independent.
+    ///
+    /// @param source Instance with the internal state to attach to.
+    /// @throws NullPointerException If `source` is `null`.
+    /// @since 2.0
+    protected LocalizeFX(Localize source) {
+        super(source);
+        this.localeProperty = new LocaleProperty(source.getLocale());
+    }
+
     /// Creates a [LocalizeFX] instance with the given locale and configuration.
     ///
     /// @param locale Initial locale.
@@ -60,6 +83,22 @@ public class LocalizeFX extends Localize {
     protected LocalizeFX(Locale locale, LocalizeConfig config) {
         super(locale, config);
         this.localeProperty = new LocaleProperty(locale);
+    }
+
+    /// Creates a new [LocalizeFX] instance attached to the same internal state as the given source,
+    /// sharing the same [locale][getLocale], [formatter][getFormatter], [providers][getProviderEntries],
+    /// [configuration][getConfig], [core event listeners][addListener],
+    /// and is [notified of events made by either][fireEvent].
+    ///
+    /// **The given source is not used as a delegate. Method calls will not be routed through it.**
+    /// Aside from the shared internal state, both instances are independent.
+    ///
+    /// @param source Instance with the internal state to attach to.
+    /// @return       **Thread-safe** LocalizeFX instance attached to the same internal state of `source`.
+    /// @throws NullPointerException If `source` is `null`.
+    /// @since 2.0
+    public static LocalizeFX attach(Localize source) {
+        return new LocalizeFX(source);
     }
 
     /// Creates a new [LocalizeFX] instance with the

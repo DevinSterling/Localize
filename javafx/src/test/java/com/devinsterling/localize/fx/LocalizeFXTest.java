@@ -1,5 +1,6 @@
 package com.devinsterling.localize.fx;
 
+import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
 import com.devinsterling.localize.fx.junit.JavaFXExtension;
 
@@ -21,6 +22,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(JavaFXExtension.class)
 class LocalizeFXTest {
+
+    @Test void testCompositionConstructor() {
+        Localize localize = Localize.of();
+        LocalizeFX swingA = LocalizeFX.attach(localize);
+        LocalizeFX swingB = LocalizeFX.attach(localize);
+
+        assertNotEquals(localize, swingA);
+        assertNotEquals(swingA, swingB);
+    }
 
     @Test void testDefaultLocale() {
         Locale defaultLocale = Locale.getDefault();
