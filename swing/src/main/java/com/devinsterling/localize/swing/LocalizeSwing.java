@@ -6,6 +6,7 @@ import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
 import com.devinsterling.localize.event.LocaleChangeEvent;
 import com.devinsterling.localize.event.ProviderChangeEvent;
+import com.devinsterling.localize.event.Subscription;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -182,7 +183,8 @@ public class LocalizeSwing extends Localize {
     /// subscription.dispose();
     /// ```
     /// @param listener Listener to add.
-    /// @return         Subscription to remove the added listener.
+    /// @return         Subscription to remove the added listener,
+    ///                 for use on the Swing UI (EDT) thread only.
     /// @see #addLocaleListener(LocaleChangeListener)
     // An NPE is not thrown to match Swing's patterns regarding potentially null arguments.
     public Subscription addPropertyChangeListener(PropertyChangeListener listener) {
@@ -247,7 +249,8 @@ public class LocalizeSwing extends Localize {
     /// subscription.dispose();
     /// ```
     /// @param listener Listener to add.
-    /// @return         Subscription to remove the added listener.
+    /// @return         Subscription to remove the added listener,
+    ///                 for use on the Swing UI (EDT) thread only.
     public Subscription addLocaleListener(LocaleChangeListener listener) {
         if (listener == null) {
             return Subscription.EMPTY;
