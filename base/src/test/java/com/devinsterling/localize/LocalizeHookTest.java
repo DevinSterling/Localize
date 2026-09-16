@@ -59,14 +59,14 @@ public class LocalizeHookTest {
         assertEquals(5, counter.get());
 
         localize.removeProvider("non-existent key");
-        localize.refresh("non-existent key");
+        localize.refreshProvider("non-existent key");
         assertEquals(5, counter.get());
 
         localize.removeProvider("key");
-        localize.refresh("key2");
+        localize.refreshProvider("key2");
         assertEquals(7, counter.get());
 
-        localize.refresh();
+        localize.refreshProviders();
         assertEquals(8, counter.get());
 
         entry1.refresh();

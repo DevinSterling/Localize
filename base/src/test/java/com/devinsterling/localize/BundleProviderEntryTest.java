@@ -108,7 +108,7 @@ public class BundleProviderEntryTest {
         entry.refresh();
         assertEquals("4", localize.getValue(TEST_KEY_TEST));
 
-        localize.refresh(entry.getKey());
+        localize.refreshProvider(entry.getKey());
         entry.refresh();
         assertEquals("6", localize.getValue(TEST_KEY_TEST));
 
