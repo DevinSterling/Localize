@@ -17,9 +17,9 @@ public class Example {
     public static final LocalizeSwing LOCALIZE = LocalizeSwing.of(Locale.ENGLISH);
 
     static {
-        LOCALIZE.addBundleProvider(locale -> ResourceBundle.getBundle("messages", locale));
+        LOCALIZE.addProvider(locale -> ResourceBundle.getBundle("messages", locale));
         // Alternatively, reference a resource bundle by the base name directly.
-        LOCALIZE.addBundleProvider("demo");
+        LOCALIZE.addProvider("demo");
     }
 
     public static void main(String[] args) {

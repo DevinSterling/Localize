@@ -24,7 +24,7 @@ public class EventRegistryTest {
         localize.setLocale(Locale.JAPANESE);
         assertEquals(1, count.get());
 
-        localize.addBundleProvider(locale -> null);
+        localize.addProvider(locale -> null);
         localize.setLocale(Locale.JAPANESE);
         assertEquals(1, count.get());
 
@@ -41,7 +41,7 @@ public class EventRegistryTest {
 
         localize.addListener(ProviderChangeEvent.class, listener);
         localize.addListener(ProviderChangeEvent.class, listener);
-        localize.putBundleProvider(key, locale -> null);
+        localize.putProvider(key, locale -> null);
         assertEquals(1, count.get());
 
         localize.setLocale(Locale.JAPANESE);
@@ -49,16 +49,16 @@ public class EventRegistryTest {
         assertTrue(localize.removeListener(ProviderChangeEvent.class, listener));
         assertFalse(localize.removeListener(ProviderChangeEvent.class, listener));
 
-        localize.removeBundleProvider(key);
+        localize.removeProvider(key);
         assertEquals(1, count.get());
 
         Subscription subscription = localize.addListener(ProviderChangeEvent.class, listener);
-        localize.putBundleProvider(key, TEST_PROVIDER);
+        localize.putProvider(key, TEST_PROVIDER);
         assertEquals(2, count.get());
 
         subscription.dispose();
         subscription.dispose();
-        localize.putBundleProvider(key, TEST2_PROVIDER);
+        localize.putProvider(key, TEST2_PROVIDER);
         assertEquals(2, count.get());
     }
 

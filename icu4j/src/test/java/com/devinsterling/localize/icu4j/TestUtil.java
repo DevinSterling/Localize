@@ -29,7 +29,7 @@ public final class TestUtil {
 
         config.setFormatter(messageFormat);
         localize.setFormatter(formatter);
-        localize.addBundleProvider(provider);
+        localize.addProvider(provider);
         return localize;
     }
 }

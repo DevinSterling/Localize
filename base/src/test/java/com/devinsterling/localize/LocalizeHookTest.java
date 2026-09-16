@@ -49,20 +49,20 @@ public class LocalizeHookTest {
 
         assertEquals(0, counter.get());
 
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(TEST_PROVIDER_NAME);
+        Localize.ProviderEntry entry1 = localize.addProvider(TEST_PROVIDER_NAME);
         assertEquals(1, counter.get());
 
-        localize.addBundleProvider(TEST_PROVIDER);
-        localize.putBundleProvider("key", TEST2_PROVIDER);
-        localize.putBundleProvider("key", TEST2_PROVIDER_NAME);
-        localize.putBundleProvider(Localize.ProviderKey.of("key2"), TEST_PROVIDER);
+        localize.addProvider(TEST_PROVIDER);
+        localize.putProvider("key", TEST2_PROVIDER);
+        localize.putProvider("key", TEST2_PROVIDER_NAME);
+        localize.putProvider(Localize.ProviderKey.of("key2"), TEST_PROVIDER);
         assertEquals(5, counter.get());
 
-        localize.removeBundleProvider("non-existent key");
+        localize.removeProvider("non-existent key");
         localize.refresh("non-existent key");
         assertEquals(5, counter.get());
 
-        localize.removeBundleProvider("key");
+        localize.removeProvider("key");
         localize.refresh("key2");
         assertEquals(7, counter.get());
 
@@ -77,10 +77,10 @@ public class LocalizeHookTest {
         entry1.remove();
         assertEquals(10, counter.get());
 
-        localize.clearBundleProviders();
+        localize.clearProviders();
         assertEquals(11, counter.get());
 
-        localize.clearBundleProviders();
+        localize.clearProviders();
         assertEquals(11, counter.get());
     }
 }

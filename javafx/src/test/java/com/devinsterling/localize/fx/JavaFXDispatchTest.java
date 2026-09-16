@@ -21,7 +21,7 @@ public class JavaFXDispatchTest {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
         Localize.ProviderKey key = Localize.ProviderKey.of("key");
 
-        localize.putBundleProvider(key, TEST_PROVIDER);
+        localize.putProvider(key, TEST_PROVIDER);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
         localize.setLocale(Locale.KOREAN);
@@ -29,7 +29,7 @@ public class JavaFXDispatchTest {
 
         runOnJavaFXThreadAndWait(() -> assertEquals("クリック！", binding.get()));
 
-        localize.putBundleProvider(key, TEST2_PROVIDER);
+        localize.putProvider(key, TEST2_PROVIDER);
 
         runOnJavaFXThreadAndWait(() -> assertEquals("クリック！？", binding.get()));
     }

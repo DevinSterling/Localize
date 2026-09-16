@@ -37,10 +37,10 @@ class LocalizeConfigTest {
         // Resource bundles
         assertThrows(
                 MissingResourceException.class,
-                () -> localize.putBundleProvider("key", provider));
+                () -> localize.putProvider("key", provider));
         config.setIgnoreMissingResourceBundles(true);
         assertDoesNotThrow(
-                () -> localize.putBundleProvider("key", provider));
+                () -> localize.putProvider("key", provider));
 
     }
 

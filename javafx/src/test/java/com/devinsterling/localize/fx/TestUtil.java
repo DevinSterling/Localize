@@ -20,7 +20,7 @@ public final class TestUtil {
 
     public static LocalizeFX getLocalizeFXInstance() {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-        localize.putBundleProvider("key", TEST_PROVIDER);
+        localize.putProvider("key", TEST_PROVIDER);
         return localize;
     }
 
