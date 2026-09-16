@@ -1,5 +1,7 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.event.Subscription;
+
 import javax.swing.AbstractButton;
 import javax.swing.JList;
 import javax.swing.JTable;
@@ -65,7 +67,7 @@ public interface Trigger {
         return task -> {
             PropertyChangeListener listener = evt -> task.run();
             component.addPropertyChangeListener(propertyName, listener);
-            return Subscription.of(() -> component.removePropertyChangeListener(propertyName, listener));
+            return createSubscription(() -> component.removePropertyChangeListener(propertyName, listener));
         };
     }
 
@@ -144,7 +146,7 @@ public interface Trigger {
             table.addPropertyChangeListener("selectionModel", rowModelListener);
             table.getSelectionModel().addListSelectionListener(rowListener);
 
-            return Subscription.of(() -> {
+            return createSubscription(() -> {
                 table.removePropertyChangeListener("selectionModel", rowModelListener);
                 table.getSelectionModel().removeListSelectionListener(rowListener);
             });
@@ -187,7 +189,7 @@ public interface Trigger {
             table.addPropertyChangeListener("columnModel", columnModelListener);
             table.getColumnModel().addColumnModelListener(columnListener);
 
-            return Subscription.of(() -> {
+            return createSubscription(() -> {
                 table.removePropertyChangeListener("columnModel", columnModelListener);
                 table.getColumnModel().removeColumnModelListener(columnListener);
             });
@@ -203,7 +205,24 @@ public interface Trigger {
         return task -> {
             Listener listener = listenerFactory.apply(task);
             addListener.accept(component, listener);
-            return Subscription.of(() -> removeListener.accept(component, listener));
+            return createSubscription(() -> removeListener.accept(component, listener));
+        };
+    }
+
+    private static Subscription createSubscription(Runnable onDispose) {
+        return new Subscription() {
+            private boolean isActive = true;
+
+            @Override public void dispose() {
+                if (isActive) {
+                    isActive = false;
+                    onDispose.run();
+                }
+            }
+
+            @Override public boolean isActive() {
+                return isActive;
+            }
         };
     }
 }

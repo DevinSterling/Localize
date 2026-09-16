@@ -23,7 +23,7 @@ public interface Subscription {
         }
     };
 
-    /// Disposes the subscription, or does nothing if already Disposed.
+    /// Disposes the subscription, or does nothing if already disposed.
     ///
     /// Subsequent calls have no effect.
     void dispose();
