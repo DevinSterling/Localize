@@ -1,5 +1,7 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.event.Subscription;
+
 import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;

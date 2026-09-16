@@ -1,5 +1,7 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.event.Subscription;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;

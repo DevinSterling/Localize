@@ -1,5 +1,7 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.event.Subscription;
+
 /// A reactive Swing binding associated with a bound component.
 ///
 /// @param <T> Bound type.
@@ -22,6 +24,13 @@ public interface Binding<T> extends Subscription {
     T get();
 
     /// {@inheritDoc}
+    ///
+    /// **This method is intended to be called on the Swing UI (EDT) thread only.**
+    @Override void dispose();
+
+    /// {@inheritDoc}
+    ///
+    /// **This method is intended to be called on the Swing UI (EDT) thread only.**
     ///
     /// ### Note
     /// A binding may become inactive when its bound component is garbage collected,

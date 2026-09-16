@@ -1,5 +1,6 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.event.Subscription;
 import com.devinsterling.localize.swing.junit.SwingEdtExtension;
 
 import org.junit.jupiter.api.Test;

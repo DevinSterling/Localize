@@ -1,6 +1,6 @@
 package com.devinsterling.localize.example;
 
-import com.devinsterling.localize.swing.Subscription;
+import com.devinsterling.localize.event.Subscription;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
