@@ -19,16 +19,16 @@ public class BundleProviderEntryTest {
         Localize localize = Localize.of(Locale.ENGLISH);
         Localize.ProviderKey key = Localize.ProviderKey.of("key");
 
-        localize.putBundleProvider(key, TEST_PROVIDER);
-        Localize.ProviderEntry entry = localize.getBundleProviderEntry(key);
+        localize.putProvider(key, TEST_PROVIDER);
+        Localize.ProviderEntry entry = localize.getProviderEntry(key);
 
         assertSame(key, entry.getKey());
         assertEquals(TEST_PROVIDER, entry.getProvider());
         assertEquals(ResourceBundle.getBundle(TEST_PROVIDER_NAME), entry.getBundle());
         assertTrue(entry.isActive());
 
-        localize.putBundleProvider(key, TEST_PROVIDER);
-        Localize.ProviderEntry newEntry = localize.getBundleProviderEntry(key);
+        localize.putProvider(key, TEST_PROVIDER);
+        Localize.ProviderEntry newEntry = localize.getProviderEntry(key);
 
         assertFalse(entry.isActive());
         assertTrue(newEntry.isActive());
@@ -38,8 +38,8 @@ public class BundleProviderEntryTest {
         Localize localize = Localize.of(Locale.ENGLISH);
 
         // Both keys are unique
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(TEST_PROVIDER);
-        Localize.ProviderEntry entry2 = localize.addBundleProvider(TEST_PROVIDER);
+        Localize.ProviderEntry entry1 = localize.addProvider(TEST_PROVIDER);
+        Localize.ProviderEntry entry2 = localize.addProvider(TEST_PROVIDER);
 
         assertNotEquals(entry1, entry2);
         assertTrue(entry1.isActive());
@@ -51,31 +51,31 @@ public class BundleProviderEntryTest {
     @Test void testRemoveProviderEntry() {
         Localize localize = Localize.of(Locale.ENGLISH);
 
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(TEST_PROVIDER);
+        Localize.ProviderEntry entry1 = localize.addProvider(TEST_PROVIDER);
         assertNotNull(entry1.getBundle());
 
         entry1.remove();
         assertFalse(entry1.isActive());
         assertNull(entry1.getBundle());
-        assertNull(localize.getBundleProviderEntry(entry1.getKey()));
+        assertNull(localize.getProviderEntry(entry1.getKey()));
 
         entry1.remove();
         assertFalse(entry1.isActive());
 
         Localize.ProviderKey key = Localize.ProviderKey.of("key");
-        localize.putBundleProvider(key, TEST2_PROVIDER);
-        Localize.ProviderEntry entry2 = localize.getBundleProviderEntry(key);
+        localize.putProvider(key, TEST2_PROVIDER);
+        Localize.ProviderEntry entry2 = localize.getProviderEntry(key);
         entry2.remove();
         entry2.remove();
 
         assertFalse(entry2.isActive());
         assertNull(entry2.getBundle());
-        assertNull(localize.getBundleProviderEntry(entry2.getKey()));
+        assertNull(localize.getProviderEntry(entry2.getKey()));
 
-        Localize.ProviderEntry entry3 = localize.addBundleProvider(TEST_PROVIDER);
+        Localize.ProviderEntry entry3 = localize.addProvider(TEST_PROVIDER);
         assertTrue(entry3.isActive());
 
-        localize.removeBundleProvider(entry3.getKey());
+        localize.removeProvider(entry3.getKey());
         assertFalse(entry3.isActive());
     }
 
@@ -97,7 +97,7 @@ public class BundleProviderEntryTest {
 
         Localize localize = Localize.of(Locale.ENGLISH);
         localize.getConfig().setDefaultMissingValue(null);
-        Localize.ProviderEntry entry = localize.addBundleProvider(new CountBundleProvider());
+        Localize.ProviderEntry entry = localize.addProvider(new CountBundleProvider());
 
         assertEquals("1", localize.getValue(TEST_KEY_TEST));
 

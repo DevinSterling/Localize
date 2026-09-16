@@ -15,7 +15,7 @@
 /// the associated localized values are updated.
 /// ```java
 /// LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-/// localize.addBundleProvider(locale -> ResourceBundle.getBundle("messages", locale));
+/// localize.addProvider(locale -> ResourceBundle.getBundle("messages", locale));
 ///
 /// DoubleProperty clickCount = new SimpleDoubleProperty();
 /// Label clickDetails = new Label();

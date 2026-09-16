@@ -79,46 +79,46 @@ class LocalizeFXTest {
         assertEquals(Locale.ENGLISH, LocalizeFX.of(Locale.ENGLISH).localeProperty().get());
     }
 
-    @Test void testPutBundleProviderRefresh() {
+    @Test void testPutProviderRefresh() {
         LocalizeFX localize = LocalizeFX.of(Locale.KOREAN);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
         assertEquals("", binding.get());
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("클릭!", binding.get());
     }
 
-    @Test void testPutBundleProviderReplaceRefresh() {
+    @Test void testReplaceProviderRefresh() {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("Click!", binding.get());
 
-        localize.putBundleProvider("provider", TEST2_PROVIDER);
+        localize.putProvider("provider", TEST2_PROVIDER);
         assertEquals("Click!?", binding.get());
     }
 
-    @Test void testRemoveBundleProviderRefresh() {
+    @Test void testRemoveProviderRefresh() {
         LocalizeFX localize = LocalizeFX.of(Locale.JAPANESE);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("クリック！", binding.get());
 
-        localize.removeBundleProvider("provider");
+        localize.removeProvider("provider");
         assertEquals("", binding.get());
     }
 
-    @Test void testRemoveBundleProviderMissingKey() {
+    @Test void testRemoveProviderMissingKey() {
         LocalizeFX localize = LocalizeFX.of(Locale.JAPANESE);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("クリック！", binding.get());
 
-        localize.removeBundleProvider("");
-        localize.removeBundleProvider("Provider");
+        localize.removeProvider("");
+        localize.removeProvider("Provider");
         assertEquals("クリック！", binding.get());
     }
 
@@ -139,7 +139,7 @@ class LocalizeFXTest {
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
         assertEquals("", binding.get());
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("Click!", binding.get());
 
         localize.refresh();
@@ -163,7 +163,7 @@ class LocalizeFXTest {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_LABEL);
 
-        localize.putBundleProvider("provider", locale -> currentBundle.get());
+        localize.putProvider("provider", locale -> currentBundle.get());
         assertEquals("abc", binding.get());
 
         // Realistically, this would be the file changing on disk or similar

@@ -34,11 +34,11 @@ Localize is designed to be straightforward to set up and use, simplifying intern
 2. Add a provider for resource bundles:
    ```java
    // Insert using a unique key
-   localize.putBundleProvider("ProviderKey", locale -> ResourceBundle.getBundle("i18n.sample", locale));
+   localize.putProvider("ProviderKey", locale -> ResourceBundle.getBundle("i18n.sample", locale));
    // Or without
-   localize.addBundleProvider(locale -> ResourceBundle.getBundle("i18n.sample", locale));
+   localize.addProvider(locale -> ResourceBundle.getBundle("i18n.sample", locale));
    // Or by resource bundle base name
-   localize.addBundleProvider("i18n.sample");
+   localize.addProvider("i18n.sample");
    ``` 
 3. Retrieve localized values by key:
    ```java
@@ -55,12 +55,12 @@ A `Localize` instance accepts multiple providers as additional sources or fallba
 which can be removed dynamically.
 Configuration can control scenarios such as where no value or when a resource bundle is not found.
 ```java
-localize.putBundleProvider("Provider1", locale -> ResourceBundle.getBundle("i18n.sample", locale));
-localize.addBundleProvider("i18n.other");
+localize.putProvider("Provider1", locale -> ResourceBundle.getBundle("i18n.sample", locale));
+localize.addProvider("i18n.other");
 ...
 
 // Removing a provider when no longer needed:
-localize.removeBundleProvider("Provider1");
+localize.removeProvider("Provider1");
 
 // If a value is not found in any provider, configure a global fallback:
 localize.getConfig().setDefaultMissingValue("Missing value");
@@ -141,7 +141,7 @@ Each time the `Button` is clicked or the `TextField` is edited,
 the associated localized values are updated:
 ```java
 LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-localize.addBundleProvider("messages");
+localize.addProvider("messages");
 
 DoubleProperty clickCount = new SimpleDoubleProperty();
 Label clickDetails = new Label();
@@ -185,7 +185,7 @@ Each time the `JButton` is clicked or the `JTextField` is edited,
 the associated localized values are updated:
 ```java
 LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
-localize.addBundleProvider("messages");
+localize.addProvider("messages");
 
 AtomicInteger clickCount = new AtomicInteger();
 JLabel clickDetails = new JLabel();

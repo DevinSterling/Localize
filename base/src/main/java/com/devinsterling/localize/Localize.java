@@ -70,9 +70,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /// The following localization files may be called as such:
 /// ```java
 /// Localize localize = Localize.of();
-/// localize.addBundleProvider("sample.message");
+/// localize.addProvider("sample.message");
 /// // Or alternatively for more control
-/// localize.addBundleProvider(locale -> ResourceBundle.getBundle("sample.message", locale));
+/// localize.addProvider(locale -> ResourceBundle.getBundle("sample.message", locale));
 ///
 /// // We may now change the locale a number of times.
 /// localize.setLocale(Locale.CHINESE);
@@ -462,30 +462,30 @@ public class Localize {
     /// Localize.ProviderKey key = Localize.ProviderKey.of("myKey");
     /// Localize.ProviderKey key2 = Localize.ProviderKey.of("myKey2");
     ///
-    /// localize.putBundleProvider(key, locale -> {
+    /// localize.putProvider(key, locale -> {
     ///     return ResourceBundle.getBundle("i18n.messages", locale);
     /// });
     ///
     /// // Has lower priority than the provider put first
     /// // (i.e., Localized value requests)
-    /// localize.putBundleProvider(key2, locale -> {
+    /// localize.putProvider(key2, locale -> {
     ///     return ResourceBundle.getBundle("i18n.other", locale);
     /// });
     ///
     /// // Removal
-    /// localize.removeBundleProvider(key);
+    /// localize.removeProvider(key);
     /// ```
     ///
     /// @param key      Key associated with `provider`.
     /// @param provider Provider called upon calling refresh to get a ResourceBundle instance.
     /// @return         Previous provider associated with `key`, or `null` if there was none.
     /// @throws NullPointerException If `key` or `provider` is `null`.
-    /// @see putBundleProvider(String, ResourceBundleProvider)
-    /// @see putBundleProvider(ProviderKey, String)
-    /// @see addBundleProvider(ResourceBundleProvider)
+    /// @see putProvider(String, ResourceBundleProvider)
+    /// @see putProvider(ProviderKey, String)
+    /// @see addProvider(ResourceBundleProvider)
     /// @see ProviderKey#of(String)
     /// @since 2.0
-    public ResourceBundleProvider putBundleProvider(ProviderKey key, ResourceBundleProvider provider) {
+    public ResourceBundleProvider putProvider(ProviderKey key, ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(this, key, provider);
         ProviderEntry previous = data.providers.put(entry);
         refresh(entry);
@@ -502,79 +502,79 @@ public class Localize {
     /// Adds the given provider to retrieve localized values from.
     ///
     /// This is a convenience method, equivalent to calling
-    /// [putBundleProvider(ProviderKey, ResourceBundleProvider)]
+    /// [putProvider(ProviderKey, ResourceBundleProvider)]
     /// with [ProviderKey#of(String)].
     ///
     /// ### Example Usage
     /// ```java
-    /// localize.putBundleProvider("myKey", locale -> {
+    /// localize.putProvider("myKey", locale -> {
     ///     return ResourceBundle.getBundle("i18n.messages", locale);
     /// });
     ///
     /// // Has lower priority than the provider put first
     /// // (i.e., Localized value requests)
-    /// localize.putBundleProvider("myKey2", locale -> {
+    /// localize.putProvider("myKey2", locale -> {
     ///     return ResourceBundle.getBundle("i18n.other", locale);
     /// });
     ///
     /// // Removal
-    /// localize.removeBundleProvider("myKey");
+    /// localize.removeProvider("myKey");
     /// ```
     /// @param key      Key associated with `provider`.
     /// @param provider Provider called upon calling refresh to get a ResourceBundle instance.
     /// @return         Previous provider associated with `key`, or `null` if there was none.
     /// @throws NullPointerException If `key` or `provider` is `null`.
-    /// @see putBundleProvider(String, String)
-    public ResourceBundleProvider putBundleProvider(String key, ResourceBundleProvider provider) {
-        return putBundleProvider(ProviderKey.of(key), provider);
+    /// @see putProvider(String, String)
+    public ResourceBundleProvider putProvider(String key, ResourceBundleProvider provider) {
+        return putProvider(ProviderKey.of(key), provider);
     }
 
-    /// Shorthand for [putBundleProvider(ProviderKey, ResourceBundleProvider)]
+    /// Shorthand for [putProvider(ProviderKey, ResourceBundleProvider)]
     /// using [ResourceBundle#getBundle(String)].
     ///
     /// This is a convenience method, equivalent to calling:
     /// ```
-    /// putBundleProvider(key, locale -> ResourceBundle.getBundle(baseName, locale));
+    /// putProvider(key, locale -> ResourceBundle.getBundle(baseName, locale));
     /// ```
     /// @param key                    Key associated with `provider`.
     /// @param resourceBundleBaseName The base name of a [ResourceBundle].
     /// @return                       Previous provider associated with `key`, or `null` if there was none.
     /// @throws NullPointerException If `key` or `resourceBundleBaseName` is `null`.
-    /// @see putBundleProvider(String, ResourceBundleProvider)
-    /// @see addBundleProvider(String)
+    /// @see putProvider(String, ResourceBundleProvider)
+    /// @see addProvider(String)
     /// @see ProviderKey#of(String)
     /// @since 2.0
-    public ResourceBundleProvider putBundleProvider(ProviderKey key, String resourceBundleBaseName) {
-        return putBundleProvider(key, locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
+    public ResourceBundleProvider putProvider(ProviderKey key, String resourceBundleBaseName) {
+        return putProvider(key, locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
     }
 
-    /// Shorthand for [putBundleProvider(String, ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
+    /// Shorthand for [putProvider(String, ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
     ///
-    /// This is a convenience method, equivalent to calling [putBundleProvider(ProviderKey, String)]
+    /// This is a convenience method, equivalent to calling [putProvider(ProviderKey, String)]
     /// with [ProviderKey#of(String)].
     ///
     /// @param key                    Key associated with the provider.
     /// @param resourceBundleBaseName The base name of a [ResourceBundle].
     /// @return                       Previous provider associated with `key`, or `null` if there was none.
     /// @throws NullPointerException If `key` or `resourceBundleBaseName` is `null`.
-    /// @see putBundleProvider(String, ResourceBundleProvider)
+    /// @see putProvider(String, ResourceBundleProvider)
     /// @since 2.0
-    public ResourceBundleProvider putBundleProvider(String key, String resourceBundleBaseName) {
-        return putBundleProvider(ProviderKey.of(key), resourceBundleBaseName);
+    public ResourceBundleProvider putProvider(String key, String resourceBundleBaseName) {
+        return putProvider(ProviderKey.of(key), resourceBundleBaseName);
     }
 
     /// Adds the given provider and returns the associated provider entry.
     ///
-    /// This method is equivalent to [putBundleProvider(ProviderKey, ResourceBundleProvider)]
+    /// This method is equivalent to [putProvider(ProviderKey, ResourceBundleProvider)]
     /// without the need to manually specify a key.
     ///
     /// @param provider Provider called upon calling refresh to get a ResourceBundle instance.
     /// @return         The provider entry, if needed.
     /// @throws NullPointerException If `provider` is `null`.
-    /// @see addBundleProvider(String)
-    /// @see putBundleProvider(ProviderKey, ResourceBundleProvider)
+    /// @see addProvider(String)
+    /// @see putProvider(ProviderKey, ResourceBundleProvider)
     /// @since 1.3
-    public ProviderEntry addBundleProvider(ResourceBundleProvider provider) {
+    public ProviderEntry addProvider(ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(this, ProviderKey.of(), provider);
         data.providers.put(entry);
         refresh(entry);
@@ -582,20 +582,20 @@ public class Localize {
         return entry;
     }
 
-    /// Shorthand for [addBundleProvider(ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
+    /// Shorthand for [addProvider(ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
     ///
     /// This is a convenience method, equivalent to calling:
     /// ```
-    /// addBundleProvider(locale -> ResourceBundle.getBundle(baseName, locale));
+    /// addProvider(locale -> ResourceBundle.getBundle(baseName, locale));
     /// ```
     /// @param resourceBundleBaseName The base name of a [ResourceBundle].
     /// @return                       The provider entry, if needed.
     /// @throws NullPointerException If `resourceBundleBaseName` is `null`.
-    /// @see addBundleProvider(ResourceBundleProvider)
-    /// @see putBundleProvider(ProviderKey, String)
+    /// @see addProvider(ResourceBundleProvider)
+    /// @see putProvider(ProviderKey, String)
     /// @since 2.0
-    public ProviderEntry addBundleProvider(String resourceBundleBaseName) {
-        return addBundleProvider(locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
+    public ProviderEntry addProvider(String resourceBundleBaseName) {
+        return addProvider(locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
     }
 
     /// Returns the entry associated with the given key, or `null` if not present.
@@ -603,24 +603,24 @@ public class Localize {
     /// @param key Key of the provider to retrieve the entry for.
     /// @return    Provider entry or `null` if not present.
     /// @throws NullPointerException If `key` is `null`.
-    /// @see getBundleProviderEntry(String)
+    /// @see getProviderEntry(String)
     /// @see ProviderKey#of(String)
     /// @since 2.0
-    public ProviderEntry getBundleProviderEntry(ProviderKey key) {
+    public ProviderEntry getProviderEntry(ProviderKey key) {
         return data.providers.get(Objects.requireNonNull(key, "key must not be null"));
     }
 
     /// Returns the entry associated with the given key, or `null` if not present.
     ///
-    /// This is a convenience method, equivalent to calling [getBundleProviderEntry(ProviderKey)]
+    /// This is a convenience method, equivalent to calling [getProviderEntry(ProviderKey)]
     /// with [ProviderKey#of(String)].
     ///
     /// @param key Key of the provider to retrieve the entry for.
     /// @return    Provider entry or `null` if not present.
     /// @throws NullPointerException If `key` is `null`.
     /// @since 2.0
-    public ProviderEntry getBundleProviderEntry(String key) {
-        return getBundleProviderEntry(ProviderKey.of(key));
+    public ProviderEntry getProviderEntry(String key) {
+        return getProviderEntry(ProviderKey.of(key));
     }
 
     /// Returns `true` if the provider associated with the given key is present.
@@ -628,16 +628,16 @@ public class Localize {
     /// @param key Key to check if the associated provider is present.
     /// @return    `true` if the associated provider is present.
     /// @throws NullPointerException If `key` is `null`.
-    /// @see containsBundleProvider(String)
+    /// @see containsProvider(String)
     /// @see ProviderKey#of(String)
     /// @since 2.0
-    public boolean containsBundleProvider(ProviderKey key) {
+    public boolean containsProvider(ProviderKey key) {
         return data.providers.contains(Objects.requireNonNull(key, "key must not be null"));
     }
 
     /// Returns `true` if the provider associated with the given key is present.
     ///
-    /// This is a convenience method, equivalent to calling [containsBundleProvider(ProviderKey)]
+    /// This is a convenience method, equivalent to calling [containsProvider(ProviderKey)]
     /// with [ProviderKey#of(String)].
     ///
     /// @param key Key to check if the associated provider is present.
@@ -645,8 +645,8 @@ public class Localize {
     /// @see ProviderKey#of(String)
     /// @throws NullPointerException If `key` is `null`.
     /// @since 2.0
-    public boolean containsBundleProvider(String key) {
-        return containsBundleProvider(ProviderKey.of(key));
+    public boolean containsProvider(String key) {
+        return containsProvider(ProviderKey.of(key));
     }
 
     /// Removes the [ResourceBundleProvider] associated with the given key.
@@ -654,10 +654,10 @@ public class Localize {
     /// @param key Key associated with the provider to remove.
     /// @return    The removed provider or `null` if the requested provider was not found.
     /// @throws NullPointerException if `key` is `null`.
-    /// @see removeBundleProvider(String)
+    /// @see removeProvider(String)
     /// @see ProviderKey#of(String)
     /// @since 2.0
-    public ResourceBundleProvider removeBundleProvider(ProviderKey key) {
+    public ResourceBundleProvider removeProvider(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
         ProviderEntry removed = data.providers.remove(key);
 
@@ -670,21 +670,21 @@ public class Localize {
 
     /// Removes the [ResourceBundleProvider] associated with the given key.
     ///
-    /// This is a convenience method, equivalent to calling [removeBundleProvider(ProviderKey)]
+    /// This is a convenience method, equivalent to calling [removeProvider(ProviderKey)]
     /// with [ProviderKey#of(String)].
     ///
     /// @param key Key associated with the provider to remove.
     /// @return    The removed provider or `null` if the requested provider was not found.
     /// @throws NullPointerException if `key` is `null`.
-    public ResourceBundleProvider removeBundleProvider(String key) {
-        return removeBundleProvider(ProviderKey.of(key));
+    public ResourceBundleProvider removeProvider(String key) {
+        return removeProvider(ProviderKey.of(key));
     }
 
     /// Removes all provider entries and returns `true` if any were removed.
     ///
     /// @return `true` if any entries were removed, or `false` if there were no entries to remove.
     /// @since 2.0
-    public boolean clearBundleProviders() {
+    public boolean clearProviders() {
         List<ProviderEntry> removed = data.providers.clear();
         boolean isAnyRemoved = !removed.isEmpty();
 
@@ -715,7 +715,7 @@ public class Localize {
     ///            Otherwise, `false` is returned if the provider was not found or superseded by a newer refresh.
     /// @throws NullPointerException If `key` is `null`.
     /// @see refresh(String)
-    /// @see putBundleProvider(String, ResourceBundleProvider)
+    /// @see putProvider(String, ResourceBundleProvider)
     /// @see ProviderKey#of(String)
     /// @since 2.0
     public boolean refresh(ProviderKey key) {
@@ -837,11 +837,11 @@ public class Localize {
     }
 
     /// Returns an unmodifiable live view of all provider entries,
-    /// ordered by their [priority][putBundleProvider(ProviderKey, ResourceBundleProvider)].
+    /// ordered by their [priority][putProvider(ProviderKey, ResourceBundleProvider)].
     ///
     /// @return Unmodifiable live view of all entries.
     /// @since 2.0
-    public Collection<ProviderEntry> getBundleProviderEntries() {
+    public Collection<ProviderEntry> getProviderEntries() {
         return data.providers.unmodifiableView;
     }
 
@@ -1132,8 +1132,8 @@ public class Localize {
     ///
     /// Entries are containers that represent a provider registered within a [Localize] instance.
     ///
-    /// @see Localize#getBundleProviderEntry(ProviderKey)
-    /// @see Localize#addBundleProvider(ResourceBundleProvider)
+    /// @see Localize#getProviderEntry(ProviderKey)
+    /// @see Localize#addProvider(ResourceBundleProvider)
     /// @since 2.0
     public static final class ProviderEntry {
         private final ProviderKey key;
@@ -1179,7 +1179,7 @@ public class Localize {
         ///
         /// This method has no effect if this entry is [inactive][isActive].
         ///
-        /// @see Localize#removeBundleProvider(ProviderKey)
+        /// @see Localize#removeProvider(ProviderKey)
         /// @see isActive
         public void remove() {
             Localize localize = this.localize;
@@ -1207,12 +1207,12 @@ public class Localize {
         /// Returns `true` if this entry is currently active; registered within a [Localize] instance.
         ///
         /// When the associated provider is
-        /// [replaced][Localize#putBundleProvider(ProviderKey, ResourceBundleProvider)] or
-        /// [removed][Localize#removeBundleProvider(ProviderKey)]
+        /// [replaced][Localize#putProvider(ProviderKey, ResourceBundleProvider)] or
+        /// [removed][Localize#removeProvider(ProviderKey)]
         /// via any related operation, this flag will permanently remain `false`.
         ///
         /// @return `true` if active, or `false` if the contained provider was replaced or removed prior.
-        /// @see Localize#containsBundleProvider(ProviderKey)
+        /// @see Localize#containsProvider(ProviderKey)
         public boolean isActive() {
             return localize != null;
         }

@@ -17,7 +17,7 @@ public final class TestUtil {
 
     public static LocalizeSwing getLocalizeSwingInstance() {
         LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
-        localize.addBundleProvider(TEST_PROVIDER);
+        localize.addProvider(TEST_PROVIDER);
         return localize;
     }
 
