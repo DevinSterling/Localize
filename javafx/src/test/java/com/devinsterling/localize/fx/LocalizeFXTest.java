@@ -126,14 +126,14 @@ class LocalizeFXTest {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
-        localize.refresh();
+        localize.refreshProviders();
         assertEquals("", binding.get());
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("", binding.get());
     }
 
-    @Test void testRefresh() {
+    @Test void testRefreshProviders() {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
 
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
@@ -142,13 +142,13 @@ class LocalizeFXTest {
         localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("Click!", binding.get());
 
-        localize.refresh();
+        localize.refreshProviders();
         assertEquals("Click!", binding.get());
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("Click!", binding.get());
 
-        localize.refresh("nonexistent");
+        localize.refreshProvider("nonexistent");
         assertEquals("Click!", binding.get());
     }
 
@@ -170,7 +170,7 @@ class LocalizeFXTest {
         currentBundle.set(bundleFactory.apply("xyz"));
         assertEquals("abc", binding.get());
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("xyz", binding.get());
     }
 }

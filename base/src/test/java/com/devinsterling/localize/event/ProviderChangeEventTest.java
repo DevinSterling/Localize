@@ -114,7 +114,7 @@ public class ProviderChangeEventTest {
     @Test void testOnProviderRefresh() {
         LocalizeEventTest localize = new LocalizeEventTest();
 
-        localize.refresh(Localize.ProviderKey.of());
+        localize.refreshProvider(Localize.ProviderKey.of());
 
         Localize.ProviderEntry entry1 = localize.addProvider(NULL_PROVIDER); // Event 0
         Localize.ProviderEntry entry2 = localize.addProvider(NULL_PROVIDER); // 1
@@ -122,13 +122,13 @@ public class ProviderChangeEventTest {
         Localize.ProviderEntry entry4 = localize.addProvider(TEST_PROVIDER); // 3
 
         // No refreshes occur here because `NULL_PROVIDER` always returns a null bundle (Nothing to refresh)
-        localize.refresh(entry2.getKey());
+        localize.refreshProvider(entry2.getKey());
         entry2.remove(); // 4
         entry2.refresh();
         entry1.refresh();
 
         // These refreshes occur since the returned bundle is always non-null (Something to refresh)
-        localize.refresh(entry3.getKey()); // 5
+        localize.refreshProvider(entry3.getKey()); // 5
         entry3.refresh(); // 6
         entry3.remove(); // 7
         entry3.refresh();
@@ -145,15 +145,15 @@ public class ProviderChangeEventTest {
 
         // No refreshes occur here because `NULL_PROVIDER` always returns a null bundle (Nothing to refresh)
         localize.addProvider(NULL_PROVIDER); // Event 0
-        localize.refresh();
+        localize.refreshProviders();
         localize.addProvider(NULL_PROVIDER); // 1
-        localize.refresh();
+        localize.refreshProviders();
 
         // These refreshes occur since the returned bundle is always non-null (Something to refresh)
         Localize.ProviderEntry entry3 = localize.addProvider(TEST_PROVIDER); // 2
-        localize.refresh(); // 3
+        localize.refreshProviders(); // 3
         Localize.ProviderEntry entry4 = localize.addProvider(TEST_PROVIDER); // 4
-        localize.refresh(); // 5
+        localize.refreshProviders(); // 5
 
         assertEquals(6, localize.capturedEvents.size());
         assertEquals(

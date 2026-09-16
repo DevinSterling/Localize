@@ -74,7 +74,7 @@ public interface ProviderChangeEvent extends LocalizeEvent {
 
     /// An event representing that a single entry was refreshed.
     ///
-    /// @see Localize#refresh(Localize.ProviderKey)
+    /// @see Localize#refreshProvider(Localize.ProviderKey)
     /// @see Localize.ProviderEntry#refresh
     interface Refreshed extends ProviderChangeEvent {
         /// Returns the refreshed entry.
@@ -95,7 +95,7 @@ public interface ProviderChangeEvent extends LocalizeEvent {
 
     /// A coalesced event representing that more than one entry were refreshed.
     ///
-    /// @see Localize#refresh()
+    /// @see Localize#refreshProviders()
     interface BulkRefreshed extends ProviderChangeEvent {
         /// Returns the refreshed entries.
         ///

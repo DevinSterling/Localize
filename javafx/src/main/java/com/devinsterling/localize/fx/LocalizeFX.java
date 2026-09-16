@@ -150,7 +150,7 @@ public class LocalizeFX extends Localize {
     /// @return **Non-thread-safe** observable locale property.
     /// @see setLocale
     /// @see getLocale
-    /// @see refresh()
+    /// @see refreshProviders()
     public ObjectProperty<Locale> localeProperty() {
         return localeProperty;
     }
