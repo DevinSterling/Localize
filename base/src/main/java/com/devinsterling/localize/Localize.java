@@ -1,8 +1,11 @@
 package com.devinsterling.localize;
 
+import com.devinsterling.localize.event.EventListener;
 import com.devinsterling.localize.event.LocaleChangeEvent;
 import com.devinsterling.localize.event.LocalizeEvent;
 import com.devinsterling.localize.event.ProviderChangeEvent;
+import com.devinsterling.localize.event.Subscription;
+import com.devinsterling.localize.event.impl.EventListenerRegistry;
 import com.devinsterling.localize.event.impl.ProviderChangeEventImpls;
 
 import java.lang.ref.WeakReference;
@@ -41,7 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /// an optional dependency (`localize-icu4j`) providing
 /// [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/#platform-dependencies) support.
 ///
-/// ### Example
+/// #### Example
 /// Localization `*.properties` files reside under `resources`.
 ///
 /// For example, such files residing in a subdirectory `sample`:
@@ -98,6 +101,40 @@ import java.util.concurrent.atomic.AtomicLong;
 ///                .equals("There are 100 people on campus.");
 /// ```
 ///
+/// ### Events
+/// Event handling is primarily managed using an [EventListener],
+/// which listens to events fired by [Localize] instances (e.g., [LocaleChangeEvent], [ProviderChangeEvent]).
+///
+/// Listeners are added by calling [addListener], which stores listeners by **strong** reference.
+/// To prevent memory leaks when no longer needed, listeners are removed using [removeListener]
+/// or by disposing the [Subscription] returned by [addListener]:
+/// ```java
+/// Localize localize = Localize.of(Locale.JAPANESE);
+/// // Creating a listener
+/// EventListener<LocaleChangeEvent> listener = event -> {
+///     logger.info("New locale = {}", event.getNewLocale());
+/// };
+///
+/// // Registering a listener
+/// Subscription subscription = localize.addListener(LocaleChangeEvent.class, listener);
+///
+/// // Deregistering a listener
+/// subscription.dispose();
+/// // or
+/// localize.removeListener(LocaleChangeEvent.class, listener);
+/// ```
+/// Subclasses can override protected hooks to handle events
+/// without registering listeners or managing their lifecycle:
+/// ```
+/// class Custom extends Localize {
+///     ...
+///     @Override protected void onLocaleChanged(LocaleChangeEvent event) {
+///         super.onLocaleChanged(event);
+///         ...
+///     }
+/// }
+/// ```
+///
 /// ### Attaching and Shared State
 /// [Localize] instances can be attached to adapt to specific environments while sharing the same underlying state.
 ///
@@ -136,6 +173,7 @@ public class Localize {
         private final CopyOnWriteArrayList<WeakReference<Localize>> attached = new CopyOnWriteArrayList<>();
         /// Lock to synchronize [ProviderEntry#bundle] replacements
         private final Object providerEntryBundleLock = new Object();
+        private final EventListenerRegistry listeners = new EventListenerRegistry();
         private final ProviderStore providers = new ProviderStore();
         private final VersionedLocale locale;
         private final LocalizeConfig config;
@@ -239,6 +277,7 @@ public class Localize {
     ///     ...
     /// }
     /// ```
+    /// @param event Localize event.
     /// @implSpec This method must be thread-safe.
     /// @see fireEvent
     /// @since 2.0
@@ -299,6 +338,51 @@ public class Localize {
     /// @since 2.0
     protected void onProvidersChanged(ProviderChangeEvent event) {
         // no-op
+    }
+
+    /// Adds the given listener, notifying it whenever the specified event occurs.
+    ///
+    /// If the given listener is already registered, it is not re-inserted and
+    /// a reference to its existing associated [Subscription] is returned.
+    ///
+    /// ### Memory
+    /// The given listener is stored by a strong reference.
+    /// To prevent memory leaks when the listener is no longer needed,
+    /// call [removeListener] or [Subscription#dispose]:
+    /// ```java
+    /// // Creating a listener
+    /// EventListener<LocaleChangeEvent> listener = event -> {
+    ///     logger.info("New locale set: {}", event.getNewLocale());
+    /// };
+    ///
+    /// // Registering a listener
+    /// Subscription subscription = localize.addListener(LocaleChangeEvent.class, listener);
+    ///
+    /// // Deregistering a listener
+    /// subscription.dispose();
+    /// // or
+    /// localize.removeListener(LocaleChangeEvent.class, listener);
+    /// ```
+    /// @param <T>       Event type.
+    /// @param eventType Type of event to listen to.
+    /// @param listener  Listener to add.
+    /// @return         **Thread-safe** subscription to remove the added listener.
+    /// @throws NullPointerException If `type` or `listener` is `null`.
+    /// @since 2.0
+    public <T extends LocalizeEvent> Subscription addListener(Class<T> eventType, EventListener<? super T> listener) {
+        return data.listeners.addListener(eventType, listener);
+    }
+
+    /// Removes the given listener for the specified event, if it was [previously added][addListener].
+    ///
+    /// @param <T>       Event type.
+    /// @param eventType ype of event to listen to.
+    /// @param listener  Listener to remove.
+    /// @return         `true` if the given listener was removed, or `false` if it isn't registered.
+    /// @throws NullPointerException If `type` or `listener` is `null`.
+    /// @since 2.0
+    public <T extends LocalizeEvent> boolean removeListener(Class<T> eventType, EventListener<? super T> listener) {
+        return data.listeners.removeListener(eventType, listener);
     }
 
     /// Sets the locale and updates all resource bundles.
@@ -987,6 +1071,8 @@ public class Localize {
         if (needsCleanup) {
             data.attached.removeIf(weak -> weak.get() == null);
         }
+
+        data.listeners.fireEvent(event);
     }
 
     /// A unique key associated with a [ResourceBundleProvider] [entry][ProviderEntry].
