@@ -30,19 +30,19 @@ class LocalizeTest {
 
     @Test void testPutProvider() {
         Localize localize = Localize.of();
-        Collection<Localize.ProviderEntry> entries = localize.getBundleProviderEntries();
+        Collection<Localize.ProviderEntry> entries = localize.getProviderEntries();
         String key = "key";
 
         assertTrue(entries.isEmpty());
-        assertNull(localize.putBundleProvider(key, TEST_PROVIDER));
-        assertSame(TEST_PROVIDER, localize.putBundleProvider(key, TEST2_PROVIDER));
+        assertNull(localize.putProvider(key, TEST_PROVIDER));
+        assertSame(TEST_PROVIDER, localize.putProvider(key, TEST2_PROVIDER));
         assertEquals(1, entries.size());
 
-        assertSame(TEST2_PROVIDER, localize.removeBundleProvider(key));
+        assertSame(TEST2_PROVIDER, localize.removeProvider(key));
         assertTrue(entries.isEmpty());
 
-        assertNull(localize.putBundleProvider(key, TEST_PROVIDER));
-        assertNull(localize.putBundleProvider("other", TEST_PROVIDER));
+        assertNull(localize.putProvider(key, TEST_PROVIDER));
+        assertNull(localize.putProvider("other", TEST_PROVIDER));
         assertEquals(2, entries.size());
     }
 
@@ -50,55 +50,55 @@ class LocalizeTest {
         Localize localize = Localize.of();
         String key = "key";
 
-        // NOTE: these methods delegate to `putBundleProvider(String, ResourceBundleProvider)`
-        localize.putBundleProvider(key, TEST_PROVIDER_NAME);
-        localize.putBundleProvider(key, TEST2_PROVIDER_NAME);
-        localize.putBundleProvider("other", TEST2_PROVIDER_NAME);
-        assertEquals(2, localize.getBundleProviderEntries().size());
+        // NOTE: these methods delegate to `putProvider(String, ResourceBundleProvider)`
+        localize.putProvider(key, TEST_PROVIDER_NAME);
+        localize.putProvider(key, TEST2_PROVIDER_NAME);
+        localize.putProvider("other", TEST2_PROVIDER_NAME);
+        assertEquals(2, localize.getProviderEntries().size());
     }
 
     @Test void testAddProvider() {
         Localize localize = Localize.of();
-        Collection<Localize.ProviderEntry> entries = localize.getBundleProviderEntries();
+        Collection<Localize.ProviderEntry> entries = localize.getProviderEntries();
 
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(TEST_PROVIDER);
-        Localize.ProviderEntry entry2 = localize.addBundleProvider(TEST2_PROVIDER);
+        Localize.ProviderEntry entry1 = localize.addProvider(TEST_PROVIDER);
+        Localize.ProviderEntry entry2 = localize.addProvider(TEST2_PROVIDER);
         assertEquals(2, entries.size());
 
         entry1.remove();
         assertEquals(1, entries.size());
 
-        localize.putBundleProvider(entry2.getKey(), TEST_PROVIDER);
+        localize.putProvider(entry2.getKey(), TEST_PROVIDER);
         assertEquals(1, entries.size());
     }
 
     @Test void testAddProviderByBaseName() {
         Localize localize = Localize.of();
 
-        // NOTE: these methods delegate to `addBundleProvider(ResourceBundleProvider)`
-        localize.addBundleProvider(TEST_PROVIDER_NAME);
-        localize.addBundleProvider(TEST2_PROVIDER_NAME);
-        assertEquals(2, localize.getBundleProviderEntries().size());
+        // NOTE: these methods delegate to `addProvider(ResourceBundleProvider)`
+        localize.addProvider(TEST_PROVIDER_NAME);
+        localize.addProvider(TEST2_PROVIDER_NAME);
+        assertEquals(2, localize.getProviderEntries().size());
     }
 
     @Test void testPutNullReturningProvider() {
         Localize localize = Localize.of();
         String key = "key";
 
-        localize.putBundleProvider(key, _unusedLocale -> null);
+        localize.putProvider(key, _unusedLocale -> null);
         assertEquals("", localize.getValue("missing"));
     }
 
-    @Test void testRemoveProvider() {
+    @Test void testReturnedProviderFromRemove() {
         Localize localize = Localize.of();
 
-        assertNull(localize.removeBundleProvider("key"));
-        assertNull(localize.removeBundleProvider("key4"));
+        assertNull(localize.removeProvider("key"));
+        assertNull(localize.removeProvider("key4"));
 
-        localize.putBundleProvider("key", TEST_PROVIDER);
-        assertSame(TEST_PROVIDER, localize.removeBundleProvider("key"));
-        localize.putBundleProvider("key3", TEST_PROVIDER);
-        assertSame(TEST_PROVIDER, localize.removeBundleProvider("key3"));
+        localize.putProvider("key", TEST_PROVIDER);
+        assertSame(TEST_PROVIDER, localize.removeProvider("key"));
+        localize.putProvider("key3", TEST_PROVIDER);
+        assertSame(TEST_PROVIDER, localize.removeProvider("key3"));
     }
 
     @Test void testLocale() {
@@ -122,7 +122,7 @@ class LocalizeTest {
         assertEquals("", localize.getValue(TEST_KEY_GREET));
         assertEquals("", localize.getValue(() -> TEST_KEY_TEST));
 
-        localize.putBundleProvider("key", TEST_PROVIDER);
+        localize.putProvider("key", TEST_PROVIDER);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
         assertEquals("test", localize.getValue(() -> TEST_KEY_TEST));
         assertEquals("", localize.getValue("missing1"));
@@ -147,65 +147,65 @@ class LocalizeTest {
         assertThrows(NullPointerException.class, () -> localize.setFormatter(null));
     }
 
-    @Test void testContainsBundleProvider() {
+    @Test void testContainsProvider() {
         Localize localize = Localize.of();
-        Function<String, Boolean> contains = localize::containsBundleProvider;
+        Function<String, Boolean> contains = localize::containsProvider;
 
         assertFalse(contains.apply("key"));
 
-        localize.putBundleProvider("key", TEST_PROVIDER);
+        localize.putProvider("key", TEST_PROVIDER);
         assertFalse(contains.apply("Key"));
         assertFalse(contains.apply("other"));
         assertTrue(contains.apply("key"));
         assertThrows(NullPointerException.class, () -> contains.apply(null));
 
-        localize.removeBundleProvider("key");
+        localize.removeProvider("key");
         assertFalse(contains.apply("key"));
     }
 
-    @Test void testReplaceBundleProvider() {
+    @Test void testReplaceProvider() {
         Localize localize = Localize.of(Locale.JAPANESE);
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("おはよう", localize.getValue(TEST_KEY_GREET));
 
-        localize.putBundleProvider("provider", TEST2_PROVIDER);
+        localize.putProvider("provider", TEST2_PROVIDER);
         assertEquals("おはようございます", localize.getValue(TEST_KEY_GREET));
     }
 
-    @Test void testRemoveBundleProvider() {
+    @Test void testRemoveProvider() {
         Localize localize = Localize.of(Locale.CHINESE);
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("早上好", localize.getValue(TEST_KEY_GREET));
 
-        localize.removeBundleProvider("provider");
+        localize.removeProvider("provider");
         assertEquals("", localize.getValue(TEST_KEY_GREET));
     }
 
-    @Test void testRemoveBundleProviderMissingKey() {
+    @Test void testRemoveProviderMissingKey() {
         Localize localize = Localize.of(Locale.ENGLISH);
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
 
-        localize.removeBundleProvider("");
-        localize.removeBundleProvider("Provider");
+        localize.removeProvider("");
+        localize.removeProvider("Provider");
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
     }
 
-    @Test void testClearRemoveBundleProviders() {
+    @Test void testClearProviders() {
         Localize localize = Localize.of(Locale.ENGLISH);
-        Collection<Localize.ProviderEntry> entries = localize.getBundleProviderEntries();
+        Collection<Localize.ProviderEntry> entries = localize.getProviderEntries();
 
-        assertFalse(localize.clearBundleProviders());
+        assertFalse(localize.clearProviders());
 
-        localize.addBundleProvider(TEST_PROVIDER);
+        localize.addProvider(TEST_PROVIDER);
 
         assertFalse(entries.isEmpty());
-        assertTrue(localize.clearBundleProviders());
+        assertTrue(localize.clearProviders());
         assertTrue(entries.isEmpty());
-        assertFalse(localize.clearBundleProviders());
+        assertFalse(localize.clearProviders());
     }
 
     @Test void testRefreshNoProviders() {
@@ -224,7 +224,7 @@ class LocalizeTest {
 
         assertEquals("", supplier.get());
 
-        localize.putBundleProvider("provider", TEST_PROVIDER);
+        localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("hi", supplier.get());
 
         localize.refresh();
@@ -243,15 +243,15 @@ class LocalizeTest {
         Collection<ResourceBundle> snapshotA = localize.getResourceBundles();
         assertTrue(snapshotA.isEmpty());
 
-        localize.putBundleProvider("key", TEST_PROVIDER);
+        localize.putProvider("key", TEST_PROVIDER);
         assertTrue(snapshotA.isEmpty());
 
         Collection<ResourceBundle> snapshotB = localize.getResourceBundles();
         assertEquals(1, snapshotB.size());
         assertNotEquals(snapshotA, snapshotB);
 
-        localize.addBundleProvider(TEST_PROVIDER);
-        localize.addBundleProvider(TEST2_PROVIDER);
+        localize.addProvider(TEST_PROVIDER);
+        localize.addProvider(TEST2_PROVIDER);
         Collection<ResourceBundle> snapshotC = localize.getResourceBundles();
 
         assertTrue(snapshotA.isEmpty());
@@ -269,7 +269,7 @@ class LocalizeTest {
         AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
         Localize localize = Localize.of(Locale.ENGLISH);
 
-        localize.putBundleProvider("provider", locale -> currentBundle.get());
+        localize.putProvider("provider", locale -> currentBundle.get());
         assertEquals("abc", localize.getValue(TEST_KEY_TEST));
 
         // Realistically, this would be the file changing on disk or similar

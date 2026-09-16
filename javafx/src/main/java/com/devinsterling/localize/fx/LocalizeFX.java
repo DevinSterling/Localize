@@ -43,7 +43,7 @@ import java.util.Locale;
 /// JavaFX code:
 /// ```
 /// LocalizeFX localize = LocalizeFX.of();
-/// localize.addBundleProvider("messages");
+/// localize.addProvider("messages");
 ///
 /// Button button = new Button();
 /// Label label = new Label();

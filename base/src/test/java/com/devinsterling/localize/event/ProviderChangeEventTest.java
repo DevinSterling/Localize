@@ -21,14 +21,14 @@ public class ProviderChangeEventTest {
         LocalizeEventTest localize = new LocalizeEventTest();
 
         Localize.ProviderKey key1 = Localize.ProviderKey.of();
-        localize.putBundleProvider(key1, NULL_PROVIDER); // Event 0
-        Localize.ProviderEntry entry1 = localize.getBundleProviderEntry(key1);
+        localize.putProvider(key1, NULL_PROVIDER); // Event 0
+        Localize.ProviderEntry entry1 = localize.getProviderEntry(key1);
 
         Localize.ProviderKey key2 = Localize.ProviderKey.of("123");
-        localize.putBundleProvider(key2, NULL_PROVIDER); // 1
-        Localize.ProviderEntry entry2 = localize.getBundleProviderEntry(key2);
+        localize.putProvider(key2, NULL_PROVIDER); // 1
+        Localize.ProviderEntry entry2 = localize.getProviderEntry(key2);
 
-        Localize.ProviderEntry entry3 = localize.addBundleProvider(NULL_PROVIDER); // 2
+        Localize.ProviderEntry entry3 = localize.addProvider(NULL_PROVIDER); // 2
 
         assertEquals(3, localize.capturedEvents.size());
         assertSame(entry1, localize.getEvent(0, ProviderChangeEvent.Added.class).getEntry());
@@ -39,16 +39,16 @@ public class ProviderChangeEventTest {
     @Test void testOnProviderReplaced() {
         LocalizeEventTest localize = new LocalizeEventTest();
 
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(NULL_PROVIDER); // Event 0
-        localize.putBundleProvider(entry1.getKey(), NULL_PROVIDER); // 1
-        Localize.ProviderEntry entry1A = localize.getBundleProviderEntry(entry1.getKey());
-        localize.putBundleProvider(entry1.getKey(), NULL_PROVIDER); // 2
-        Localize.ProviderEntry entry1B = localize.getBundleProviderEntry(entry1.getKey());
+        Localize.ProviderEntry entry1 = localize.addProvider(NULL_PROVIDER); // Event 0
+        localize.putProvider(entry1.getKey(), NULL_PROVIDER); // 1
+        Localize.ProviderEntry entry1A = localize.getProviderEntry(entry1.getKey());
+        localize.putProvider(entry1.getKey(), NULL_PROVIDER); // 2
+        Localize.ProviderEntry entry1B = localize.getProviderEntry(entry1.getKey());
 
-        localize.putBundleProvider("abc", NULL_PROVIDER); // 3
-        Localize.ProviderEntry entry2 = localize.getBundleProviderEntry("abc");
-        localize.putBundleProvider("abc", NULL_PROVIDER); // 4
-        Localize.ProviderEntry entry2A = localize.getBundleProviderEntry("abc");
+        localize.putProvider("abc", NULL_PROVIDER); // 3
+        Localize.ProviderEntry entry2 = localize.getProviderEntry("abc");
+        localize.putProvider("abc", NULL_PROVIDER); // 4
+        Localize.ProviderEntry entry2A = localize.getProviderEntry("abc");
 
         assertEquals(5, localize.capturedEvents.size());
 
@@ -71,14 +71,14 @@ public class ProviderChangeEventTest {
     @Test void testOnProviderRemove() {
         LocalizeEventTest localize = new LocalizeEventTest();
 
-        localize.removeBundleProvider(Localize.ProviderKey.of());
+        localize.removeProvider(Localize.ProviderKey.of());
 
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(NULL_PROVIDER); // Event 0
-        Localize.ProviderEntry entry2 = localize.addBundleProvider(NULL_PROVIDER); // 1
+        Localize.ProviderEntry entry1 = localize.addProvider(NULL_PROVIDER); // Event 0
+        Localize.ProviderEntry entry2 = localize.addProvider(NULL_PROVIDER); // 1
 
-        localize.removeBundleProvider(entry2.getKey()); // 2
-        localize.removeBundleProvider(entry2.getKey());
-        localize.removeBundleProvider(Localize.ProviderKey.of());
+        localize.removeProvider(entry2.getKey()); // 2
+        localize.removeProvider(entry2.getKey());
+        localize.removeProvider(Localize.ProviderKey.of());
         entry1.remove(); // 3
         entry1.remove();
 
@@ -90,15 +90,15 @@ public class ProviderChangeEventTest {
     @Test void testOnProviderBulkRemove() {
         LocalizeEventTest localize = new LocalizeEventTest();
 
-        localize.clearBundleProviders();
+        localize.clearProviders();
 
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(NULL_PROVIDER); // Event 0
-        Localize.ProviderEntry entry2 = localize.addBundleProvider(NULL_PROVIDER); // 1
-        localize.clearBundleProviders(); // 2
+        Localize.ProviderEntry entry1 = localize.addProvider(NULL_PROVIDER); // Event 0
+        Localize.ProviderEntry entry2 = localize.addProvider(NULL_PROVIDER); // 1
+        localize.clearProviders(); // 2
 
-        Localize.ProviderEntry entry3 = localize.addBundleProvider(NULL_PROVIDER); // 3
-        localize.clearBundleProviders(); // 4
-        localize.clearBundleProviders();
+        Localize.ProviderEntry entry3 = localize.addProvider(NULL_PROVIDER); // 3
+        localize.clearProviders(); // 4
+        localize.clearProviders();
 
         assertEquals(5, localize.capturedEvents.size());
         assertEquals(
@@ -116,10 +116,10 @@ public class ProviderChangeEventTest {
 
         localize.refresh(Localize.ProviderKey.of());
 
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(NULL_PROVIDER); // Event 0
-        Localize.ProviderEntry entry2 = localize.addBundleProvider(NULL_PROVIDER); // 1
-        Localize.ProviderEntry entry3 = localize.addBundleProvider(TEST_PROVIDER); // 2
-        Localize.ProviderEntry entry4 = localize.addBundleProvider(TEST_PROVIDER); // 3
+        Localize.ProviderEntry entry1 = localize.addProvider(NULL_PROVIDER); // Event 0
+        Localize.ProviderEntry entry2 = localize.addProvider(NULL_PROVIDER); // 1
+        Localize.ProviderEntry entry3 = localize.addProvider(TEST_PROVIDER); // 2
+        Localize.ProviderEntry entry4 = localize.addProvider(TEST_PROVIDER); // 3
 
         // No refreshes occur here because `NULL_PROVIDER` always returns a null bundle (Nothing to refresh)
         localize.refresh(entry2.getKey());
@@ -144,15 +144,15 @@ public class ProviderChangeEventTest {
         LocalizeEventTest localize = new LocalizeEventTest();
 
         // No refreshes occur here because `NULL_PROVIDER` always returns a null bundle (Nothing to refresh)
-        localize.addBundleProvider(NULL_PROVIDER); // Event 0
+        localize.addProvider(NULL_PROVIDER); // Event 0
         localize.refresh();
-        localize.addBundleProvider(NULL_PROVIDER); // 1
+        localize.addProvider(NULL_PROVIDER); // 1
         localize.refresh();
 
         // These refreshes occur since the returned bundle is always non-null (Something to refresh)
-        Localize.ProviderEntry entry3 = localize.addBundleProvider(TEST_PROVIDER); // 2
+        Localize.ProviderEntry entry3 = localize.addProvider(TEST_PROVIDER); // 2
         localize.refresh(); // 3
-        Localize.ProviderEntry entry4 = localize.addBundleProvider(TEST_PROVIDER); // 4
+        Localize.ProviderEntry entry4 = localize.addProvider(TEST_PROVIDER); // 4
         localize.refresh(); // 5
 
         assertEquals(6, localize.capturedEvents.size());
@@ -170,17 +170,17 @@ public class ProviderChangeEventTest {
         LocalizeEventTest localize = new LocalizeEventTest();
 
         localize.setLocale(Locale.JAPANESE);
-        localize.addBundleProvider(NULL_PROVIDER); // Event 0
+        localize.addProvider(NULL_PROVIDER); // Event 0
         localize.setLocale(Locale.CHINESE);
 
-        Localize.ProviderEntry entry1 = localize.addBundleProvider(TEST_PROVIDER); // 1
+        Localize.ProviderEntry entry1 = localize.addProvider(TEST_PROVIDER); // 1
         localize.setLocale(Locale.ENGLISH); // 2
 
-        Localize.ProviderEntry entry2 = localize.addBundleProvider(TEST_PROVIDER); // 3
+        Localize.ProviderEntry entry2 = localize.addProvider(TEST_PROVIDER); // 3
         localize.setLocale(Locale.JAPANESE); // 4
         localize.setLocale(Locale.JAPANESE);
         localize.setLocale(Locale.CHINESE); // 5
-        localize.clearBundleProviders(); // 6
+        localize.clearProviders(); // 6
         localize.setLocale(Locale.ENGLISH);
 
         assertEquals(7, localize.capturedEvents.size());

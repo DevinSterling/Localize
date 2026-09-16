@@ -21,7 +21,7 @@ public class CompositionTest {
         assertEquals(Locale.JAPANESE, wrapped2.getLocale());
         assertEquals(Locale.JAPANESE, localize.getLocale());
 
-        assertEquals(localize.getBundleProviderEntries(), wrapped1.getBundleProviderEntries());
+        assertEquals(localize.getProviderEntries(), wrapped1.getProviderEntries());
     }
 
     @Test void testNestedComposition() {

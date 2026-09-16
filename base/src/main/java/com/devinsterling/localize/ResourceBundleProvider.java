@@ -5,7 +5,7 @@ import java.util.ResourceBundle;
 
 /// Provider that produces a [ResourceBundle] on demand with a given [Locale].
 ///
-/// @see Localize#putBundleProvider(String, ResourceBundleProvider)
+/// @see Localize#putProvider(String, ResourceBundleProvider)
 /// @since 1.0
 @FunctionalInterface
 public interface ResourceBundleProvider {

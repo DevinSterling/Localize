@@ -36,8 +36,8 @@ import java.util.List;
 public interface ProviderChangeEvent extends LocalizeEvent {
     /// An event representing that a single entry was added.
     ///
-    /// @see Localize#putBundleProvider(Localize.ProviderKey, ResourceBundleProvider)
-    /// @see Localize#addBundleProvider(ResourceBundleProvider)
+    /// @see Localize#putProvider(Localize.ProviderKey, ResourceBundleProvider)
+    /// @see Localize#addProvider(ResourceBundleProvider)
     interface Added extends ProviderChangeEvent {
         /// Returns the added entry.
         ///
@@ -47,7 +47,7 @@ public interface ProviderChangeEvent extends LocalizeEvent {
 
     /// An event representing that a single entry was replaced.
     ///
-    /// @see Localize#putBundleProvider(Localize.ProviderKey, ResourceBundleProvider)
+    /// @see Localize#putProvider(Localize.ProviderKey, ResourceBundleProvider)
     /// @see Localize.ProviderEntry#remove
     interface Replaced extends ProviderChangeEvent {
         /// Returns the old entry.
@@ -63,7 +63,7 @@ public interface ProviderChangeEvent extends LocalizeEvent {
 
     /// An event representing that a single entry was removed.
     ///
-    /// @see Localize#removeBundleProvider(Localize.ProviderKey)
+    /// @see Localize#removeProvider(Localize.ProviderKey)
     /// @see Localize.ProviderEntry#remove
     interface Removed extends ProviderChangeEvent {
         /// Returns the removed entry.
@@ -85,7 +85,7 @@ public interface ProviderChangeEvent extends LocalizeEvent {
 
     /// A coalesced event representing that more than one entry were removed.
     ///
-    /// @see Localize#clearBundleProviders()
+    /// @see Localize#clearProviders()
     interface BulkRemoved extends ProviderChangeEvent {
         /// Returns the removed entries.
         ///

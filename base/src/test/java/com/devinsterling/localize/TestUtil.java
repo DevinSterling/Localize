@@ -20,7 +20,7 @@ public final class TestUtil {
 
     public static Localize getLocalizeInstance() {
         Localize localize = Localize.of(Locale.ENGLISH);
-        localize.addBundleProvider(TEST_PROVIDER);
+        localize.addProvider(TEST_PROVIDER);
         return localize;
     }
 }
