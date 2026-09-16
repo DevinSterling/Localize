@@ -211,14 +211,14 @@ class LocalizeTest {
     @Test void testRefreshNoProviders() {
         Localize localize = Localize.of(Locale.ENGLISH);
 
-        localize.refresh();
+        localize.refreshProviders();
         assertEquals("", localize.getValue(TEST_KEY_GREET));
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("", localize.getValue(TEST_KEY_GREET));
     }
 
-    @Test void testRefresh() {
+    @Test void testProviderRefresh() {
         Localize localize = Localize.of(Locale.ENGLISH);
         Supplier<String> supplier = () -> localize.getValue(TEST_KEY_GREET);
 
@@ -227,13 +227,13 @@ class LocalizeTest {
         localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("hi", supplier.get());
 
-        localize.refresh();
+        localize.refreshProviders();
         assertEquals("hi", supplier.get());
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("hi", supplier.get());
 
-        localize.refresh("nonexistent");
+        localize.refreshProvider("nonexistent");
         assertEquals("hi", supplier.get());
     }
 
@@ -276,7 +276,7 @@ class LocalizeTest {
         currentBundle.set(bundleFactory.apply("xyz"));
         assertEquals("abc", localize.getValue(TEST_KEY_TEST)); // still stale
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("xyz", localize.getValue(TEST_KEY_TEST));
     }
 }

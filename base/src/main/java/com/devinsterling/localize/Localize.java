@@ -387,7 +387,7 @@ public class Localize {
 
     /// Sets the locale and updates all resource bundles.
     ///
-    /// Changing the locale will trigger a [refresh][refresh()].
+    /// Changing the locale will trigger a [refresh][refreshProviders()].
     ///
     /// @param locale Locale to fetch associated resource bundles.
     /// @throws NullPointerException If locale is `null`.
@@ -413,7 +413,7 @@ public class Localize {
         VersionedLocale.Snapshot snapshot = this.data.locale.set(locale);
 
         if (!snapshot.isUnchanged()) {
-            refresh(snapshot, LocalizeEvent.Cause.LOCALE_CHANGE);
+            refreshProviders(snapshot, LocalizeEvent.Cause.LOCALE_CHANGE);
             fireEvent(new Change(this, snapshot));
         }
     }
@@ -488,7 +488,7 @@ public class Localize {
     public ResourceBundleProvider putProvider(ProviderKey key, ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(this, key, provider);
         ProviderEntry previous = data.providers.put(entry);
-        refresh(entry);
+        refreshProvider(entry);
 
         fireEvent(
             previous == null
@@ -577,7 +577,7 @@ public class Localize {
     public ProviderEntry addProvider(ResourceBundleProvider provider) {
         ProviderEntry entry = new ProviderEntry(this, ProviderKey.of(), provider);
         data.providers.put(entry);
-        refresh(entry);
+        refreshProvider(entry);
         fireEvent(new ProviderChangeEventImpls.Added(this, entry));
         return entry;
     }
@@ -714,14 +714,14 @@ public class Localize {
     /// @return    `true` if the provider was refreshed.
     ///            Otherwise, `false` is returned if the provider was not found or superseded by a newer refresh.
     /// @throws NullPointerException If `key` is `null`.
-    /// @see refresh(String)
+    /// @see refreshProvider(String)
     /// @see putProvider(String, ResourceBundleProvider)
     /// @see ProviderKey#of(String)
     /// @since 2.0
-    public boolean refresh(ProviderKey key) {
+    public boolean refreshProvider(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
         ProviderEntry entry = data.providers.get(key);
-        boolean isRefreshed = entry != null && refresh(entry);
+        boolean isRefreshed = entry != null && refreshProvider(entry);
 
         if (isRefreshed) {
             fireEvent(new ProviderChangeEventImpls.Refreshed(this, entry));
@@ -733,15 +733,15 @@ public class Localize {
     /// Triggers a refresh by fetching a new [ResourceBundle] from
     /// the [ResourceBundleProvider] associated with the given key.
     ///
-    /// This is a convenience method, equivalent to calling [refresh(ProviderKey)]
+    /// This is a convenience method, equivalent to calling [refreshProvider(ProviderKey)]
     /// with [ProviderKey#of(String)].
     ///
     /// @param key Key associated with the provider to refresh.
     /// @return    `true` if the provider was refreshed.
     ///            Otherwise, `false` is returned if the provider was not found or superseded by a newer refresh.
     /// @throws NullPointerException If `key` is `null`.
-    public boolean refresh(String key) {
-        return refresh(ProviderKey.of(key));
+    public boolean refreshProvider(String key) {
+        return refreshProvider(ProviderKey.of(key));
     }
 
     /// Triggers all providers to refresh and fetch new [ResourceBundle] instances.
@@ -751,8 +751,8 @@ public class Localize {
     /// after their contents have changed during runtime.
     ///
     /// @return `true` if any providers were refreshed, or `false` if none were refreshed.
-    public boolean refresh() {
-        return refresh(data.locale.snapshot(), LocalizeEvent.Cause.EXTERNAL);
+    public boolean refreshProviders() {
+        return refreshProviders(data.locale.snapshot(), LocalizeEvent.Cause.EXTERNAL);
     }
 
     /// Returns a builder for formatting a localized value from the given pattern.
@@ -950,7 +950,7 @@ public class Localize {
     ///
     /// @param snapshot Snapshot locale to refresh all providers with.
     /// @return       `true` if any providers were refreshed.
-    private boolean refresh(VersionedLocale.Snapshot snapshot, LocalizeEvent.Cause cause) {
+    private boolean refreshProviders(VersionedLocale.Snapshot snapshot, LocalizeEvent.Cause cause) {
         record VersionEntryBundle(ProviderEntry entry, ResourceBundle bundle, long version) {}
 
         int sizeHint = data.providers.providers.size();
@@ -999,7 +999,7 @@ public class Localize {
         return !refreshed.isEmpty();
     }
 
-    private boolean refresh(ProviderEntry entry) {
+    private boolean refreshProvider(ProviderEntry entry) {
         if (!entry.isActive()) return false;
 
         boolean isRefreshed = false;
@@ -1022,7 +1022,7 @@ public class Localize {
         return isRefreshed;
     }
 
-    private void remove(ProviderEntry entry) {
+    private void removeProvider(ProviderEntry entry) {
         if (entry.isActive() && data.providers.remove(entry)) {
             fireEvent(new ProviderChangeEventImpls.Removed(this, entry));
         }
@@ -1185,7 +1185,7 @@ public class Localize {
             Localize localize = this.localize;
 
             if (localize != null) {
-                localize.remove(this);
+                localize.removeProvider(this);
             }
         }
 
@@ -1194,12 +1194,12 @@ public class Localize {
         ///
         /// This method has no effect if this entry is [inactive][isActive].
         ///
-        /// @see Localize#refresh(ProviderKey)
+        /// @see Localize#refreshProvider(ProviderKey)
         /// @see isActive
         public void refresh() {
             Localize localize = this.localize;
 
-            if (localize != null && localize.refresh(this)) {
+            if (localize != null && localize.refreshProvider(this)) {
                 localize.fireEvent(new ProviderChangeEventImpls.Refreshed(localize, this));
             }
         }

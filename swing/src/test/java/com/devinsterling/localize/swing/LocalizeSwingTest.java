@@ -163,14 +163,14 @@ public class LocalizeSwingTest {
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
-        localize.refresh();
+        localize.refreshProviders();
         assertEquals("", label.getText());
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("", label.getText());
     }
 
-    @Test void testRefresh() {
+    @Test void testRefreshProvider() {
         LocalizeSwing localize = LocalizeSwing.of(Locale.JAPANESE);
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
@@ -180,13 +180,13 @@ public class LocalizeSwingTest {
         localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("クリック！", label.getText());
 
-        localize.refresh();
+        localize.refreshProviders();
         assertEquals("クリック！", label.getText());
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("クリック！", label.getText());
 
-        localize.refresh("nonexistent");
+        localize.refreshProvider("nonexistent");
         assertEquals("クリック！", label.getText());
     }
 
@@ -209,7 +209,7 @@ public class LocalizeSwingTest {
         currentBundle.set(bundleFactory.apply("xyz"));
         assertEquals("abc", label.getText());
 
-        localize.refresh("provider");
+        localize.refreshProvider("provider");
         assertEquals("xyz", label.getText());
     }
 }
