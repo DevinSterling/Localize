@@ -2,9 +2,6 @@ package com.devinsterling.localize.event;
 
 import com.devinsterling.localize.Localize;
 
-import java.util.Objects;
-import java.util.function.Consumer;
-
 /// A thread-safe event listener to handle events from [Localize] instances.
 ///
 /// To prevent memory leaks, listeners must be removed when no longer needed
@@ -15,17 +12,17 @@ import java.util.function.Consumer;
 /// ```
 /// Localize localize = Localize.of(Locale.ENGLISH);
 /// // Creating a listener
-/// EventListener<LocaleChangeEvent> listener = event -> {
+/// EventListener<LocaleEvent.Replaced> listener = event -> {
 ///     logger.info("Locale changed to {}", event.getNewLocale());
 /// };
 ///
 /// // Registering a listener
-/// Subscription subscription = localize.addListener(LocaleChangeEvent.class, listener);
+/// Subscription subscription = localize.addListener(LocaleEvent.Replaced.class, listener);
 ///
 /// // Deregistering a listener
 /// subscription.dispose();
 /// // or
-/// localize.removeListener(LocaleChangeEvent.class, listener);
+/// localize.removeListener(LocaleEvent.Replaced.class, listener);
 /// ```
 ///
 /// ### Note
@@ -33,6 +30,7 @@ import java.util.function.Consumer;
 /// Overridable hooks are provided there (e.g., `Localize#onEvent`).
 ///
 /// @param <T> Event type.
+/// @see Localize#addListener
 /// @since 2.0
 @FunctionalInterface
 public interface EventListener<T extends LocalizeEvent> {

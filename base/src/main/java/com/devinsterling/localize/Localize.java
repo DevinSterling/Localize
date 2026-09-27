@@ -1,14 +1,14 @@
 package com.devinsterling.localize;
 
 import com.devinsterling.localize.event.EventListener;
-import com.devinsterling.localize.event.LocaleChangeEvent;
+import com.devinsterling.localize.event.FormatterEvent;
+import com.devinsterling.localize.event.LocaleEvent;
 import com.devinsterling.localize.event.LocalizeEvent;
-import com.devinsterling.localize.event.ProviderChangeEvent;
+import com.devinsterling.localize.event.ProviderEvent;
 import com.devinsterling.localize.event.Subscription;
+import com.devinsterling.localize.event.impl.EventImpls;
 import com.devinsterling.localize.event.impl.EventListenerRegistry;
-import com.devinsterling.localize.event.impl.ProviderChangeEventImpls;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -103,7 +103,7 @@ import java.util.concurrent.atomic.AtomicLong;
 ///
 /// ### Events
 /// Event handling is primarily managed using an [EventListener],
-/// which listens to events fired by [Localize] instances (e.g., [LocaleChangeEvent], [ProviderChangeEvent]).
+/// which listens to events fired by [Localize] instances (e.g., [LocaleEvent], [ProviderEvent]).
 ///
 /// Listeners are added by calling [addListener], which stores listeners by **strong** reference.
 /// To prevent memory leaks when no longer needed, listeners are removed using [removeListener]
@@ -111,25 +111,25 @@ import java.util.concurrent.atomic.AtomicLong;
 /// ```java
 /// Localize localize = Localize.of(Locale.JAPANESE);
 /// // Creating a listener
-/// EventListener<LocaleChangeEvent> listener = event -> {
+/// EventListener<LocaleEvent.Replaced> listener = event -> {
 ///     logger.info("New locale = {}", event.getNewLocale());
 /// };
 ///
 /// // Registering a listener
-/// Subscription subscription = localize.addListener(LocaleChangeEvent.class, listener);
+/// Subscription subscription = localize.addListener(LocaleEvent.Replaced.class, listener);
 ///
 /// // Deregistering a listener
 /// subscription.dispose();
 /// // or
-/// localize.removeListener(LocaleChangeEvent.class, listener);
+/// localize.removeListener(LocaleEvent.Replaced.class, listener);
 /// ```
 /// Subclasses can override protected hooks to handle events
 /// without registering listeners or managing their lifecycle:
 /// ```
 /// class Custom extends Localize {
 ///     ...
-///     @Override protected void onLocaleChanged(LocaleChangeEvent event) {
-///         super.onLocaleChanged(event);
+///     @Override protected void onLocaleReplaced(LocaleEvent.Replaced event) {
+///         super.onLocaleReplaced(event);
 ///         ...
 ///     }
 /// }
@@ -167,16 +167,13 @@ import java.util.concurrent.atomic.AtomicLong;
 /// @since 1.0
 public class Localize {
     private static final class Data {
-        /// All [Localize] instances attached to this [Data].
-        /// This avoids having to go through the [listeners] registry,
-        /// allowing to notify attached instances without indirection.
-        private final CopyOnWriteArrayList<WeakReference<Localize>> attached = new CopyOnWriteArrayList<>();
         /// Lock to synchronize [ProviderEntry#bundle] replacements
         private final Object providerEntryBundleLock = new Object();
         private final EventListenerRegistry listeners = new EventListenerRegistry();
         private final ProviderStore providers = new ProviderStore();
         private final VersionedLocale locale;
         private final LocalizeConfig config;
+        // NOTE: In the future, `data.formatter` can be changed into a `VersionedFormatter`, if the need arises.
         private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
 
         private Data(Locale locale, LocalizeConfig config) {
@@ -202,7 +199,7 @@ public class Localize {
     private Localize(Localize parent, Data data) {
         this.parent = parent;
         this.data = data;
-        data.attached.add(new WeakReference<>(this));
+        data.listeners.attach(Localize::onEvent, this);
     }
 
     /// Creates a [Localize] instance attached to the same internal state as the given source,
@@ -270,6 +267,7 @@ public class Localize {
     ///
     /// This method is called internally and should not be called directly by programs.
     ///
+    /// By default, this method delegates to [onLocaleReplaced], [onFormatterReplaced], and [onProviderEvent].
     /// When overriding, subclasses *should* call `super.onEvent` to preserve parent behavior:
     /// ```java
     /// @Override protected void onEvent(LocalizeEvent event) {
@@ -283,64 +281,84 @@ public class Localize {
     /// @since 2.0
     protected void onEvent(LocalizeEvent event) {
         // In Java 21, this will be replaced with a switch
-        if (event instanceof LocaleChangeEvent change) {
-            onLocaleChanged(change);
-        } else if (event instanceof ProviderChangeEvent change) {
-            onProvidersChanged(change);
+        if (event instanceof LocaleEvent.Replaced e) {
+            onLocaleReplaced(e);
+        } else if (event instanceof FormatterEvent.Replaced e) {
+            onFormatterReplaced(e);
+        } else if (event instanceof ProviderEvent e) {
+            onProviderEvent(e);
         }
     }
 
-    /// A hook triggered whenever the locale is changed.
+    /// A hook triggered whenever the locale is replaced.
     ///
     /// This method is called internally and should not be called directly by programs.
     ///
-    /// When overriding, subclasses *should* call `super.onLocaleChanged` to preserve parent behavior:
+    /// When overriding, subclasses *should* call `super.onLocaleReplaced` to preserve parent behavior:
     /// ```java
-    /// @Override protected void onLocaleChanged(LocaleChanged change) {
-    ///     super.onLocaleChanged(change);
+    /// @Override protected void onLocaleReplaced(LocaleEvent.Replaced event) {
+    ///     super.onLocaleReplaced(event);
     ///
-    ///     // Checking if the change is still fresh
-    ///     if (change.isValid()) {
+    ///     // Checking if the event is still fresh
+    ///     if (event.isValid()) {
     ///         ...
     ///     }
     /// }
     /// ```
-    /// @param change Locale change event.
+    /// @param event Locale replace event.
     /// @implSpec This method must be thread-safe.
     /// @since 2.0
-    protected void onLocaleChanged(LocaleChangeEvent change) {
+    protected void onLocaleReplaced(LocaleEvent.Replaced event) {
         // no-op
     }
 
-    /// A hook triggered whenever a provider is added, removed, or refreshed.
+    /// A hook triggered whenever the formatter is replaced.
     ///
     /// This method is called internally and should not be called directly by programs.
     ///
-    /// When overriding, subclasses *should* call `super.onProvidersChanged` to preserve parent behavior:
+    /// When overriding, subclasses *should* call `super.onFormatterReplaced` to preserve parent behavior:
     /// ```java
-    /// @Override protected void onProvidersChanged(ProviderChangeEvent event) {
-    ///     super.onProvidersChanged(event);
+    /// @Override protected void onFormatterReplaced(FormatterEvent.Replaced event) {
+    ///     super.onFormatterReplaced(event);
+    ///     ...
+    /// }
+    /// ```
+    /// @param event Formatter replace event.
+    /// @implSpec This method must be thread-safe.
+    /// @since 2.0
+    protected void onFormatterReplaced(FormatterEvent.Replaced event) {
+        // no-op
+    }
+
+    /// A hook triggered whenever a provider event occurs (e.g., added, removed, refreshed).
+    ///
+    /// This method is called internally and should not be called directly by programs.
+    ///
+    /// When overriding, subclasses *should* call `super.onProviderEvent` to preserve parent behavior:
+    /// ```java
+    /// @Override protected void onProviderEvent(ProviderEvent event) {
+    ///     super.onProviderEvent(event);
     ///
     ///     // Inspecting the event
     ///     switch (event) {
-    ///         case ProviderChangeEvent.Added added -> {
+    ///         case ProviderEvent.Added added -> {
     ///             logger.info("Added provider {}", added.getEntry().getKey());
     ///         }
-    ///         case ProviderChangeEvent.Refreshed refreshed -> {
+    ///         case ProviderEvent.Refreshed refreshed -> {
     ///             // ...
     ///         }
     ///         default -> {}
     ///     }
     /// }
     /// ```
-    /// @param event Provider change event.
+    /// @param event Provider event.
     /// @implSpec This method must be thread-safe.
     /// @since 2.0
-    protected void onProvidersChanged(ProviderChangeEvent event) {
+    protected void onProviderEvent(ProviderEvent event) {
         // no-op
     }
 
-    /// Adds the given listener, notifying it whenever the specified event occurs.
+    /// Adds the given listener, notifying it whenever the specified [event][LocalizeEvent] occurs.
     ///
     /// If the given listener is already registered, it is not re-inserted and
     /// a reference to its existing associated [Subscription] is returned.
@@ -351,20 +369,20 @@ public class Localize {
     /// call [removeListener] or [Subscription#dispose]:
     /// ```java
     /// // Creating a listener
-    /// EventListener<LocaleChangeEvent> listener = event -> {
+    /// EventListener<LocaleEvent.Replaced> listener = event -> {
     ///     logger.info("New locale set: {}", event.getNewLocale());
     /// };
     ///
     /// // Registering a listener
-    /// Subscription subscription = localize.addListener(LocaleChangeEvent.class, listener);
+    /// Subscription subscription = localize.addListener(LocaleEvent.Replaced.class, listener);
     ///
     /// // Deregistering a listener
     /// subscription.dispose();
     /// // or
-    /// localize.removeListener(LocaleChangeEvent.class, listener);
+    /// localize.removeListener(LocaleEvent.Replaced.class, listener);
     /// ```
-    /// @param <T>       Event type.
-    /// @param eventType Type of event to listen to.
+    /// @param <T>       [Event][LocalizeEvent] type.
+    /// @param eventType Type of [event][LocalizeEvent] to listen to.
     /// @param listener  Listener to add.
     /// @return         **Thread-safe** subscription to remove the added listener.
     /// @throws NullPointerException If `type` or `listener` is `null`.
@@ -392,7 +410,7 @@ public class Localize {
     /// @param locale Locale to fetch associated resource bundles.
     /// @throws NullPointerException If locale is `null`.
     public void setLocale(Locale locale) {
-        record Change(Localize localize, VersionedLocale.Snapshot snapshot) implements LocaleChangeEvent {
+        record Replaced(Localize localize, VersionedLocale.Snapshot snapshot) implements LocaleEvent.Replaced {
             @Override public Locale getOldLocale() {
                 return snapshot.previous;
             }
@@ -414,7 +432,7 @@ public class Localize {
 
         if (!snapshot.isUnchanged()) {
             refreshProviders(snapshot, LocalizeEvent.Cause.LOCALE_CHANGE);
-            fireEvent(new Change(this, snapshot));
+            fireEvent(new Replaced(this, snapshot));
         }
     }
 
@@ -434,7 +452,13 @@ public class Localize {
     /// @param formatter Formatter to format requests.
     /// @throws NullPointerException If `formatter` is `null`.
     public void setFormatter(LocalizationFormatter formatter) {
+        LocalizationFormatter old = data.formatter;
         data.formatter = Objects.requireNonNull(formatter, "Formatter must not be null");
+
+        // Fire the event if a change occurred
+        if (!old.equals(formatter)) {
+            fireEvent(new EventImpls.Formatter.Replaced(this, old, formatter));
+        }
     }
 
     /// Returns the localization formatter.
@@ -498,8 +522,8 @@ public class Localize {
 
         fireEvent(
             previous == null
-                ? new ProviderChangeEventImpls.Added(this, entry)
-                : new ProviderChangeEventImpls.Replaced(this, previous, entry)
+                ? new EventImpls.Provider.Added(this, entry)
+                : new EventImpls.Provider.Replaced(this, previous, entry)
         );
 
         return previous != null ? previous.getProvider() : null;
@@ -584,7 +608,7 @@ public class Localize {
         ProviderEntry entry = new ProviderEntry(this, ProviderKey.of(), provider);
         data.providers.put(entry);
         refreshProvider(entry);
-        fireEvent(new ProviderChangeEventImpls.Added(this, entry));
+        fireEvent(new EventImpls.Provider.Added(this, entry));
         return entry;
     }
 
@@ -668,7 +692,7 @@ public class Localize {
         ProviderEntry removed = data.providers.remove(key);
 
         if (removed != null) {
-            fireEvent(new ProviderChangeEventImpls.Removed(this, removed));
+            fireEvent(new EventImpls.Provider.Removed(this, removed));
         }
 
         return removed == null ? null : removed.getProvider();
@@ -697,9 +721,9 @@ public class Localize {
         if (isAnyRemoved) {
             fireEvent(
                 removed.size() > 1
-                    ? new ProviderChangeEventImpls.BulkRemoved(this, removed)
+                    ? new EventImpls.Provider.BulkRemoved(this, removed)
                     // If one entry was removed, no need to fire a bulk refresh event
-                    : new ProviderChangeEventImpls.Removed(this, removed.get(0))
+                    : new EventImpls.Provider.Removed(this, removed.get(0))
             );
         }
 
@@ -730,7 +754,7 @@ public class Localize {
         boolean isRefreshed = entry != null && refreshProvider(entry);
 
         if (isRefreshed) {
-            fireEvent(new ProviderChangeEventImpls.Refreshed(this, entry));
+            fireEvent(new EventImpls.Provider.Refreshed(this, entry));
         }
 
         return isRefreshed;
@@ -758,7 +782,7 @@ public class Localize {
     ///
     /// @return `true` if any providers were refreshed, or `false` if none were refreshed.
     public boolean refreshProviders() {
-        return refreshProviders(data.locale.snapshot(), LocalizeEvent.Cause.EXTERNAL);
+        return refreshProviders(data.locale.snapshot(), LocalizeEvent.Cause.DIRECT);
     }
 
     /// Returns a builder for formatting a localized value from the given pattern.
@@ -893,7 +917,7 @@ public class Localize {
 
     private String formatValue(LocalizationRequestSource.Pattern source, LocalizationRequest request) {
         // Since a pattern is given, `defaultValue` is not used here as a value will always be present
-        return getFormatter().format(
+        return handleFormatterRequest(
             LocalizationFormatter.Request.Builder
                 .of(source.value())
                 .arguments(request.getArguments())
@@ -911,21 +935,14 @@ public class Localize {
             if ((bundle = entry.getBundle()) == null || !bundle.containsKey(key)) continue;
 
             String pattern = bundle.getString(key);
-
-            try {
-                value = getFormatter().format(
-                    LocalizationFormatter.Request.Builder
-                        .of(pattern)
-                        .arguments(request.getArguments())
-                        // Locale can change mid-loop, so it's always set here
-                        .locale(getLocale())
-                        .build()
-                );
-            } catch (RuntimeException e) {
-                if (!getConfig().isIgnoreProcessingExceptions()) {
-                    throw e;
-                }
-            }
+            value = handleFormatterRequest(
+                LocalizationFormatter.Request.Builder
+                    .of(pattern)
+                    .arguments(request.getArguments())
+                    // Locale can change mid-loop, so it's always set here
+                    .locale(getLocale())
+                    .build()
+            );
 
             if (value != null) {
                 break;
@@ -933,6 +950,8 @@ public class Localize {
         }
 
         if (value == null) {
+            fireEvent(new EventImpls.Diagnostic.MissingKey(this, source, request));
+
             if (request.hasDefaultValue()) {
                 value = request.getDefaultValue();
             } else if (getConfig().isThrowWhenNoValueFound()) {
@@ -945,6 +964,23 @@ public class Localize {
                 );
             } else {
                 value = getConfig().getDefaultMissingValue();
+            }
+        }
+
+        return value;
+    }
+
+    private String handleFormatterRequest(LocalizationFormatter.Request request) {
+        LocalizationFormatter formatter = getFormatter();
+        String value = null;
+
+        try {
+            value = formatter.format(request);
+        } catch (Exception e) {
+            fireEvent(new EventImpls.Formatter.ExceptionCaught(this, formatter, request, e));
+
+            if (!getConfig().isIgnoreFormatterExceptions()) {
+                throw e;
             }
         }
 
@@ -969,7 +1005,7 @@ public class Localize {
             }
 
             long version = entry.version.incrementAndGet();
-            ResourceBundle bundle = getResourceBundle(entry, snapshot.current);
+            ResourceBundle bundle = getResourceBundle(cause, entry, snapshot.current);
             newBundles.add(new VersionEntryBundle(entry, bundle, version));
         }
 
@@ -997,21 +1033,22 @@ public class Localize {
         if (!refreshed.isEmpty()) {
             fireEvent(
                 refreshed.size() > 1
-                    ? new ProviderChangeEventImpls.BulkRefreshed(this, cause, refreshed)
-                    : new ProviderChangeEventImpls.Refreshed(this, cause, refreshed.get(0))
+                    ? new EventImpls.Provider.BulkRefreshed(this, cause, refreshed)
+                    : new EventImpls.Provider.Refreshed(this, cause, refreshed.get(0))
             );
         }
 
         return !refreshed.isEmpty();
     }
 
+    // Triggered by an external request to refresh an entry
     private boolean refreshProvider(ProviderEntry entry) {
         if (!entry.isActive()) return false;
 
         boolean isRefreshed = false;
         long version = entry.version.incrementAndGet();
         VersionedLocale.Snapshot snapshot = data.locale.snapshot();
-        ResourceBundle newBundle = getResourceBundle(entry, snapshot.current);
+        ResourceBundle newBundle = getResourceBundle(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
 
         synchronized (data.providerEntryBundleLock) {
             if (// A refresh occurs if at least one of the bundles is non-null.
@@ -1030,19 +1067,21 @@ public class Localize {
 
     private void removeProvider(ProviderEntry entry) {
         if (entry.isActive() && data.providers.remove(entry)) {
-            fireEvent(new ProviderChangeEventImpls.Removed(this, entry));
+            fireEvent(new EventImpls.Provider.Removed(this, entry));
         }
     }
 
     /// @return The corresponding [ResourceBundle], or `null` if it was not found
-    ///         and [LocalizeConfig#isIgnoreMissingResourceBundles()] is `true`.
-    private ResourceBundle getResourceBundle(ProviderEntry entry, Locale locale) {
+    ///         and [LocalizeConfig#isIgnoreProviderExceptions()] is `true`.
+    private ResourceBundle getResourceBundle(LocalizeEvent.Cause cause, ProviderEntry entry, Locale locale) {
         ResourceBundle bundle = null;
 
         try {
             bundle = entry.getProvider().getBundle(locale);
-        } catch (MissingResourceException e) {
-            if (!getConfig().isIgnoreMissingResourceBundles()) {
+        } catch (Exception e) {
+            fireEvent(new EventImpls.Provider.ExceptionCaught(this, cause, locale, e, entry));
+
+            if (!getConfig().isIgnoreProviderExceptions()) {
                 throw e;
             }
         }
@@ -1054,31 +1093,17 @@ public class Localize {
         return Objects.requireNonNull(locale, "locale must not be null");
     }
 
-    /// Fires the given event and propagates it to all attached [Localize] instances.
+    /// Fires the given event and propagates it to all attached
+    /// [Localize] instances and [event listeners][EventListener].
     ///
-    /// The event is dispatched to the [onEvent] hook of each attached instance.
+    /// The event is dispatched to the [onEvent] hook of each attached instance and corresponding event listeners.
     ///
     /// @param event Event to fire and propagate.
     /// @throws NullPointerException If `event` is `null`.
     /// @since 2.0
     protected final void fireEvent(LocalizeEvent event) {
         Objects.requireNonNull(event, "event must not be null");
-        boolean needsCleanup = false;
-
-        for (WeakReference<Localize> weak : data.attached) {
-            Localize instance = weak.get();
-            if (instance != null) {
-                instance.onEvent(event);
-            } else {
-                needsCleanup = true;
-            }
-        }
-
-        if (needsCleanup) {
-            data.attached.removeIf(weak -> weak.get() == null);
-        }
-
-        data.listeners.fireEvent(event);
+        data.listeners.fireEvent(this, event);
     }
 
     /// A unique key associated with a [ResourceBundleProvider] [entry][ProviderEntry].
@@ -1173,7 +1198,7 @@ public class Localize {
         /// Returns the most recently computed resource bundle.
         ///
         /// ### Note
-        /// The returned bundle may be `null` if [LocalizeConfig#isIgnoreMissingResourceBundles()]
+        /// The returned bundle may be `null` if [LocalizeConfig#isIgnoreProviderExceptions()]
         /// is set to `true` and the most recent fetch failed, or if this entry is [inactive][isActive].
         ///
         /// @return Most recently computed resource bundle, or `null` if not available.
@@ -1206,7 +1231,7 @@ public class Localize {
             Localize localize = this.localize;
 
             if (localize != null && localize.refreshProvider(this)) {
-                localize.fireEvent(new ProviderChangeEventImpls.Refreshed(localize, this));
+                localize.fireEvent(new EventImpls.Provider.Refreshed(localize, this));
             }
         }
 

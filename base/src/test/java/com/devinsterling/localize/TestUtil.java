@@ -1,5 +1,6 @@
 package com.devinsterling.localize;
 
+import java.lang.ref.WeakReference;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -22,5 +23,15 @@ public final class TestUtil {
         Localize localize = Localize.of(Locale.ENGLISH);
         localize.addProvider(TEST_PROVIDER);
         return localize;
+    }
+
+    public static void awaitGarbageCollection() {
+        Object object = new Object();
+        WeakReference<Object> reference = new WeakReference<>(object);
+        object = null;
+
+        while(reference.get() != null) {
+            System.gc();
+        }
     }
 }

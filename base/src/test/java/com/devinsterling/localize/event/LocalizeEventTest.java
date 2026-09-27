@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LocalizeEventTest {
     @Test void testCauses() {
-        assertNotEquals(LocalizeEvent.Cause.EXTERNAL, LocalizeEvent.Cause.LOCALE_CHANGE);
-        assertEquals("EXTERNAL", LocalizeEvent.Cause.EXTERNAL.toString());
+        assertNotEquals(LocalizeEvent.Cause.DIRECT, LocalizeEvent.Cause.LOCALE_CHANGE);
+        assertEquals("DIRECT", LocalizeEvent.Cause.DIRECT.toString());
         assertEquals("LOCALE_CHANGE", LocalizeEvent.Cause.LOCALE_CHANGE.toString());
     }
 }

@@ -4,8 +4,9 @@ import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
-import com.devinsterling.localize.event.LocaleChangeEvent;
-import com.devinsterling.localize.event.ProviderChangeEvent;
+import com.devinsterling.localize.event.FormatterEvent;
+import com.devinsterling.localize.event.LocaleEvent;
+import com.devinsterling.localize.event.ProviderEvent;
 import com.devinsterling.localize.event.Subscription;
 
 import javax.swing.JComponent;
@@ -290,30 +291,34 @@ public class LocalizeSwing extends Localize {
         }
     }
 
-    @Override protected void onLocaleChanged(LocaleChangeEvent change) {
+    @Override protected void onLocaleReplaced(LocaleEvent.Replaced event) {
         if (SwingUtilities.isEventDispatchThread()) {
-            onLocaleChangedEdtThread(change);
+            onLocaleReplacedEdtThread(event);
         } else {
-            SwingUtilities.invokeLater(() -> onLocaleChangedEdtThread(change));
+            SwingUtilities.invokeLater(() -> onLocaleReplacedEdtThread(event));
         }
     }
 
-    private void onLocaleChangedEdtThread(LocaleChangeEvent change) {
-        if (change.isValid()) {
+    private void onLocaleReplacedEdtThread(LocaleEvent.Replaced event) {
+        if (event.isValid()) {
             notifyListeners();
         }
         // After notifying all listeners, recheck if the held locale is still the current one
-        if (change.isValid()) {
-            propertyChangeManager.notifyChangeListeners(this, change.getOldLocale(), change.getNewLocale());
+        if (event.isValid()) {
+            propertyChangeManager.notifyChangeListeners(this, event.getOldLocale(), event.getNewLocale());
         }
     }
 
+    @Override protected void onFormatterReplaced(FormatterEvent.Replaced event) {
+        notifyListeners();
+    }
+
     // In a future release, events will be used to optimize provider-scoped listeners (uncommon case)
-    @Override protected void onProvidersChanged(ProviderChangeEvent event) {
+    @Override protected void onProviderEvent(ProviderEvent event) {
         // Optimization NOTE:
-        // Ignore any events caused by a locale change; it is already handled on `onLocaleChanged`.
+        // Ignore any events caused by a locale change; it is already handled on `onLocaleReplaced`.
         // This avoids unnecessarily recomputing bindings more than once in quick succession.
-        if (event.getCause() != ProviderChangeEvent.Cause.LOCALE_CHANGE) {
+        if (event.getCause() != ProviderEvent.Cause.LOCALE_CHANGE) {
             notifyListeners();
         }
     }

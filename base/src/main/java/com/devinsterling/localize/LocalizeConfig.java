@@ -1,5 +1,10 @@
 package com.devinsterling.localize;
 
+import com.devinsterling.localize.event.DiagnosticEvent;
+import com.devinsterling.localize.event.EventListener;
+import com.devinsterling.localize.event.FormatterEvent;
+import com.devinsterling.localize.event.ProviderEvent;
+
 import java.util.MissingResourceException;
 import java.util.Objects;
 
@@ -7,15 +12,17 @@ import java.util.Objects;
 ///
 /// ### Default Configuration
 /// - [isThrowWhenNoValueFound][LocalizeConfig#setThrowWhenNoValueFound] = `false`
-/// - [isIgnoreProcessingException][LocalizeConfig#setIgnoreProcessingExceptions] = `false`
-/// - [isIgnoreMissingResourceBundles][LocalizeConfig#setIgnoreMissingResourceBundles] = `false`
+/// - [isIgnoreFormatterExceptions][setIgnoreFormatterExceptions] = `false`
+/// - [isIgnoreProviderExceptions][setIgnoreProviderExceptions] = `false`
+/// - [isIgnoreListenerExceptions][setIgnoreListenerExceptions] = `false`
 /// - [defaultMissingValue][LocalizeConfig#setDefaultMissingValue] = `""`
 ///
 /// @since 1.0
 public class LocalizeConfig {
     private volatile boolean isThrowWhenNoValueFound = false;
-    private volatile boolean isIgnoreProcessingExceptions = false;
-    private volatile boolean isIgnoreMissingResourceBundles = false;
+    private volatile boolean isIgnoreFormatterExceptions = false;
+    private volatile boolean isIgnoreProviderExceptions = false;
+    private volatile boolean isIgnoreListenerExceptions = false;
     private volatile String defaultMissingValue = "";
 
     /// Creates a configuration instance with all values set to their defaults.
@@ -33,25 +40,44 @@ public class LocalizeConfig {
         this.isThrowWhenNoValueFound = isThrowWhenNoValueFound;
     }
 
-    /// When set to `true`, this will ignore all runtime exceptions that
-    /// occur from processing a resource bundle. The next bundle enqueued
-    /// will be processed as if nothing happened.
+    /// Sets whether runtime exceptions from [localization formatters][LocalizationFormatter]
+    /// are ignored while calling [LocalizationFormatter#format].
     ///
-    /// The initial value is `false`.
+    /// When set to `true`, runtime exceptions are ignored.
+    /// Otherwise, exceptions are thrown and propagated.
     ///
-    /// @param isIgnoreProcessingExceptions Flag to ignore runtime exceptions.
-    public void setIgnoreProcessingExceptions(boolean isIgnoreProcessingExceptions) {
-        this.isIgnoreProcessingExceptions = isIgnoreProcessingExceptions;
+    /// Default: `false`
+    /// @param ignore `true` to ignore exceptions, or `false` to throw.
+    /// @see FormatterEvent.ExceptionCaught
+    public void setIgnoreFormatterExceptions(boolean ignore) {
+        this.isIgnoreFormatterExceptions = ignore;
     }
 
-    /// When set to `true`, this will ignore all runtime exceptions that
-    /// occur from when a resource bundle is not found; missing.
+    /// Sets whether runtime exceptions from [resource bundle providers][ResourceBundleProvider]
+    /// are ignored while calling [ResourceBundleProvider#getBundle].
     ///
-    /// The initial value is `false`.
+    /// When set to `true`, runtime exceptions are ignored.
+    /// Otherwise, exceptions are thrown and propagated.
     ///
-    /// @param isIgnoreMissingResourceBundles Flag to ignore runtime exceptions.
-    public void setIgnoreMissingResourceBundles(boolean isIgnoreMissingResourceBundles) {
-        this.isIgnoreMissingResourceBundles = isIgnoreMissingResourceBundles;
+    /// Default: `false`
+    /// @param ignore `true` to ignore exceptions, or `false` to throw.
+    /// @see ProviderEvent.ExceptionCaught
+    public void setIgnoreProviderExceptions(boolean ignore) {
+        this.isIgnoreProviderExceptions = ignore;
+    }
+
+    /// Sets whether runtime exceptions from [event listeners][EventListener]
+    /// are ignored while calling [EventListener#onEvent].
+    ///
+    /// When set to `true`, runtime exceptions are ignored.
+    /// Otherwise, exceptions are thrown and propagated.
+    ///
+    /// Default: `false`
+    /// @param ignore `true` to ignore exceptions, or `false` to throw.
+    /// @see DiagnosticEvent.ListenerExceptionCaught
+    /// @since 2.0
+    public void setIgnoreListenerExceptions(boolean ignore) {
+        this.isIgnoreListenerExceptions = ignore;
     }
 
     /// Sets the default value to use when no value is found for a specified key.
@@ -73,14 +99,32 @@ public class LocalizeConfig {
         return isThrowWhenNoValueFound;
     }
 
-    /// {@return `true`, if runtime exceptions must be ignored.}
-    public boolean isIgnoreProcessingExceptions() {
-        return isIgnoreProcessingExceptions;
+    /// Returns `true` if runtime exceptions from [localization formatters][LocalizationFormatter]
+    /// are ignored while calling [LocalizationFormatter#format].
+    ///
+    /// Default: `false`
+    /// @return `true` if exceptions are ignored, or `false` if thrown.
+    public boolean isIgnoreFormatterExceptions() {
+        return isIgnoreFormatterExceptions;
     }
 
-    /// {@return `true`, if missing resource bundles are ignored.}
-    public boolean isIgnoreMissingResourceBundles() {
-        return isIgnoreMissingResourceBundles;
+    /// Returns `true` if runtime exceptions from [resource bundle providers][ResourceBundleProvider]
+    /// are ignored while calling [ResourceBundleProvider#getBundle].
+    ///
+    /// Default: `false`
+    /// @return `true` if exceptions are ignored, or `false` if thrown.
+    public boolean isIgnoreProviderExceptions() {
+        return isIgnoreProviderExceptions;
+    }
+
+    /// Returns `true` if runtime exceptions from [event listeners][com.devinsterling.localize.event.EventListener]
+    /// are ignored while calling [EventListener#onEvent].
+    ///
+    /// Default: `false`
+    /// @return `true` if exceptions are ignored, or `false` if thrown.
+    /// @since 2.0
+    public boolean isIgnoreListenerExceptions() {
+        return isIgnoreListenerExceptions;
     }
 
     /// Returns the default value to use when no value is found for a specified key.
@@ -92,18 +136,20 @@ public class LocalizeConfig {
     }
 
     @Override public boolean equals(Object obj) {
-        if (!(obj instanceof LocalizeConfig config)) return false;
-        if (config == this) return true;
-        return this.isIgnoreMissingResourceBundles == config.isIgnoreMissingResourceBundles
-                && this.isIgnoreProcessingExceptions == config.isIgnoreProcessingExceptions
-                && this.isThrowWhenNoValueFound == config.isThrowWhenNoValueFound
-                && Objects.equals(this.defaultMissingValue, config.defaultMissingValue);
+        if (!(obj instanceof LocalizeConfig other)) return false;
+        if (other == this) return true;
+        return isIgnoreProviderExceptions == other.isIgnoreProviderExceptions
+                && isIgnoreFormatterExceptions == other.isIgnoreFormatterExceptions
+                && isIgnoreListenerExceptions == other.isIgnoreListenerExceptions
+                && isThrowWhenNoValueFound == other.isThrowWhenNoValueFound
+                && Objects.equals(defaultMissingValue, other.defaultMissingValue);
     }
 
     @Override public int hashCode() {
         return Objects.hash(
-            isIgnoreMissingResourceBundles,
-            isIgnoreProcessingExceptions,
+            isIgnoreProviderExceptions,
+            isIgnoreFormatterExceptions,
+            isIgnoreListenerExceptions,
             isThrowWhenNoValueFound,
             defaultMissingValue
         );
