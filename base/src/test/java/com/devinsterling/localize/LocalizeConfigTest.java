@@ -1,5 +1,7 @@
 package com.devinsterling.localize;
 
+import com.devinsterling.localize.event.LocalizeEvent;
+
 import nl.jqno.equalsverifier.EqualsVerifier;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ class LocalizeConfigTest {
 
         // Default values
         assertEquals(config, localize.getConfig());
+
         config.setDefaultMissingValue(missingValue);
         assertEquals(missingValue, localize.getValue("Missing Key"));
     }
@@ -35,13 +38,10 @@ class LocalizeConfigTest {
         ResourceBundleProvider provider = l -> ResourceBundle.getBundle("missing", l);
 
         // Resource bundles
-        assertThrows(
-                MissingResourceException.class,
-                () -> localize.putProvider("key", provider));
-        config.setIgnoreMissingResourceBundles(true);
-        assertDoesNotThrow(
-                () -> localize.putProvider("key", provider));
+        assertThrows(MissingResourceException.class, () -> localize.putProvider("key", provider));
 
+        config.setIgnoreProviderExceptions(true);
+        assertDoesNotThrow(() -> localize.putProvider("key", provider));
     }
 
     @Test void testValueNotFound() {
@@ -49,25 +49,54 @@ class LocalizeConfigTest {
         LocalizeConfig config = localize.getConfig();
 
         // Value not found
-        assertDoesNotThrow(
-                () -> localize.getValue("Missing Key"));
+        assertDoesNotThrow(() -> localize.getValue("Missing Key"));
+
         config.setThrowWhenNoValueFound(true);
-        assertThrows(
-                MissingResourceException.class,
-                () -> localize.getValue("Missing Key"));
+        assertThrows(MissingResourceException.class, () -> localize.getValue("Missing Key"));
     }
 
-    @Test void testIgnoreProcessingExceptions() {
+    @Test void testIgnoreFormatterExceptions() {
         Localize localize = getLocalizeInstance();
         LocalizeConfig config = localize.getConfig();
 
-        localize.setFormatter(ctx -> {
+        localize.setFormatter(request -> {
             throw new TestException();
         });
 
         assertThrows(TestException.class, () -> localize.getValue(TEST_KEY_GREET));
-        config.setIgnoreProcessingExceptions(true);
+
+        config.setIgnoreFormatterExceptions(true);
         assertDoesNotThrow(() -> localize.getValue(TEST_KEY_GREET));
+    }
+
+    @Test void testIgnoreProviderExceptions() {
+        Localize localize = getLocalizeInstance();
+        LocalizeConfig config = localize.getConfig();
+
+        ResourceBundleProvider exceptionProvider = locale -> {
+            throw new TestException();
+        };
+
+        assertThrows(TestException.class, () -> localize.addProvider(exceptionProvider));
+        assertThrows(TestException.class, localize::refreshProviders);
+
+        config.setIgnoreProviderExceptions(true);
+        assertDoesNotThrow(() -> localize.addProvider(exceptionProvider));
+        assertDoesNotThrow(localize::refreshProviders);
+    }
+
+    @Test void testIgnoreEventListenerExceptions() {
+        Localize localize = getLocalizeInstance();
+        LocalizeConfig config = localize.getConfig();
+
+        localize.addListener(LocalizeEvent.class, event -> {
+            throw new TestException();
+        });
+
+        assertThrows(TestException.class, () -> localize.addProvider(TEST_PROVIDER));
+
+        config.setIgnoreListenerExceptions(true);
+        assertDoesNotThrow(() -> localize.addProvider(TEST_PROVIDER));
     }
 
     private static class TestException extends RuntimeException {}

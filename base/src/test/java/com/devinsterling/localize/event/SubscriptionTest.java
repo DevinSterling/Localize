@@ -45,9 +45,10 @@ public class SubscriptionTest {
 
     @Test void testSubscriptionCombine() {
         Subscription a = Subscription.EMPTY;
+        assertEquals(a, Subscription.combine());
+
         Subscription b = createSubscription();
         Subscription ab = Subscription.combine(a, b);
-
         assertTrue(ab.isActive());
 
         b.dispose();

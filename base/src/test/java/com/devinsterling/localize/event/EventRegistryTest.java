@@ -16,11 +16,11 @@ public class EventRegistryTest {
     @Test void testAddEventListener() {
         AtomicInteger count = new AtomicInteger();
         Localize localize = Localize.of(Locale.ENGLISH);
-        EventListener<LocaleChangeEvent> listener = event -> count.incrementAndGet();
+        EventListener<LocaleEvent> listener = event -> count.incrementAndGet();
 
-        localize.addListener(LocaleChangeEvent.class, listener);
-        localize.addListener(LocaleChangeEvent.class, listener);
-        localize.addListener(LocaleChangeEvent.class, listener);
+        localize.addListener(LocaleEvent.class, listener);
+        localize.addListener(LocaleEvent.class, listener);
+        localize.addListener(LocaleEvent.class, listener);
         localize.setLocale(Locale.JAPANESE);
         assertEquals(1, count.get());
 
@@ -28,7 +28,7 @@ public class EventRegistryTest {
         localize.setLocale(Locale.JAPANESE);
         assertEquals(1, count.get());
 
-        localize.addListener(LocaleChangeEvent.class, listener);
+        localize.addListener(LocaleEvent.class, listener);
         localize.setLocale(Locale.ENGLISH);
         assertEquals(2, count.get());
     }
@@ -37,22 +37,22 @@ public class EventRegistryTest {
         AtomicInteger count = new AtomicInteger();
         Localize localize = Localize.of(Locale.ENGLISH);
         Localize.ProviderKey key = Localize.ProviderKey.of();
-        EventListener<ProviderChangeEvent> listener = event -> count.incrementAndGet();
+        EventListener<ProviderEvent> listener = event -> count.incrementAndGet();
 
-        localize.addListener(ProviderChangeEvent.class, listener);
-        localize.addListener(ProviderChangeEvent.class, listener);
+        localize.addListener(ProviderEvent.class, listener);
+        localize.addListener(ProviderEvent.class, listener);
         localize.putProvider(key, locale -> null);
         assertEquals(1, count.get());
 
         localize.setLocale(Locale.JAPANESE);
         assertEquals(1, count.get());
-        assertTrue(localize.removeListener(ProviderChangeEvent.class, listener));
-        assertFalse(localize.removeListener(ProviderChangeEvent.class, listener));
+        assertTrue(localize.removeListener(ProviderEvent.class, listener));
+        assertFalse(localize.removeListener(ProviderEvent.class, listener));
 
         localize.removeProvider(key);
         assertEquals(1, count.get());
 
-        Subscription subscription = localize.addListener(ProviderChangeEvent.class, listener);
+        Subscription subscription = localize.addListener(ProviderEvent.class, listener);
         localize.putProvider(key, TEST_PROVIDER);
         assertEquals(2, count.get());
 
@@ -60,6 +60,43 @@ public class EventRegistryTest {
         subscription.dispose();
         localize.putProvider(key, TEST2_PROVIDER);
         assertEquals(2, count.get());
+    }
+
+    @Test void testListenerEventHierarchy() {
+        AtomicInteger eventsCount = new AtomicInteger();
+        AtomicInteger providerEventsCount = new AtomicInteger();
+        AtomicInteger providerAddedEventsCount = new AtomicInteger();
+        Localize localize = Localize.of(Locale.ENGLISH);
+
+        localize.addListener(LocalizeEvent.class, event -> eventsCount.incrementAndGet());
+        localize.addListener(ProviderEvent.class, event -> providerEventsCount.incrementAndGet());
+        localize.addListener(ProviderEvent.Added.class, event -> providerAddedEventsCount.incrementAndGet());
+
+        localize.addProvider(TEST_PROVIDER);
+        assertEquals(1, eventsCount.get());
+        assertEquals(1, providerEventsCount.get());
+        assertEquals(1, providerAddedEventsCount.get());
+
+        localize.setLocale(Locale.JAPANESE);
+        assertEquals(3, eventsCount.get());
+        assertEquals(2, providerEventsCount.get());
+        assertEquals(1, providerAddedEventsCount.get());
+    }
+
+    @Test void testEventListenerWithSuperTypes() {
+        AtomicInteger count = new AtomicInteger();
+        Localize localize = Localize.of(Locale.ENGLISH);
+        EventListener<LocalizeEvent> listener = event -> count.incrementAndGet();
+
+        localize.addListener(LocalizeEvent.class, listener);
+        localize.addListener(ProviderEvent.class, listener);
+        localize.addListener(LocaleEvent.Replaced.class, listener);
+
+        localize.addProvider(TEST_PROVIDER);
+        assertEquals(2, count.get());
+
+        localize.setLocale(Locale.JAPANESE);
+        assertEquals(6, count.get());
     }
 
     @Test void testSubscription() {
