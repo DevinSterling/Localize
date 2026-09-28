@@ -787,6 +787,9 @@ public class Localize {
 
     /// Returns a builder for formatting a localized value from the given pattern.
     ///
+    /// The format syntax depends on the [current][getFormatter] [LocalizationFormatter]
+    /// (e.g., [LocalizationFormatter#STANDARD]).
+    ///
     /// ### Example Usage
     /// Using a pattern with positional arguments:
     /// ```java

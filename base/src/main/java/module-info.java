@@ -54,7 +54,8 @@
 /// [`LocalizationFormatter`][com.devinsterling.localize.LocalizationFormatter]
 /// built around [java.text.MessageFormat], though this can be replaced
 /// [programmatically][com.devinsterling.localize.Localize#setFormatter] or via SPI by providing a custom formatter.
-/// The default formatter supports both named and numbered arguments,
+/// The [default formatter][com.devinsterling.localize.LocalizationFormatter#STANDARD]
+/// supports both named and numbered arguments,
 /// as well as pluralization through [java.text.ChoiceFormat] choice patterns.
 ///
 /// > For advanced message formatting, plural rules, and greater control over bundle properties,

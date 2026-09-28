@@ -16,7 +16,7 @@ public class LocalizationFormatterTest {
         String sample = "sample";
         LocalizationFormatter mock = (ctx) -> sample;
 
-        assertEquals(LocalizationFormatter.DEFAULT, localize.getFormatter());
+        assertEquals(LocalizationFormatter.STANDARD, localize.getFormatter());
 
         localize.setFormatter(mock);
         // No bundles contained
@@ -27,7 +27,7 @@ public class LocalizationFormatterTest {
         assertEquals(sample, localize.getValue(TEST_KEY_GREET));
         assertEquals(sample, localize.getValue(() -> TEST_KEY_TEST));
 
-        localize.setFormatter(LocalizationFormatter.DEFAULT);
+        localize.setFormatter(LocalizationFormatter.STANDARD);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
         assertEquals("test", localize.getValue(() -> TEST_KEY_TEST));
     }
