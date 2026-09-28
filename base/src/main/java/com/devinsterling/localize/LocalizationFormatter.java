@@ -13,7 +13,7 @@ import java.util.Objects;
 /// For more details see
 /// [`LocalizationFormatterProvider`][com.devinsterling.localize.spi.LocalizationFormatterProvider].
 ///
-/// If no formatter is specified via SPI, [DEFAULT] is used as the default for [Localize] instances.
+/// If no formatter is specified via SPI, [STANDARD] is used as the default for [Localize] instances.
 ///
 /// @see Localize#setFormatter
 /// @see com.devinsterling.localize.spi.LocalizationFormatterProvider
@@ -186,7 +186,8 @@ public interface LocalizationFormatter {
     /// 1 #one time|\
     /// 1 <{click_count} times}!
     /// ```
-    LocalizationFormatter DEFAULT = new LocalizationFormatter() {
+    /// @since 2.0
+    LocalizationFormatter STANDARD = new LocalizationFormatter() {
         @Override public String format(Request request) {
             String value = request.getPattern();
             Arguments arguments = request.getArguments();

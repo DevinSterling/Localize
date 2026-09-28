@@ -12,6 +12,6 @@ final class LocalizationFormatterLocator {
     private static LocalizationFormatterProvider loadProvider() {
         ServiceLoader<LocalizationFormatterProvider> loader = ServiceLoader.load(LocalizationFormatterProvider.class);
 
-        return loader.findFirst().orElse(() -> LocalizationFormatter.DEFAULT);
+        return loader.findFirst().orElse(() -> LocalizationFormatter.STANDARD);
     }
 }
