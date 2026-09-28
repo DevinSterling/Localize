@@ -11,7 +11,7 @@ import java.util.Objects;
 /// Configuration to control how [Localize] handles operations.
 ///
 /// ### Default Configuration
-/// - [isThrowWhenNoValueFound][LocalizeConfig#setThrowWhenNoValueFound] = `false`
+/// - [isThrowOnMissingValue][setThrowOnMissingValue] = `false`
 /// - [isIgnoreFormatterExceptions][setIgnoreFormatterExceptions] = `false`
 /// - [isIgnoreProviderExceptions][setIgnoreProviderExceptions] = `false`
 /// - [isIgnoreListenerExceptions][setIgnoreListenerExceptions] = `false`
@@ -19,7 +19,7 @@ import java.util.Objects;
 ///
 /// @since 1.0
 public class LocalizeConfig {
-    private volatile boolean isThrowWhenNoValueFound = false;
+    private volatile boolean isThrowOnMissingValue = false;
     private volatile boolean isIgnoreFormatterExceptions = false;
     private volatile boolean isIgnoreProviderExceptions = false;
     private volatile boolean isIgnoreListenerExceptions = false;
@@ -35,9 +35,9 @@ public class LocalizeConfig {
     /// 2. [LocalizationRequest#getDefaultValue] is `null` (Set by [LocalizationValueBuilder#defaultValue(String)]).
     ///
     /// Default: `false`
-    /// @param isThrowWhenNoValueFound `true` to throw an exception, or `false` to ignore.
-    public void setThrowWhenNoValueFound(boolean isThrowWhenNoValueFound) {
-        this.isThrowWhenNoValueFound = isThrowWhenNoValueFound;
+    /// @param isThrow `true` to throw an exception, or `false` to ignore.
+    public void setThrowOnMissingValue(boolean isThrow) {
+        this.isThrowOnMissingValue = isThrow;
     }
 
     /// Sets whether runtime exceptions from [localization formatters][LocalizationFormatter]
@@ -95,8 +95,8 @@ public class LocalizeConfig {
     ///
     /// Default: `false`
     /// @return `true` if an exception is thrown, or `false` if ignored.
-    public boolean isThrowWhenNoValueFound() {
-        return isThrowWhenNoValueFound;
+    public boolean isThrowOnMissingValue() {
+        return isThrowOnMissingValue;
     }
 
     /// Returns `true` if runtime exceptions from [localization formatters][LocalizationFormatter]
@@ -138,19 +138,19 @@ public class LocalizeConfig {
     @Override public boolean equals(Object obj) {
         if (!(obj instanceof LocalizeConfig other)) return false;
         if (other == this) return true;
-        return isIgnoreProviderExceptions == other.isIgnoreProviderExceptions
+        return isThrowOnMissingValue == other.isThrowOnMissingValue
+                && isIgnoreProviderExceptions == other.isIgnoreProviderExceptions
                 && isIgnoreFormatterExceptions == other.isIgnoreFormatterExceptions
                 && isIgnoreListenerExceptions == other.isIgnoreListenerExceptions
-                && isThrowWhenNoValueFound == other.isThrowWhenNoValueFound
                 && Objects.equals(defaultMissingValue, other.defaultMissingValue);
     }
 
     @Override public int hashCode() {
         return Objects.hash(
+            isThrowOnMissingValue,
             isIgnoreProviderExceptions,
             isIgnoreFormatterExceptions,
             isIgnoreListenerExceptions,
-            isThrowWhenNoValueFound,
             defaultMissingValue
         );
     }
