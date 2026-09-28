@@ -957,7 +957,7 @@ public class Localize {
 
             if (request.hasDefaultValue()) {
                 value = request.getDefaultValue();
-            } else if (getConfig().isThrowWhenNoValueFound()) {
+            } else if (getConfig().isThrowOnMissingValue()) {
                 throw new MissingResourceException(
                     "Cannot find resource for " + getClass().getName() +
                             ", key " + key +

@@ -51,7 +51,7 @@ class LocalizeConfigTest {
         // Value not found
         assertDoesNotThrow(() -> localize.getValue("Missing Key"));
 
-        config.setThrowWhenNoValueFound(true);
+        config.setThrowOnMissingValue(true);
         assertThrows(MissingResourceException.class, () -> localize.getValue("Missing Key"));
     }
 
