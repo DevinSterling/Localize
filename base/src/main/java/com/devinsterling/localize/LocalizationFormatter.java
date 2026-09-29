@@ -166,7 +166,7 @@ public interface LocalizationFormatter {
 
     /// The standard formatter to format a [Request] into a localized string.
     ///
-    /// The standard formatter is built around [java.text.MessageFormat] and supports all of its syntax,
+    /// The standard formatter is built around [MessageFormat] and supports all of its syntax,
     /// including pluralization through [java.text.ChoiceFormat] choice patterns.
     /// In addition, both named and numbered arguments are supported.
     ///
@@ -175,36 +175,59 @@ public interface LocalizationFormatter {
     /// an optional dependency (`localize-icu4j`) providing
     /// [ICU4J](https://unicode-org.github.io/icu/userguide/icu4j/#platform-dependencies) support.
     ///
-    /// Examples within a properties file:
+    /// Examples within a properties file using [MessageFormat] syntax:
     /// ```properties
+    /// Example.simple=Hello World!
+    ///
     /// Example.numberedArguments=Hello {0}! Welcome to {1}, {0}!
     ///
     /// Example.namedArguments=Yesterday was {yesterday_date} and tomorrow is {tomorrow_date}.
+    ///
+    /// Example.quoted=To use a single quote, it must be escaped. '' will appear as a single quote.
     ///
     /// Example.pluralization={name} clicked this button {click_count, choice,\
     /// 0 #zero times|\
     /// 1 #one time|\
     /// 1 <{click_count} times}!
     /// ```
+    ///
+    /// ### Named Arguments
+    /// For compatibility with [MessageFormat], which uses numbered arguments,
+    /// named arguments are converted into numbered arguments.
+    /// For example, `Hi {first} {last}` becomes `Hi {0} {1}`.
+    ///
+    /// Named arguments are converted to numbered arguments only [when named arguments are present][Arguments#isNamed].
+    ///
+    /// #### Malformed Named Argument Syntax
+    /// Nested or unclosed braces (e.g., `{x{y}}`, `{x} {y`) are not valid syntax.
+    /// The underlying [MessageFormat] will throw an [IllegalArgumentException].
+    ///
+    /// @implNote As an optimization, requests with no arguments and no quotes to unescape in the pattern
+    ///           return the pattern as-is without invoking [MessageFormat].
     /// @since 2.0
     LocalizationFormatter STANDARD = new LocalizationFormatter() {
         @Override public String format(Request request) {
             String value = request.getPattern();
             Arguments arguments = request.getArguments();
+            boolean hasArguments = !arguments.isEmpty();
+
+            // Return early; nothing for `MessageFormat` to do as there are no arguments or quotes to unescape.
+            if (!hasArguments && value.indexOf('\'') < 0) {
+                return value;
+            }
+
             Object[] positionalArguments = null;
 
-            if (!arguments.isEmpty()) {
+            if (hasArguments) {
                 if (arguments.isPositional()) {
                     positionalArguments = arguments.toArray();
                 } else if (arguments.isNamed()) {
                     positionalArguments = new Object[arguments.size()];
                     value = convertToPositionalArgs(value, arguments.toNamedMap(), positionalArguments);
                 }
-
-                value = new MessageFormat(value, request.getLocale()).format(positionalArguments);
             }
 
-            return value;
+            return new MessageFormat(value, request.getLocale()).format(positionalArguments);
         }
 
         private static String convertToPositionalArgs(
@@ -221,8 +244,8 @@ public interface LocalizationFormatter {
             for (int i = 0; i < value.length(); i++) {
                 char c = value.charAt(i);
 
-                if (start >= 0) {
-                    if (c == '}' || c == ',') {
+                if (start >= 0) switch (c) {
+                    case '}', ',' -> {
                         String key = value.substring(start, i);
                         // Before inserting, check if the key was visited before
                         Integer position = keyToIndex.get(key);
@@ -238,7 +261,14 @@ public interface LocalizationFormatter {
 
                         buf.append(position);
                         start = -1;
-                    } else {
+                    }
+                    // NOTE: If this case happens, it's a bug from the end-caller since `{0{1}}` is invalid syntax.
+                    //       `MessageFormat` will throw an exception once it receives the converted string.
+                    case '{' -> {
+                        buf.append(value, start, i);
+                        start = i + 1;
+                    }
+                    default -> {
                         continue;
                     }
                 } else if (c == '\'') {
@@ -251,6 +281,8 @@ public interface LocalizationFormatter {
             }
 
             // If there's an unclosed brace, add the content after
+            // NOTE: If this case happens, it's a bug from the end-caller since braces must be closed.
+            //       `MessageFormat` will throw an exception once it receives the converted string.
             if (start > 0) {
                 buf.append(value, start, value.length());
             }
