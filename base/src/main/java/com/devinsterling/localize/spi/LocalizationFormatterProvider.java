@@ -1,5 +1,6 @@
 package com.devinsterling.localize.spi;
 
+import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizationFormatter;
 
 /// A provider of localization formatters.
@@ -50,4 +51,18 @@ public interface LocalizationFormatterProvider {
     /// @return Formatter to format requests.
     /// @implSpec This method must be thread-safe.
     LocalizationFormatter provide();
+
+    /// Returns the priority of this provider.
+    ///
+    /// A higher priority takes precedence over a lower priority. For example, `1` has higher priority than `-5`.
+    ///
+    /// When multiple providers are available, the provider with the highest priority is selected to
+    /// supply default [LocalizationFormatter] instances to all newly instantiated [Localize] instances.
+    ///
+    /// The default implementation returns `0`.
+    ///
+    /// @return Provider priority.
+    default int getPriority() {
+        return 0;
+    }
 }
