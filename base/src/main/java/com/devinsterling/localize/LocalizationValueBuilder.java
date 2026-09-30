@@ -1,25 +1,22 @@
 package com.devinsterling.localize;
 
+import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-/// Builder instance to retrieve formatted localized string values.
+/// Builder to retrieve formatted localized string values.
 ///
 /// **Builder instances are not thread-safe.**
 ///
-/// ### Arguments Resolution
-/// todo!
-///
 /// ### Positional and Named Arguments
-///
-/// Support for both named and numbered arguments is included.
-/// Note that mixing such calls will throw an [IllegalStateException].
-///
-/// ### Example
+/// Both positional and named arguments are supported.
+/// However, both argument styles cannot be mixed within the same builder instance
+/// and attempting to do so will throw an [IllegalStateException]:
 /// ```java
 /// // GOOD
-/// builder.arg("test") // Argument 0
+/// builder.arg("test")   // Argument 0
 ///        .arg("value2") // Argument 1
 ///        .arg("value3") // Argument 2
 ///        .value();
@@ -30,8 +27,7 @@ import java.util.function.Supplier;
 ///        .arg("value3")
 ///        .value();
 /// ```
-///
-/// Arguments may be appended in bulk consecutively:
+/// Arguments may also be appended in bulk:
 /// ```java
 /// // Numbered arguments
 /// builder.args("test", "value2", "value3")
@@ -43,6 +39,26 @@ import java.util.function.Supplier;
 ///        .args(Map.of("key3", "value3"))
 ///        .value();
 /// ```
+///
+/// ### Deferred Arguments
+/// [LocalizationValueBuilder] supports deferred values as arguments by accepting suppliers:
+/// ```java
+/// builder.arg(weather::getTemperature);
+/// ```
+/// Supplier are invoked each time the formatted localized value is computed (e.g., calling [value]).
+///
+/// For memory-sensitive applications that want to avoid retaining the source object by strong reference,
+/// Localize also supports weakly referencing the source separately from the method reference:
+/// - [arg(Object, Function)] (Numbered argument variant)
+///   ```java
+///   builder.arg(weather, Weather::getTemperature);
+///   ```
+/// - [arg(String, Object, Function)] (Named argument variant)
+///   ```java
+///   builder.arg("humidity", weather, Weather::getHumidity);
+///   ```
+/// Note that if a source object is garbage collected, its deferred argument value is `null`.
+///
 /// @param <B> Builder instance type.
 /// @since 1.0
 public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
@@ -103,11 +119,29 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
 
     /// Adds a numbered *deferred* argument that is supplied during formatting.
     ///
-    /// @param valueSupplier Numbered argument value.
+    /// @param valueSupplier Deferred value, invoked each time a formatted localized value is computed.
     /// @return              This builder instance.
     /// @throws IllegalStateException If named arguments were added prior.
+    /// @since 2.0
     public B arg(Supplier<?> valueSupplier) {
         return arg((Object) valueSupplier);
+    }
+
+    /// Adds a numbered *deferred* argument backed by a weak reference to the given source.
+    ///
+    /// The source is weakly referenced so that it may be garbage collected when no longer in use.
+    /// If the source has been garbage collected, the deferred argument value is `null`.
+    ///
+    /// @param <T>       Type of the source.
+    /// @param <U>       Type of the deferred value.
+    /// @param source    Source providing the value.
+    /// @param getValue  Deferred value from the source,
+    ///                  invoked each time a formatted localized value is computed.
+    /// @return          This builder instance.
+    /// @throws NullPointerException If `source` or `getValue` is `null`.
+    /// @since 2.0
+    public <T, U> B arg(T source, Function<T, U> getValue) {
+        return arg(new WeakSupplier<>(source, getValue));
     }
 
     /// Adds a named argument with an associated value.
@@ -128,12 +162,31 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// Adds a named *deferred* argument that is supplied during formatting.
     ///
     /// @param key           Named argument key.
-    /// @param valueSupplier Named argument value.
+    /// @param valueSupplier Deferred value, invoked each time a formatted localized value is computed.
     /// @return              This builder instance.
     /// @throws IllegalStateException If numbered arguments were added prior.
     /// @throws NullPointerException If the given key is `null`.
+    /// @since 2.0
     public B arg(String key, Supplier<?> valueSupplier) {
         return arg(key, (Object) valueSupplier);
+    }
+
+    /// Adds a named *deferred* argument backed by a weak reference to the given source.
+    ///
+    /// The source is weakly referenced so that it may be garbage collected when no longer in use.
+    /// If the source has been garbage collected, the deferred argument value is `null`.
+    ///
+    /// @param <T>       Type of the source.
+    /// @param <U>       Type of the deferred value.
+    /// @param key       Key to be inserted.
+    /// @param source    Source providing the value.
+    /// @param getValue  Deferred value from the source,
+    ///                  invoked each time a formatted localized value is computed.
+    /// @return          This builder instance.
+    /// @throws NullPointerException If `key`, `source`, or `getValue` is `null`.
+    /// @since 2.0
+    public <T, U> B arg(String key, T source, Function<T, U> getValue) {
+        return arg(key, new WeakSupplier<>(source, getValue));
     }
 
     /// Sets the default value if the requested key does not exist.
@@ -235,5 +288,19 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     @SuppressWarnings("unchecked")
     protected B getBuilder() {
         return (B) this;
+    }
+
+    private record WeakSupplier<T, U>(WeakReference<T> reference, Function<T, U> supplier) implements Supplier<U> {
+        public WeakSupplier(T source, Function<T, U> getValue) {
+            this(
+                new WeakReference<>(Objects.requireNonNull(source, "source must not be null")),
+                Objects.requireNonNull(getValue, "getValue must not be null")
+            );
+        }
+
+        @Override public U get() {
+            T value = reference.get();
+            return value == null ? null : supplier.apply(value);
+        }
     }
 }
