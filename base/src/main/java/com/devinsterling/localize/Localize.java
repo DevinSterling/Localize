@@ -850,7 +850,7 @@ public class Localize {
     /// Retrieves the value associated with the given resource bundle key.
     ///
     /// @param key Resource bundle key associated with the value to retrieve.
-    /// @return    Resource bundle value or the [default value][LocalizeConfig#getDefaultMissingValue] if not found.
+    /// @return    Resource bundle value or the [default value][LocalizeConfig#getMissingValueHandler] if not found.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(LocalizationKey)
     public String getValue(String key) {
@@ -862,7 +862,7 @@ public class Localize {
     /// This method is equivalent to [getValue(String)].
     ///
     /// @param key Resource bundle key associated with the value to retrieve.
-    /// @return    Resource bundle value or the [default value][LocalizeConfig#getDefaultMissingValue] if not found.
+    /// @return    Resource bundle value or the [default value][LocalizeConfig#getMissingValueHandler] if not found.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(String)
     public String getValue(LocalizationKey key) {
@@ -956,7 +956,7 @@ public class Localize {
             fireEvent(new EventImpls.Diagnostic.MissingKey(this, source, request));
 
             if (request.hasDefaultValue()) {
-                value = request.getDefaultValue();
+                value = request.getMissingValueHandler().handle(this, request, key);
             } else if (getConfig().isThrowOnMissingValue()) {
                 throw new MissingResourceException(
                     "Cannot find resource for " + getClass().getName() +
@@ -966,7 +966,7 @@ public class Localize {
                     key
                 );
             } else {
-                value = getConfig().getDefaultMissingValue();
+                value = getConfig().getMissingValueHandler().handle(this, request, key);
             }
         }
 

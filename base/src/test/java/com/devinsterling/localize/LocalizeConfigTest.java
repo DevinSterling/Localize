@@ -23,10 +23,11 @@ class LocalizeConfigTest {
     @Test void testDefaultMissingValue() {
         LocalizeConfig config = new LocalizeConfig();
         Localize localize = Localize.of(Locale.ENGLISH, config);
-        String missingValue = "Missing Value";
+        String missingValue = "N/A";
 
         // Default values
         assertEquals(config, localize.getConfig());
+        assertEquals("[Missing Key]", localize.getValue("Missing Key"));
 
         config.setDefaultMissingValue(missingValue);
         assertEquals(missingValue, localize.getValue("Missing Key"));

@@ -134,10 +134,11 @@ class LocalizationValueBuilderTest {
 
     @Test void testDefaultValue() {
         String defaultValue = "default";
-        Localize localize = getLocalizeInstance();
+        Localize localize = Localize.of(Locale.ENGLISH);
+        localize.addProvider(TEST_PROVIDER);
 
-        // By default, if a key is not found, an empty string is returned
-        assertEquals("", localize.get("doesn't exist").value());
+        // By default, if a key is not found, the key is returned encased in square brackets
+        assertEquals("[doesn't exist]", localize.get("doesn't exist").value());
         // The key doesn't exist, so the default value specified is returned
         assertEquals(defaultValue, localize.get("doesn't exist").defaultValue(defaultValue).value());
         // The key exists, so the default value is not returned
@@ -183,13 +184,14 @@ class LocalizationValueBuilderTest {
         Localize localize = Localize.of();
         LocalizationRequestSource source = new LocalizationRequestSource.Key("key");
         TestValueBuilder<?> builder = new TestValueBuilder<>(source, localize);
+        MissingValueHandler handler = MissingValueHandler.of("test_default_value");
 
-        assertSame(builder, builder.defaultValue("test_default_value"));
+        assertSame(builder, builder.defaultHandler(handler));
         assertSame(builder, builder.args(Map.of("key1", "value1", "key2", "value2")));
 
+        assertSame(handler, builder.getMissingValueHandler());
         assertEquals(localize, builder.getLocalize());
         assertEquals(source, builder.getSource());
-        assertEquals("test_default_value", builder.getDefaultValue());
 
         Arguments args = builder.arguments();
         assertEquals(Map.of("key1", "value1", "key2", "value2"), args.toNamedMap());
@@ -214,8 +216,8 @@ class TestValueBuilder<B extends TestValueBuilder<B>> extends LocalizationValueB
         return super.getSource();
     }
 
-    public String getDefaultValue() {
-        return super.getDefaultValue();
+    public MissingValueHandler getMissingValueHandler() {
+        return super.getMissingValueHandler();
     }
 
     public Arguments arguments() {

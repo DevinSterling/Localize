@@ -80,7 +80,7 @@ class LocalizeFXTest {
     }
 
     @Test void testPutProviderRefresh() {
-        LocalizeFX localize = LocalizeFX.of(Locale.KOREAN);
+        LocalizeFX localize = getEmptyLocalizeFXInstance(Locale.KOREAN);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
         assertEquals("", binding.get());
 
@@ -89,7 +89,7 @@ class LocalizeFXTest {
     }
 
     @Test void testReplaceProviderRefresh() {
-        LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
+        LocalizeFX localize = getEmptyLocalizeFXInstance();
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
         localize.putProvider("provider", TEST_PROVIDER);
@@ -100,7 +100,7 @@ class LocalizeFXTest {
     }
 
     @Test void testRemoveProviderRefresh() {
-        LocalizeFX localize = LocalizeFX.of(Locale.JAPANESE);
+        LocalizeFX localize = getEmptyLocalizeFXInstance(Locale.JAPANESE);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
         localize.putProvider("provider", TEST_PROVIDER);
@@ -111,7 +111,7 @@ class LocalizeFXTest {
     }
 
     @Test void testRemoveProviderMissingKey() {
-        LocalizeFX localize = LocalizeFX.of(Locale.JAPANESE);
+        LocalizeFX localize = getEmptyLocalizeFXInstance(Locale.JAPANESE);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
         localize.putProvider("provider", TEST_PROVIDER);
@@ -123,7 +123,7 @@ class LocalizeFXTest {
     }
 
     @Test void testRefreshNoProviders() {
-        LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
+        LocalizeFX localize = getEmptyLocalizeFXInstance();
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
         localize.refreshProviders();
@@ -134,7 +134,7 @@ class LocalizeFXTest {
     }
 
     @Test void testRefreshProviders() {
-        LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
+        LocalizeFX localize = getEmptyLocalizeFXInstance();
 
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
         assertEquals("", binding.get());
@@ -160,7 +160,7 @@ class LocalizeFXTest {
         };
 
         AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
-        LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
+        LocalizeFX localize = getEmptyLocalizeFXInstance();
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_LABEL);
 
         localize.putProvider("provider", locale -> currentBundle.get());

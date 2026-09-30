@@ -4,6 +4,7 @@ import com.devinsterling.localize.Arguments;
 import com.devinsterling.localize.LocalizationRequest;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.LocalizationValueBuilder;
+import com.devinsterling.localize.MissingValueHandler;
 
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
@@ -282,7 +283,7 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
         StringBinding binding = new WeakStringBinding<>(
             localize,
             getSource(),
-            getDefaultValue(),
+            getMissingValueHandler(),
             snapshotArguments(),
             getResolver(),
             new WeakReference<>(component),
@@ -309,7 +310,7 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
     private static final class WeakStringBinding<T> implements StringBinding {
         private final LocalizeSwing localize;
         private final LocalizationRequestSource source;
-        private final String defaultValue;
+        private final MissingValueHandler missingValueHandler;
         private final Arguments arguments;
         private final Arguments.Resolver resolver;
         private final WeakReference<T> weakComponent;
@@ -320,7 +321,7 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
         WeakStringBinding(
             LocalizeSwing localize,
             LocalizationRequestSource source,
-            String defaultValue,
+            MissingValueHandler missingValueHandler,
             Arguments arguments,
             Arguments.Resolver resolver,
             WeakReference<T> weakComponent,
@@ -328,7 +329,7 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
         ) {
             this.localize = localize;
             this.source = source;
-            this.defaultValue = defaultValue;
+            this.missingValueHandler = missingValueHandler;
             this.arguments = arguments;
             this.resolver = resolver;
             this.weakComponent = weakComponent;
@@ -343,7 +344,7 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
                 LocalizationRequest.Builder
                     .of(source)
                     .arguments(arguments.resolve(resolver))
-                    .defaultValue(defaultValue)
+                    .missingValueHandler(missingValueHandler)
                     .build()
             );
 

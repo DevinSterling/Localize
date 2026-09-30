@@ -3,6 +3,7 @@ package com.devinsterling.localize.event;
 import com.devinsterling.localize.LocalizationRequest;
 import com.devinsterling.localize.LocalizationRequestSource;
 
+import com.devinsterling.localize.MissingValueHandler;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
@@ -19,11 +20,12 @@ public class DiagnosticEventTest {
 
         LocalizationRequestSource.Key key = new LocalizationRequestSource.Key("");
         LocalizationRequest request = LocalizationRequest.Builder.of(key).build();
+        MissingValueHandler handler = MissingValueHandler.of("123");
 
         localize.getValue(TEST_KEY_GREET); // Event 0
         localize.addProvider(TEST_PROVIDER);
         localize.get(TEST_KEY_GREET);
-        localize.get("non-existent").defaultValue("123").value(); // 1
+        localize.get("non-existent").defaultHandler(handler).value(); // 1
         localize.formatValue(request); // 2
 
         assertEquals(3, localize.capturedEventsCount());
@@ -33,7 +35,7 @@ public class DiagnosticEventTest {
 
         DiagnosticEvent.MissingKey event1 = localize.getEvent(1);
         assertEquals("non-existent", event1.getKey().value());
-        assertEquals("123", event1.getRequest().getDefaultValue());
+        assertEquals(handler, event1.getRequest().getMissingValueHandler());
 
         DiagnosticEvent.MissingKey event2 = localize.getEvent(2);
         assertSame(key, event2.getKey());

@@ -86,7 +86,7 @@ class LocalizeTest {
         String key = "key";
 
         localize.putProvider(key, _unusedLocale -> null);
-        assertEquals("", localize.getValue("missing"));
+        assertEquals("[missing]", localize.getValue("missing"));
     }
 
     @Test void testReturnedProviderFromRemove() {
@@ -116,7 +116,7 @@ class LocalizeTest {
     }
 
     @Test void testGetValue() {
-        Localize localize = Localize.of(Locale.ENGLISH);
+        Localize localize = getEmptyLocalizeInstance();
 
         // No bundles contained
         assertEquals("", localize.getValue(TEST_KEY_GREET));
@@ -164,7 +164,7 @@ class LocalizeTest {
     }
 
     @Test void testReplaceProvider() {
-        Localize localize = Localize.of(Locale.JAPANESE);
+        Localize localize = getEmptyLocalizeInstance(Locale.JAPANESE);
 
         localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("おはよう", localize.getValue(TEST_KEY_GREET));
@@ -174,7 +174,7 @@ class LocalizeTest {
     }
 
     @Test void testRemoveProvider() {
-        Localize localize = Localize.of(Locale.CHINESE);
+        Localize localize = getEmptyLocalizeInstance(Locale.CHINESE);
 
         localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("早上好", localize.getValue(TEST_KEY_GREET));
@@ -184,7 +184,7 @@ class LocalizeTest {
     }
 
     @Test void testRemoveProviderMissingKey() {
-        Localize localize = Localize.of(Locale.ENGLISH);
+        Localize localize = getEmptyLocalizeInstance();
 
         localize.putProvider("provider", TEST_PROVIDER);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
@@ -195,7 +195,7 @@ class LocalizeTest {
     }
 
     @Test void testClearProviders() {
-        Localize localize = Localize.of(Locale.ENGLISH);
+        Localize localize = getEmptyLocalizeInstance();
         Collection<Localize.ProviderEntry> entries = localize.getProviderEntries();
 
         assertFalse(localize.clearProviders());
@@ -209,7 +209,7 @@ class LocalizeTest {
     }
 
     @Test void testRefreshNoProviders() {
-        Localize localize = Localize.of(Locale.ENGLISH);
+        Localize localize = getEmptyLocalizeInstance();
 
         localize.refreshProviders();
         assertEquals("", localize.getValue(TEST_KEY_GREET));
@@ -219,7 +219,7 @@ class LocalizeTest {
     }
 
     @Test void testProviderRefresh() {
-        Localize localize = Localize.of(Locale.ENGLISH);
+        Localize localize = getEmptyLocalizeInstance();
         Supplier<String> supplier = () -> localize.getValue(TEST_KEY_GREET);
 
         assertEquals("", supplier.get());
@@ -238,7 +238,7 @@ class LocalizeTest {
     }
 
     @Test void testGetResourceBundles() {
-        Localize localize = Localize.of(Locale.ENGLISH);
+        Localize localize = getEmptyLocalizeInstance();
 
         Collection<ResourceBundle> snapshotA = localize.getResourceBundles();
         assertTrue(snapshotA.isEmpty());
@@ -267,7 +267,7 @@ class LocalizeTest {
         };
 
         AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
-        Localize localize = Localize.of(Locale.ENGLISH);
+        Localize localize = getEmptyLocalizeInstance();
 
         localize.putProvider("provider", locale -> currentBundle.get());
         assertEquals("abc", localize.getValue(TEST_KEY_TEST));

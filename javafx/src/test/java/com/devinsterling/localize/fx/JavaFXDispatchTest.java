@@ -18,7 +18,7 @@ public class JavaFXDispatchTest {
     }
 
     @Test void testLocaleChangeDispatchesToEdt() {
-        LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
+        LocalizeFX localize = getEmptyLocalizeFXInstance();
         Localize.ProviderKey key = Localize.ProviderKey.of("key");
 
         localize.putProvider(key, TEST_PROVIDER);

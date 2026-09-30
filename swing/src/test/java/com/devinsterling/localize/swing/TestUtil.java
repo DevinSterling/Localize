@@ -12,12 +12,32 @@ public final class TestUtil {
     public static final String TEST_KEY_CLICK_ME = "MyApp.clickMe";
     public static final String TEST_KEY_CLICK_LABEL = "MyApp.clickLabel";
     public static final String TEST_KEY_PRINT = "MyApp.print";
+    private static final String DEFAULT_VALUE = "";
 
     private TestUtil() {}
 
+    /// Returns an instance with:
+    /// - [Locale#ENGLISH] set as the locale.
+    /// - [DEFAULT_VALUE] set as the default value.
+    /// - [TEST_PROVIDER] present.
     public static LocalizeSwing getLocalizeSwingInstance() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
+        LocalizeSwing localize = getEmptyLocalizeSwingInstance();
         localize.addProvider(TEST_PROVIDER);
+        return localize;
+    }
+
+    /// Returns an instance with:
+    /// - [Locale#ENGLISH] set as the locale.
+    /// - [DEFAULT_VALUE] set as the default value.
+    public static LocalizeSwing getEmptyLocalizeSwingInstance() {
+        return getEmptyLocalizeSwingInstance(Locale.ENGLISH);
+    }
+
+    /// Returns an instance with:
+    /// - [DEFAULT_VALUE] set as the default value.
+    public static LocalizeSwing getEmptyLocalizeSwingInstance(Locale locale) {
+        LocalizeSwing localize = LocalizeSwing.of(locale);
+        localize.getConfig().setDefaultMissingValue(DEFAULT_VALUE);
         return localize;
     }
 
