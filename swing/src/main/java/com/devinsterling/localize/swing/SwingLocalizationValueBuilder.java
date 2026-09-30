@@ -97,73 +97,39 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
         // NOTE: In Java 21, this can be converted into a switch
         if (value instanceof Frame frame) {
             listenerHelper().addPropertyListener("title", frame);
-            value = new WeakSupplier<>(frame, Frame::getTitle);
+            value = new Deferred<>(frame, Frame::getTitle);
         } else if (value instanceof Dialog dialog) {
             listenerHelper().addPropertyListener("title", dialog);
-            value = new WeakSupplier<>(dialog, Dialog::getTitle);
+            value = new Deferred<>(dialog, Dialog::getTitle);
         } else if (value instanceof JLabel label) {
             listenerHelper().addPropertyListener("text", label);
-            value = new WeakSupplier<>(label, JLabel::getText);
+            value = new Deferred<>(label, JLabel::getText);
         } else if (value instanceof AbstractButton button) {
             listenerHelper().addPropertyListener("text", button);
-            value = new WeakSupplier<>(button, AbstractButton::getText);
+            value = new Deferred<>(button, AbstractButton::getText);
         } else if (value instanceof JToolTip tip) {
             listenerHelper().addPropertyListener("tiptext", tip);
-            value = new WeakSupplier<>(tip, JToolTip::getTipText);
+            value = new Deferred<>(tip, JToolTip::getTipText);
         } else if (value instanceof JTextComponent text) {
             listenerHelper().addTextListener(text);
-            value = new WeakSupplier<>(text, JTextComponent::getText);
+            value = new Deferred<>(text, JTextComponent::getText);
         } else if (value instanceof JProgressBar bar) {
             listenerHelper().addChangeListener(bar, JProgressBar::addChangeListener, JProgressBar::removeChangeListener);
-            value = new WeakSupplier<>(bar, JProgressBar::getValue);
+            value = new Deferred<>(bar, JProgressBar::getValue);
         } else if (value instanceof JSlider slider) {
             listenerHelper().addChangeListener(slider, JSlider::addChangeListener, JSlider::removeChangeListener);
-            value = new WeakSupplier<>(slider, JSlider::getValue);
+            value = new Deferred<>(slider, JSlider::getValue);
         } else if (value instanceof JSpinner spinner) {
             listenerHelper().addChangeListener(spinner, JSpinner::addChangeListener, JSpinner::removeChangeListener);
-            value = new WeakSupplier<>(spinner, JSpinner::getValue);
+            value = new Deferred<>(spinner, JSpinner::getValue);
         } else if (value instanceof JComboBox<?> combo) {
             listenerHelper().addItemListener(combo, JComboBox::addItemListener, JComboBox::removeItemListener);
-            value = new WeakSupplier<>(combo, JComboBox::getSelectedItem);
+            value = new Deferred<>(combo, JComboBox::getSelectedItem);
         }
 
         // Perform parent interception last; less precedence
         return super.interceptValue(value);
     }
-
-    /// Adds a numbered *deferred* argument backed by a weak reference to the given component.
-    ///
-    /// The given function is evaluated each time the localized formatted value is computed.
-    /// The component is referenced weakly so that it may be garbage collected when
-    /// no longer in use.
-    ///
-    /// @param <T>       Type of the component.
-    /// @param <U>       Type of the deferred value.
-    /// @param component Component providing the value.
-    /// @param getValue  Function to retrieve the current value from the component.
-    /// @return          This builder instance.
-    /// @throws NullPointerException If `component` or `getValue` is `null`.
-    public <T, U> B arg(T component, Function<T, U> getValue) {
-        Objects.requireNonNull(component, "component must not be null");
-        Objects.requireNonNull(getValue, "getValue must not be null");
-        return arg(new WeakSupplier<>(component, getValue));
-    }
-
-    /// Adds a named *deferred* argument backed by a weak reference to the given component.
-    ///
-    /// @param <T>       Type of the component.
-    /// @param <U>       Type of the deferred value.
-    /// @param key       Key to be inserted.
-    /// @param component Component providing the value.
-    /// @param getValue  Function to retrieve the current value from the component.
-    /// @return          This builder instance.
-    /// @throws NullPointerException If `key`, `component`, or `getValue` is `null`.
-    public <T, U> B arg(String key, T component, Function<T, U> getValue) {
-        Objects.requireNonNull(component, "component must not be null");
-        Objects.requireNonNull(getValue, "getValue must not be null");
-        return arg(key, new WeakSupplier<>(component, getValue));
-    }
-
 
     /// Adds an event trigger that triggers bound components to recompute and update their text.
     ///
@@ -401,6 +367,17 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
 
         @Override public String get() {
             return text;
+        }
+    }
+
+    private record Deferred<T, U>(WeakReference<T> reference, Function<T, U> supplier) implements Supplier<U> {
+        public Deferred(T reference, Function<T, U> supplier) {
+            this(new WeakReference<>(reference), supplier);
+        }
+
+        @Override public U get() {
+            T value = reference.get();
+            return value == null ? null : supplier.apply(value);
         }
     }
 }

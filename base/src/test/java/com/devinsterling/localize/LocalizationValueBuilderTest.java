@@ -46,6 +46,40 @@ class LocalizationValueBuilderTest {
         assertEquals("Output: 2", builder.value());
     }
 
+    @Test void testWeakPositionalDeferredArgs() {
+        Localize localize = getLocalizeInstance();
+        AtomicInteger counter = new AtomicInteger(100);
+
+        LocalizationValueBuilder<?> builder = localize.get(TEST_KEY_OUTPUT).arg(counter, AtomicInteger::get);
+        assertEquals("Output: 100", builder.value());
+
+        counter.set(200);
+        assertEquals("Output: 200", builder.value());
+
+        counter = null;
+        awaitGarbageCollection();
+        assertEquals("Output: null", builder.value());
+    }
+
+    @Test void testWeakNamedDeferredArgs() {
+        Localize localize = getLocalizeInstance();
+        AtomicInteger counter = new AtomicInteger();
+
+        LocalizationValueBuilder<?> builder = localize
+                .get(TEST_KEY_OUTPUT)
+                .arg("0", counter, count -> {
+                    count.set(count.get() + 100);
+                    return count.get();
+                });
+
+        assertEquals("Output: 100", builder.value());
+        assertEquals("Output: 200", builder.value());
+
+        counter = null;
+        awaitGarbageCollection();
+        assertEquals("Output: null", builder.value());
+    }
+
     @Test void testNamedArgs() {
         Localize localize = getLocalizeInstance();
         Supplier<String> supplier = () -> localize.get(TEST_KEY_NAMED)
@@ -113,7 +147,7 @@ class LocalizationValueBuilderTest {
     @Test void testExceptionsFromArguments() {
         Localize localize = Localize.of();
 
-        assertDoesNotThrow(() -> localize.get("").arg("key", null));
+        assertDoesNotThrow(() -> localize.get("").arg("key", (Object) null));
 
         // Adding arguments
         assertThrows(
