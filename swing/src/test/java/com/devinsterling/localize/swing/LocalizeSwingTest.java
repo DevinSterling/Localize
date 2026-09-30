@@ -43,7 +43,7 @@ public class LocalizeSwingTest {
     }
 
     @Test void testPropertyChangeListenerClassicLifecycle() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
+        LocalizeSwing localize = getEmptyLocalizeSwingInstance();
         AtomicInteger counter = new AtomicInteger();
 
         LocaleChangeListener listener = (oldLocale, newLocale) -> counter.getAndIncrement();
@@ -98,7 +98,7 @@ public class LocalizeSwingTest {
     }
 
     @Test void testLocaleChangeListener() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
+        LocalizeSwing localize = getEmptyLocalizeSwingInstance();
 
         localize.addLocaleListener(((oldLocale, newLocale) -> {
             assertNotEquals(oldLocale, newLocale);
@@ -111,7 +111,7 @@ public class LocalizeSwingTest {
     }
 
     @Test void testAddProviderRefresh() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.KOREAN);
+        LocalizeSwing localize = TestUtil.getEmptyLocalizeSwingInstance(Locale.KOREAN);
         JLabel label = new JLabel();
 
         localize.bind(TEST_KEY_CLICK_ME, label);
@@ -122,7 +122,7 @@ public class LocalizeSwingTest {
     }
 
     @Test void testReplaceBundleProviderRefresh() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
+        LocalizeSwing localize = getEmptyLocalizeSwingInstance();
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
@@ -134,7 +134,7 @@ public class LocalizeSwingTest {
     }
 
     @Test void testRemoveProviderRefresh() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.JAPANESE);
+        LocalizeSwing localize = TestUtil.getEmptyLocalizeSwingInstance(Locale.JAPANESE);
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
@@ -146,7 +146,7 @@ public class LocalizeSwingTest {
     }
 
     @Test void testRemoveProviderMissingKey() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.JAPANESE);
+        LocalizeSwing localize = TestUtil.getEmptyLocalizeSwingInstance(Locale.JAPANESE);
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
@@ -159,7 +159,7 @@ public class LocalizeSwingTest {
     }
 
     @Test void testRefreshNoProviders() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
+        LocalizeSwing localize = getEmptyLocalizeSwingInstance();
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
@@ -171,7 +171,7 @@ public class LocalizeSwingTest {
     }
 
     @Test void testRefreshProvider() {
-        LocalizeSwing localize = LocalizeSwing.of(Locale.JAPANESE);
+        LocalizeSwing localize = TestUtil.getEmptyLocalizeSwingInstance(Locale.JAPANESE);
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
@@ -198,7 +198,7 @@ public class LocalizeSwingTest {
         };
 
         AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
-        LocalizeSwing localize = LocalizeSwing.of(Locale.JAPANESE);
+        LocalizeSwing localize = TestUtil.getEmptyLocalizeSwingInstance(Locale.JAPANESE);
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 

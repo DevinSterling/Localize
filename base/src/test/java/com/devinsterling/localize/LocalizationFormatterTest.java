@@ -3,7 +3,6 @@ package com.devinsterling.localize;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Locale;
 
 import static com.devinsterling.localize.TestUtil.*;
 
@@ -12,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class LocalizationFormatterTest {
 
     @Test void testFormatter() {
-        Localize localize = Localize.of(Locale.ENGLISH);
+        Localize localize = getEmptyLocalizeInstance();
         String sample = "sample";
         LocalizationFormatter mock = (ctx) -> sample;
 

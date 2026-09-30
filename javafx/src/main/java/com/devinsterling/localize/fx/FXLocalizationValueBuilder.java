@@ -4,6 +4,7 @@ import com.devinsterling.localize.Arguments;
 import com.devinsterling.localize.LocalizationRequest;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.LocalizationValueBuilder;
+import com.devinsterling.localize.MissingValueHandler;
 
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
@@ -43,7 +44,7 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         LocalizeFX localize = getLocalize();
         // Effectively final variables to prevent implicit reference to this class
         LocalizationRequestSource source = getSource();
-        String defaultValue = getDefaultValue();
+        MissingValueHandler defaultValue = getMissingValueHandler();
         Arguments arguments = snapshotArguments();
         Arguments.Resolver resolver = getResolver();
 
@@ -51,7 +52,7 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
             () -> localize.formatValue(
                 LocalizationRequest.Builder
                     .of(source)
-                    .defaultValue(defaultValue)
+                    .missingValueHandler(defaultValue)
                     .arguments(arguments.resolve(resolver))
                     .build()
             ),

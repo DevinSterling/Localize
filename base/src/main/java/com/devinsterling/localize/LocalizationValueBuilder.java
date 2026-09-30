@@ -65,7 +65,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     private final ArgumentsHelper arguments;
     private final LocalizationRequestSource source;
     private final Localize localize;
-    private String defaultValue;
+    private MissingValueHandler missingValueHandler;
 
     /// Creates a builder to request a specified localized value.
     ///
@@ -189,14 +189,33 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return arg(key, new WeakSupplier<>(source, getValue));
     }
 
-    /// Sets the default value if the requested key does not exist.
+    /// Sets the default value to use when no value is found for the specified
+    /// [key][LocalizationRequestSource.Key].
+    ///
+    /// This is a convenience method, equivalent to calling:
+    /// ```
+    /// defaultValue(MissingValueHandler.of(defaultValue));
+    /// ```
     ///
     /// @param defaultValue Default value.
     /// @return             This builder instance.
-    /// @see                LocalizeConfig#setDefaultMissingValue(String)
+    /// @see                defaultHandler
+    /// @see                LocalizeConfig#setMissingValueHandler
     /// @since 1.1
     public B defaultValue(String defaultValue) {
-        this.defaultValue = defaultValue;
+        return defaultHandler(MissingValueHandler.of(defaultValue));
+    }
+
+    /// Sets the handler to provide a default value when no value is found for the specified
+    /// [key][LocalizationRequestSource.Key].
+    ///
+    /// The handler given here takes precedence over the handler set via [LocalizeConfig#setMissingValueHandler].
+    ///
+    /// @param handler Handler to provide a default value.
+    /// @return        This builder instance.
+    /// @since 2.0
+    public B defaultHandler(MissingValueHandler handler) {
+        missingValueHandler = handler;
         return getBuilder();
     }
 
@@ -207,7 +226,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return localize.formatValue(
             LocalizationRequest.Builder
                 .of(getSource())
-                .defaultValue(getDefaultValue())
+                .missingValueHandler(getMissingValueHandler())
                 .arguments(arguments.get().resolve(getResolver()))
                 .build()
         );
@@ -274,12 +293,13 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
         return source;
     }
 
-    /// Returns the default value, if any.
+    /// Returns the handler to provide a default value when no value is found for a specified
+    /// [key][LocalizationRequestSource.Key].
     ///
-    /// @return Default value or `null` if not set.
-    /// @since 1.1
-    protected String getDefaultValue() {
-        return defaultValue;
+    /// @return Handler or `null` if not set.
+    /// @since 2.0
+    protected MissingValueHandler getMissingValueHandler() {
+        return missingValueHandler;
     }
 
     /// Returns this builder instance.

@@ -15,12 +15,32 @@ public final class TestUtil {
     public static final ResourceBundleProvider TEST2_PROVIDER = locale -> ResourceBundle.getBundle("test2", locale);
     public static final String TEST_KEY_CLICK_ME = "MyApp.clickMe";
     public static final String TEST_KEY_CLICK_LABEL = "MyApp.clickLabel";
+    private static final String DEFAULT_VALUE = "";
 
     private TestUtil() {}
 
+    /// Returns an instance with:
+    /// - [Locale#ENGLISH] set as the locale.
+    /// - [DEFAULT_VALUE] set as the default value.
+    /// - [TEST_PROVIDER] present.
     public static LocalizeFX getLocalizeFXInstance() {
-        LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
+        LocalizeFX localize = getEmptyLocalizeFXInstance();
         localize.putProvider("key", TEST_PROVIDER);
+        return localize;
+    }
+
+    /// Returns an instance with:
+    /// - [Locale#ENGLISH] set as the locale.
+    /// - [DEFAULT_VALUE] set as the default value.
+    public static LocalizeFX getEmptyLocalizeFXInstance() {
+        return getEmptyLocalizeFXInstance(Locale.ENGLISH);
+    }
+
+    /// Returns an instance with:
+    /// - [DEFAULT_VALUE] set as the default value.
+    public static LocalizeFX getEmptyLocalizeFXInstance(Locale locale) {
+        LocalizeFX localize = LocalizeFX.of(locale);
+        localize.getConfig().setDefaultMissingValue(DEFAULT_VALUE);
         return localize;
     }
 

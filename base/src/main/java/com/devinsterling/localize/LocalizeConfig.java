@@ -15,24 +15,28 @@ import java.util.Objects;
 /// - [isIgnoreFormatterExceptions][setIgnoreFormatterExceptions] = `false`
 /// - [isIgnoreProviderExceptions][setIgnoreProviderExceptions] = `false`
 /// - [isIgnoreListenerExceptions][setIgnoreListenerExceptions] = `false`
-/// - [defaultMissingValue][LocalizeConfig#setDefaultMissingValue] = `""`
+/// - [missingValueHandler][LocalizeConfig#setMissingValueHandler]
+///   = `(_, _, key) -> "[" + key + "]"` (e.g., `"[program.name]"`).
 ///
 /// @since 1.0
 public class LocalizeConfig {
+    private static final MissingValueHandler DEFAULT_HANDLER = (s, r, key) -> "[" + key + "]";
+
     private volatile boolean isThrowOnMissingValue = false;
     private volatile boolean isIgnoreFormatterExceptions = false;
     private volatile boolean isIgnoreProviderExceptions = false;
     private volatile boolean isIgnoreListenerExceptions = false;
-    private volatile String defaultMissingValue = "";
+    private volatile MissingValueHandler missingValueHandler = DEFAULT_HANDLER;
 
     /// Creates a configuration instance with all values set to their defaults.
     public LocalizeConfig() {}
 
-    /// Sets whether to throw a [MissingResourceException] when no value is found for a specified key.
+    /// Sets whether to throw a [MissingResourceException] when no value is found for a specified
+    /// [key][LocalizationRequestSource.Key].
     ///
     /// When set to `true`, a [MissingResourceException] is thrown when all the conditions are met:
     /// 1. **All** bundles contain no value for a specified key.
-    /// 2. [LocalizationRequest#getDefaultValue] is `null` (Set by [LocalizationValueBuilder#defaultValue(String)]).
+    /// 2. [LocalizationRequest#getMissingValueHandler] is `null` (Set by [LocalizationValueBuilder#defaultHandler]).
     ///
     /// Default: `false`
     /// @param isThrow `true` to throw an exception, or `false` to ignore.
@@ -80,18 +84,36 @@ public class LocalizeConfig {
         this.isIgnoreListenerExceptions = ignore;
     }
 
-    /// Sets the default value to use when no value is found for a specified key.
+    /// Sets the handler to provide a default value when no value is found for a specified
+    /// [key][LocalizationRequestSource.Key].
     ///
-    /// [LocalizationRequest#getDefaultValue()] takes precedence over the default value set here.
-    /// If it is `null`, then default value set here is used.
+    /// [LocalizationRequest#getMissingValueHandler] takes precedence over the handler given here.
+    /// If it is `null`, then the handler set here is used when [isThrowOnMissingValue()] is disabled.
     ///
-    /// Default: `""` (Empty string)
-    /// @param defaultValue Default value.
-    public void setDefaultMissingValue(String defaultValue) {
-        this.defaultMissingValue = defaultValue;
+    /// Default: `(_, _, key) -> "[" + key + "]"` (e.g., `"[program.name]"`).
+    /// @param handler Handler to provide a default value.
+    /// @throws NullPointerException If `handler` is `null`.
+    /// @since 2.0
+    public void setMissingValueHandler(MissingValueHandler handler) {
+        this.missingValueHandler = Objects.requireNonNull(handler, "handler must not be null");
     }
 
-    /// Returns `true` if a [MissingResourceException] is thrown when no value is found for a specified key.
+    /// Sets the default value to use when no value is found for a specified
+    /// [key][LocalizationRequestSource.Key].
+    ///
+    /// This is a convenience method, equivalent to calling:
+    /// ```
+    /// setMissingValueHandler(MissingValueHandler.of(defaultValue));
+    /// ```
+    ///
+    /// @param defaultValue Default value.
+    /// @see setMissingValueHandler
+    public void setDefaultMissingValue(String defaultValue) {
+        setMissingValueHandler(MissingValueHandler.of(defaultValue));
+    }
+
+    /// Returns `true` if a [MissingResourceException] is thrown when no value is found for a specified
+    /// [key][LocalizationRequestSource.Key].
     ///
     /// Default: `false`
     /// @return `true` if an exception is thrown, or `false` if ignored.
@@ -127,12 +149,14 @@ public class LocalizeConfig {
         return isIgnoreListenerExceptions;
     }
 
-    /// Returns the default value to use when no value is found for a specified key.
+    /// Returns the handler to provide a default value when no value is found for a specified
+    /// [key][LocalizationRequestSource.Key].
     ///
-    /// Default: `""` (Empty string)
-    /// @return Default value.
-    public String getDefaultMissingValue() {
-        return defaultMissingValue;
+    /// Default: `(_, _, key) -> "[" + key + "]"` (e.g., `"[program.name]"`).
+    /// @return Handler to provide a default value.
+    /// @since 2.0
+    public MissingValueHandler getMissingValueHandler() {
+        return missingValueHandler;
     }
 
     @Override public boolean equals(Object obj) {
@@ -142,7 +166,7 @@ public class LocalizeConfig {
                 && isIgnoreProviderExceptions == other.isIgnoreProviderExceptions
                 && isIgnoreFormatterExceptions == other.isIgnoreFormatterExceptions
                 && isIgnoreListenerExceptions == other.isIgnoreListenerExceptions
-                && Objects.equals(defaultMissingValue, other.defaultMissingValue);
+                && Objects.equals(missingValueHandler, other.missingValueHandler);
     }
 
     @Override public int hashCode() {
@@ -151,7 +175,7 @@ public class LocalizeConfig {
             isIgnoreProviderExceptions,
             isIgnoreFormatterExceptions,
             isIgnoreListenerExceptions,
-            defaultMissingValue
+            missingValueHandler
         );
     }
 }

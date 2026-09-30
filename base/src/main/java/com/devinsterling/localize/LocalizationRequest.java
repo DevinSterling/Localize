@@ -12,13 +12,17 @@ import java.util.Objects;
 /// @since 1.0
 public final class LocalizationRequest {
     private final LocalizationRequestSource source;
-    private final String defaultValue;
+    private final MissingValueHandler missingValueHandler;
     private final Arguments arguments;
 
-    private LocalizationRequest(LocalizationRequestSource source, Arguments arguments, String defaultValue) {
+    private LocalizationRequest(
+        LocalizationRequestSource source,
+        Arguments arguments,
+        MissingValueHandler missingValueHandler
+    ) {
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
-        this.defaultValue = defaultValue;
+        this.missingValueHandler = missingValueHandler;
     }
 
     static LocalizationRequest ofKey(String key) {
@@ -33,13 +37,14 @@ public final class LocalizationRequest {
         return source;
     }
 
-    /// Returns the default value for the requested value, if any.
+    /// Returns the handler to provide a default value when no value is found for the specified
+    /// [key][LocalizationRequestSource.Key].
     ///
-    /// @return Default value or `null` if not set.
+    /// @return Handler or `null` if not set.
     /// @see hasDefaultValue
-    /// @since 1.1
-    public String getDefaultValue() {
-        return defaultValue;
+    /// @since 2.0
+    public MissingValueHandler getMissingValueHandler() {
+        return missingValueHandler;
     }
 
     /// Returns the arguments to format with.
@@ -49,13 +54,13 @@ public final class LocalizationRequest {
         return arguments;
     }
 
-    /// Checks if a default value is present.
+    /// Returns `true` if a default value is present.
     ///
-    /// @return `true` if a non-null default value is set.
-    /// @see getDefaultValue
+    /// @return `true` if there is a default value.
+    /// @see getMissingValueHandler
     /// @since 1.1
     public boolean hasDefaultValue() {
-        return defaultValue != null;
+        return missingValueHandler != null;
     }
 
     // When value classes become stable, equals and hashcode will be removed here
@@ -63,12 +68,12 @@ public final class LocalizationRequest {
         if (obj == this) return true;
         if (!(obj instanceof LocalizationRequest other)) return false;
         return source.equals(other.source)
-                && Objects.equals(defaultValue, other.defaultValue)
+                && Objects.equals(missingValueHandler, other.missingValueHandler)
                 && arguments.equals(other.arguments);
     }
 
     @Override public int hashCode() {
-        return Objects.hash(source, defaultValue, arguments);
+        return Objects.hash(source, missingValueHandler, arguments);
     }
 
     /// Builder to create a [LocalizationRequest] for retrieval of a formatted localized value.
@@ -77,7 +82,7 @@ public final class LocalizationRequest {
     /// @since 1.1
     public static final class Builder {
         private final LocalizationRequestSource source;
-        private String defaultValue;
+        private MissingValueHandler missingValueHandler;
         private Arguments arguments = Arguments.NONE;
 
         private Builder(LocalizationRequestSource source) {
@@ -93,12 +98,14 @@ public final class LocalizationRequest {
             return new Builder(Objects.requireNonNull(source, "source must not be null"));
         }
 
-        /// Sets the default value to return if the key is not found.
+        /// Sets the handler to provide a default value when no value is found for a specified
+        /// [key][LocalizationRequestSource.Key].
         ///
-        /// @param defaultValue Default value.
+        /// @param handler Handler to provide a default value.
         /// @return This builder instance.
-        public Builder defaultValue(String defaultValue) {
-            this.defaultValue = defaultValue;
+        /// @since 2.0
+        public Builder missingValueHandler(MissingValueHandler handler) {
+            this.missingValueHandler = handler;
             return this;
         }
 
@@ -117,7 +124,7 @@ public final class LocalizationRequest {
         ///
         /// @return Request to get a formatted localized value with.
         public LocalizationRequest build() {
-            return new LocalizationRequest(source, arguments, defaultValue);
+            return new LocalizationRequest(source, arguments, missingValueHandler);
         }
     }
 }
