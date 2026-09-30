@@ -2,6 +2,7 @@ package com.devinsterling.localize;
 
 import com.devinsterling.localize.spi.LocalizationFormatterProvider;
 
+import java.util.Comparator;
 import java.util.ServiceLoader;
 
 final class LocalizationFormatterLocator {
@@ -10,8 +11,10 @@ final class LocalizationFormatterLocator {
     private LocalizationFormatterLocator() {}
 
     private static LocalizationFormatterProvider loadProvider() {
-        ServiceLoader<LocalizationFormatterProvider> loader = ServiceLoader.load(LocalizationFormatterProvider.class);
-
-        return loader.findFirst().orElse(() -> LocalizationFormatter.STANDARD);
+        return ServiceLoader.load(LocalizationFormatterProvider.class)
+                            .stream()
+                            .map(ServiceLoader.Provider::get)
+                            .max(Comparator.comparingInt(LocalizationFormatterProvider::getPriority))
+                            .orElse(() -> LocalizationFormatter.STANDARD);
     }
 }
