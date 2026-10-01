@@ -29,8 +29,12 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
         super(source, localize);
     }
 
-    @Override public Arguments.Resolver getResolver() {
+    @Override protected Arguments.Resolver getResolver() {
         return FXArgumentsResolver.INSTANCE;
+    }
+
+    @Override protected LocalizeFX getLocalize() {
+        return (LocalizeFX) super.getLocalize();
     }
 
     /// Retrieves an observable formatted string with all properties applied from this builder.
@@ -58,10 +62,6 @@ public class FXLocalizationValueBuilder<B extends FXLocalizationValueBuilder<B>>
             ),
             getObservables(localize.localeProperty(), arguments)
         );
-    }
-
-    protected LocalizeFX getLocalize() {
-        return (LocalizeFX) super.getLocalize();
     }
 
     /// @return An array containing provided `locale` + all extracted observables from `arguments`.

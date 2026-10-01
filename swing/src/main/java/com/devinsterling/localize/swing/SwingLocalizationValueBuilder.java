@@ -132,6 +132,10 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
         return super.interceptValue(value);
     }
 
+    @Override protected LocalizeSwing getLocalize() {
+        return (LocalizeSwing) super.getLocalize();
+    }
+
     /// Adds an event trigger that triggers bound components to recompute and update their text.
     ///
     /// **This method is intended to be called on the Swing UI (EDT) thread only.**
@@ -297,10 +301,6 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
         registry.register(binding);
         binding.update();
         return binding;
-    }
-
-    protected LocalizeSwing getLocalize() {
-        return (LocalizeSwing) super.getLocalize();
     }
 
     private SwingListenerBindingHelper listenerHelper() {
