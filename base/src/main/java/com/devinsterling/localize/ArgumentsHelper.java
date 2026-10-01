@@ -226,10 +226,13 @@ final class ArgumentsHelper {
         }
 
         @Override public Map<String, Object> toNamedMap() {
-            Map<String, Object> map = new HashMap<>();
+            Map<String, Object> map = new HashMap<>(size());
 
-            for (int i = 0; i < size(); i++) {
-                map.put(intToString(i), arguments.get(i));
+            // A `for(int i; ...)` loop is not used here as any `List` implement is allowed here.
+            // For example, a backing `LinkedList` will take O(N^2) time.
+            int i = 0;
+            for (Object arg : arguments) {
+                map.put(intToString(i++), arg);
             }
 
             return Collections.unmodifiableMap(map);
@@ -247,8 +250,8 @@ final class ArgumentsHelper {
             Objects.requireNonNull(resolver, NULL_RESOLVER_MESSAGE);
             List<Object> resolved = null;
 
-            for (int i = 0; i < size(); i++) {
-                Object originalValue = arguments.get(i);
+            int i = 0;
+            for (Object originalValue : arguments) {
                 Object resolvedValue = resolver.resolve(i, originalValue);
 
                 if (!Objects.equals(originalValue, resolvedValue)) {
@@ -258,6 +261,7 @@ final class ArgumentsHelper {
 
                     resolved.set(i, resolvedValue);
                 }
+                i++;
             }
 
             return resolved == null ? this : ofUnmodifiable(resolved);
