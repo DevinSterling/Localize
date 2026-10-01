@@ -93,4 +93,14 @@ class FXLocalizationValueBuilderTest {
         localize.setLocale(Locale.KOREAN);
         assertEquals("Doe이(가) 이 버튼을 777번 클릭했습니다!", supplier.get());
     }
+
+    @Test void testFormat() {
+        LocalizeFX localize = getLocalizeFXInstance();
+        StringProperty name = new SimpleStringProperty("Snowball");
+
+        StringBinding binding = localize.format("Hello {name}").arg("name", name).binding();
+        assertEquals("Hello Snowball", binding.get());
+        name.set("Jane Doe");
+        assertEquals("Hello Jane Doe", binding.get());
+    }
 }
