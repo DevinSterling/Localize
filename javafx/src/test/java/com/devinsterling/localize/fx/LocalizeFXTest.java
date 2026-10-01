@@ -1,5 +1,6 @@
 package com.devinsterling.localize.fx;
 
+import com.devinsterling.localize.LocalizationFormatter;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
 import com.devinsterling.localize.fx.junit.JavaFXExtension;
@@ -172,5 +173,15 @@ class LocalizeFXTest {
 
         localize.refreshProvider("provider");
         assertEquals("xyz", binding.get());
+    }
+
+    @Test void testFormatterReplaced() {
+        LocalizeFX localize = getEmptyLocalizeFXInstance();
+
+        StringBinding binding = localize.format("Hello world!").binding();
+        assertEquals("Hello world!", binding.get());
+
+        localize.setFormatter(request -> "> " + LocalizationFormatter.STANDARD.format(request) + "!!!!");
+        assertEquals("> Hello world!!!!!", binding.get());
     }
 }
