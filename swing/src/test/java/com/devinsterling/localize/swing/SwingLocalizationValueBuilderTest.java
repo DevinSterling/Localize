@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -82,5 +83,17 @@ public class SwingLocalizationValueBuilderTest {
         count.incrementAndGet();
 
         assertEquals("Output: 3", label.getText());
+    }
+
+    @Test void testFormat() {
+        LocalizeSwing localize = getLocalizeSwingInstance();
+        JTextField name = new JTextField("Snowball");
+        JLabel label = new JLabel();
+
+        localize.format("Hello {name}").arg("name", name).bind(label);
+        assertEquals("Hello Snowball", label.getText());
+
+        name.setText("Jane Doe");
+        assertEquals("Hello Jane Doe", label.getText());
     }
 }

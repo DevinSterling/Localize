@@ -1,5 +1,6 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.LocalizationFormatter;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.swing.junit.SwingEdtExtension;
 
@@ -211,5 +212,16 @@ public class LocalizeSwingTest {
 
         localize.refreshProvider("provider");
         assertEquals("xyz", label.getText());
+    }
+
+    @Test void testFormatterReplaced() {
+        LocalizeSwing localize = getEmptyLocalizeSwingInstance();
+        JLabel label = new JLabel();
+
+        localize.format("Hello world!").bind(label);
+        assertEquals("Hello world!", label.getText());
+
+        localize.setFormatter(request -> "> " + LocalizationFormatter.STANDARD.format(request) + "!!!!");
+        assertEquals("> Hello world!!!!!", label.getText());
     }
 }
