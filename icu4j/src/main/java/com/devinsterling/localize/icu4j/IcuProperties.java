@@ -40,7 +40,7 @@ final class IcuProperties {
 
     private String get(String key, String defaultValue) {
         String value = System.getProperty(key, properties.getProperty(key));
-        return value == null ? defaultValue : value;
+        return value == null ? defaultValue : value.trim();
     }
 
     public IcuMessageFormat getMessageFormat() {
