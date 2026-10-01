@@ -84,11 +84,14 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @return     This builder instance.
     /// @throws IllegalStateException If numbered arguments were added prior.
     /// @throws NullPointerException If the given map or keys contained are `null`.
-    public B args(Map<String, Object> args) {
-        for (Map.Entry<String, Object> entry : args.entrySet()) {
+    public B args(Map<String, ?> args) {
+        Objects.requireNonNull(args, "args must not be null");
+
+        for (Map.Entry<String, ?> entry : args.entrySet()) {
             String key = Objects.requireNonNull(entry.getKey(), "Argument key must not be null");
             arguments.add(key, interceptValue(entry.getValue()));
         }
+
         return getBuilder();
     }
 
@@ -99,9 +102,12 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// @throws IllegalStateException If named arguments were added prior.
     /// @throws NullPointerException If the given array is `null`.
     public B args(Object... args) {
+        Objects.requireNonNull(args, "args must not be null");
+
         for (Object arg : args) {
             arguments.add(interceptValue(arg));
         }
+
         return getBuilder();
     }
 
