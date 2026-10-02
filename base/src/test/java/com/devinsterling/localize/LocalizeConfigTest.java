@@ -74,11 +74,19 @@ class LocalizeConfigTest {
         Localize localize = getLocalizeInstance();
         LocalizeConfig config = localize.getConfig();
 
-        ResourceBundleProvider exceptionProvider = locale -> {
-            throw new TestException();
+        AtomicBoolean throwTestException = new AtomicBoolean(true);
+        ResourceBundleProvider exceptionProvider = l -> {
+            if (throwTestException.get()) throw new TestException();
+            return null;
         };
 
         assertThrows(TestException.class, () -> localize.addProvider(exceptionProvider));
+        assertDoesNotThrow(localize::refreshProviders);
+
+        throwTestException.set(false);
+        assertDoesNotThrow(() -> localize.addProvider(exceptionProvider));
+
+        throwTestException.set(true);
         assertThrows(TestException.class, localize::refreshProviders);
 
         config.setIgnoreProviderExceptions(true);
