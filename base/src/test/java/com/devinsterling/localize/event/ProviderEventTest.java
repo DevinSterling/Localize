@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.devinsterling.localize.TestUtil.*;
 
@@ -205,21 +206,32 @@ public class ProviderEventTest {
         LocalizeEventCapturer<ProviderEvent.ExceptionCaught> localize
                 = new LocalizeEventCapturer<>(ProviderEvent.ExceptionCaught.class);
 
+        AtomicBoolean throwTestException = new AtomicBoolean(true);
         ProviderTestException providerException = new ProviderTestException();
-        ResourceBundleProvider exceptionProvider = locale -> {
-            throw providerException;
+        ResourceBundleProvider exceptionProvider = l -> {
+            if (throwTestException.get()) throw providerException;
+            return null;
         };
 
         // Event 0
         assertThrows(ProviderTestException.class, () -> localize.addProvider(exceptionProvider));
+
+        throwTestException.set(false);
+        localize.addProvider(exceptionProvider);
+
+        throwTestException.set(true);
         assertThrows(ProviderTestException.class, localize::refreshProviders); // Event 1
 
         ProviderEvent.ExceptionCaught event0 = localize.getEvent(0);
+        assertFalse(event0.getEntry().isActive());
         assertSame(providerException, event0.getException());
         assertSame(exceptionProvider, event0.getProvider());
         assertSame(Locale.ENGLISH, event0.getLocale());
 
         ProviderEvent.ExceptionCaught event1 = localize.getEvent(1);
-        assertEquals(event0, event1);
+        assertTrue(event1.getEntry().isActive());
+        assertSame(providerException, event1.getException());
+        assertSame(exceptionProvider, event1.getProvider());
+        assertSame(Locale.ENGLISH, event1.getLocale());
     }
 }

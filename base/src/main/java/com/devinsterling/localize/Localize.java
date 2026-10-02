@@ -193,7 +193,6 @@ public class Localize {
     ///     )
     /// );
     /// ```
-    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
     private final Localize parent;
 
     private Localize(Localize parent, Data data) {
@@ -475,6 +474,32 @@ public class Localize {
         return data.config;
     }
 
+    /// Shared helper for the public `putProvider` and `addProvider` methods.
+    ///
+    /// @return Previous entry that was replaced.
+    private ProviderEntry insertProvider(ProviderEntry entry) {
+        VersionedLocale.Snapshot snapshot = data.locale.snapshot();
+        entry.bundle = getResourceBundle(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
+
+        // Insert after retrieving the bundle.
+        // If an exception occurs from `getResourceBundle`, the faulty provider is not inserted.
+        ProviderEntry previous = data.providers.put(entry);
+        entry.activate(this);
+
+        // Refresh again if the locale changed during insertion to avoid referencing a stale bundle
+        if (!data.locale.isCurrent(snapshot)) {
+            refreshProvider(entry);
+        }
+
+        fireEvent(
+            previous == null
+                ? new EventImpls.Provider.Added(this, entry)
+                : new EventImpls.Provider.Replaced(this, previous, entry)
+        );
+
+        return previous;
+    }
+
     /// Adds the given provider to retrieve localized values from.
     ///
     /// The provider is called each time the locale changes to fetch the corresponding [ResourceBundle].
@@ -516,16 +541,8 @@ public class Localize {
     /// @see ProviderKey#of(String)
     /// @since 2.0
     public ResourceBundleProvider putProvider(ProviderKey key, ResourceBundleProvider provider) {
-        ProviderEntry entry = new ProviderEntry(this, key, provider);
-        ProviderEntry previous = data.providers.put(entry);
-        refreshProvider(entry);
-
-        fireEvent(
-            previous == null
-                ? new EventImpls.Provider.Added(this, entry)
-                : new EventImpls.Provider.Replaced(this, previous, entry)
-        );
-
+        ProviderEntry entry = ProviderEntry.ofInactive(key, provider);
+        ProviderEntry previous = insertProvider(entry);
         return previous != null ? previous.getProvider() : null;
     }
 
@@ -605,10 +622,8 @@ public class Localize {
     /// @see putProvider(ProviderKey, ResourceBundleProvider)
     /// @since 1.3
     public ProviderEntry addProvider(ResourceBundleProvider provider) {
-        ProviderEntry entry = new ProviderEntry(this, ProviderKey.of(), provider);
-        data.providers.put(entry);
-        refreshProvider(entry);
-        fireEvent(new EventImpls.Provider.Added(this, entry));
+        ProviderEntry entry = ProviderEntry.ofInactive(ProviderKey.of(), provider);
+        insertProvider(entry);
         return entry;
     }
 
@@ -1175,12 +1190,19 @@ public class Localize {
         /// A counter to stop stale refreshes early.
         private final AtomicLong version = new AtomicLong();
         private volatile ResourceBundle bundle;
-        private volatile Localize localize;
+        private volatile Localize root;
 
-        private ProviderEntry(Localize localize, ProviderKey key, ResourceBundleProvider provider) {
-            this.localize = Objects.requireNonNull(localize, "localize must not be null");
-            this.key = Objects.requireNonNull(key, "key must not be null");
-            this.provider = Objects.requireNonNull(provider, "provider must not be null");
+        /// @see ofInactive
+        private ProviderEntry(ProviderKey key, ResourceBundleProvider provider) {
+            this.key = key;
+            this.provider = provider;
+        }
+
+        /// Creates an inactive entry that can be activated via [activate].
+        ///
+        /// @see isActive
+        private static ProviderEntry ofInactive(ProviderKey key, ResourceBundleProvider provider) {
+            return new ProviderEntry(key, provider);
         }
 
         /// Returns the key associated with the contained [provider][getProvider].
@@ -1216,7 +1238,7 @@ public class Localize {
         /// @see Localize#removeProvider(ProviderKey)
         /// @see isActive
         public void remove() {
-            Localize localize = this.localize;
+            Localize localize = root;
 
             if (localize != null) {
                 localize.removeProvider(this);
@@ -1231,7 +1253,7 @@ public class Localize {
         /// @see Localize#refreshProvider(ProviderKey)
         /// @see isActive
         public void refresh() {
-            Localize localize = this.localize;
+            Localize localize = root;
 
             if (localize != null && localize.refreshProvider(this)) {
                 localize.fireEvent(new EventImpls.Provider.Refreshed(localize, this));
@@ -1248,12 +1270,19 @@ public class Localize {
         /// @return `true` if active, or `false` if the contained provider was replaced or removed prior.
         /// @see Localize#containsProvider(ProviderKey)
         public boolean isActive() {
-            return localize != null;
+            return root != null;
+        }
+
+        private void activate(Localize source) {
+            while (source.parent != null) {
+                source = source.parent;
+            }
+            root = source;
         }
 
         private void dispose() {
             version.incrementAndGet();
-            localize = null;
+            root = null;
             bundle = null;
         }
     }
