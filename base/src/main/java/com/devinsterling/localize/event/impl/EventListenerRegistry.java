@@ -39,7 +39,7 @@ public final class EventListenerRegistry {
                 try {
                     hook.onEvent(event);
                 } catch (RuntimeException e) {
-                    aggregate = reportException(aggregate, hook, instance, event, e);
+                    aggregate = reportException(aggregate, hook, source, event, e);
                 }
             } else {
                 needsCleanup = true;
