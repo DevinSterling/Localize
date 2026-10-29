@@ -36,11 +36,23 @@ final class PropertyChangeManager {
         // NOTE: If a listener is removed by invoking another listener, the removed listener will not be called.
         PropertyChangeSubscription[] snapshot = listeners.values().toArray(new PropertyChangeSubscription[0]);
         PropertyChangeEvent event = new PropertyChangeEvent(source, "locale", oldLocale, newLocale);
+        // Aggregate exceptions to avoid a single faulty listener blocking the rest
+        RuntimeException aggregate = null;
 
         for (PropertyChangeSubscription subscription : snapshot) {
-            if (subscription.isActive) {
+            if (subscription.isActive) try {
                 subscription.listener.propertyChange(event);
+            } catch (RuntimeException e) {
+                if (aggregate == null) {
+                    aggregate = e;
+                } else if (aggregate != e) {
+                    aggregate.addSuppressed(e);
+                }
             }
+        }
+
+        if (aggregate != null) {
+            throw aggregate;
         }
     }
 
