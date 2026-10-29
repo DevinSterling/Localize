@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.devinsterling.localize.TestUtil.*;
 
