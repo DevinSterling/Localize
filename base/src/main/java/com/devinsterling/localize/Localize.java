@@ -534,13 +534,21 @@ public class Localize {
     /// @param formatter Formatter to format requests.
     /// @throws NullPointerException If `formatter` is `null`.
     public void setFormatter(LocalizationFormatter formatter) {
-        LocalizationFormatter old = data.formatter;
-        data.formatter = Objects.requireNonNull(formatter, "Formatter must not be null");
+        Objects.requireNonNull(formatter, "Formatter must not be null");
+        LocalizationFormatter old;
+
+        synchronized (data) {
+            // If the formatters are equal, no change is required
+            old = data.formatter;
+            if (old.equals(formatter)) {
+                return;
+            }
+
+            data.formatter = formatter;
+        }
 
         // Fire the event if a change occurred
-        if (!old.equals(formatter)) {
-            fireEvent(new EventImpls.Formatter.Replaced(this, old, formatter));
-        }
+        fireEvent(new EventImpls.Formatter.Replaced(this, old, formatter));
     }
 
     /// Returns the localization formatter.
