@@ -33,11 +33,14 @@ final class PropertyChangeManager {
 
         // Snapshot as listeners may remove themselves during iteration,
         // which can cause a `ConcurrentModificationException`.
-        PropertyChangeListener[] snapshot = listeners.keySet().toArray(new PropertyChangeListener[0]);
+        // NOTE: If a listener is removed by invoking another listener, the removed listener will not be called.
+        PropertyChangeSubscription[] snapshot = listeners.values().toArray(new PropertyChangeSubscription[0]);
         PropertyChangeEvent event = new PropertyChangeEvent(source, "locale", oldLocale, newLocale);
 
-        for (PropertyChangeListener listener : snapshot) {
-            listener.propertyChange(event);
+        for (PropertyChangeSubscription subscription : snapshot) {
+            if (subscription.isActive) {
+                subscription.listener.propertyChange(event);
+            }
         }
     }
 
