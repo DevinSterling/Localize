@@ -1,5 +1,8 @@
 package com.devinsterling.localize;
 
+import com.devinsterling.localize.concurrent.ConcurrentProviderProbe;
+import com.devinsterling.localize.concurrent.ConcurrentTestHelper;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
@@ -278,5 +281,100 @@ class LocalizeTest {
 
         localize.refreshProvider("provider");
         assertEquals("xyz", localize.getValue(TEST_KEY_TEST));
+    }
+
+    @Test void setLocaleRefreshesUncoveredProvider() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+
+        // Use a provider that will pause mid-fetch within `setLocale`
+        var pauser = new ConcurrentProviderProbe(TEST_PROVIDER).pauseOn(Locale.CHINESE);
+        localize.putProvider("pauseSetLocale", pauser);
+
+        var setLocaleTask = ConcurrentTestHelper.background(() -> localize.setLocale(Locale.CHINESE));
+        pauser.awaitPaused();
+
+        var insertedDuringSetLocale = new ConcurrentProviderProbe(TEST_PROVIDER);
+        // This method completes while `setLocale` is paused
+        localize.putProvider("Z", insertedDuringSetLocale);
+
+        pauser.resume();
+        setLocaleTask.join();
+
+        assertEquals(Locale.CHINESE, localize.getLocale());
+        assertEquals("早上好", localize.getProviderEntry("Z").getBundle().getString(TEST_KEY_GREET));
+        assertEquals(1, insertedDuringSetLocale.calls(Locale.CHINESE));
+    }
+
+    @Test void setLocaleDuringInsertFetch_forcesRefetch() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        // Use a provider that will pause mid-fetch within `putProvider`
+        var pauser = new ConcurrentProviderProbe(TEST_PROVIDER).pauseOn(Locale.ENGLISH);
+
+        var insertTask = ConcurrentTestHelper.background(() -> localize.putProvider("Z", pauser));
+        pauser.awaitPaused();
+
+        // Change the locale while `putProvider` is paused
+        localize.setLocale(Locale.CHINESE);
+        pauser.resume();
+        insertTask.join();
+
+        assertEquals("早上好", localize.getProviderEntry("Z").getBundle().getString(TEST_KEY_GREET));
+        assertEquals(1, pauser.calls(Locale.ENGLISH));
+        assertEquals(1, pauser.calls(Locale.CHINESE));
+    }
+
+    @Test void setLocaleFailedNewCallDoesNotSupersedeOldOne() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        var oldOne = new ConcurrentProviderProbe(TEST_PROVIDER).pauseOn(Locale.JAPANESE);
+        var newOne = new ConcurrentProviderProbe(TEST_PROVIDER).failOn(Locale.KOREAN);
+
+        localize.putProvider("old", oldOne);
+        localize.putProvider("new", newOne);
+
+        // Pause `oldOne` mid-fetch within `setLocale`
+        var older = ConcurrentTestHelper.background(() -> localize.setLocale(Locale.JAPANESE));
+        oldOne.awaitPaused();
+
+        // While paused, switch locale to korean
+        assertThrows(IllegalStateException.class, () -> localize.setLocale(Locale.KOREAN));
+
+        oldOne.resume();
+        older.join();
+
+        // Locale remains Japanese since `newOne` threw an exception
+        assertEquals(Locale.JAPANESE, localize.getLocale());
+    }
+
+    @Test void setLocaleOldCallIsSuperseded() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        var provider = new ConcurrentProviderProbe(TEST_PROVIDER).pauseOn(Locale.JAPANESE);
+        localize.addProvider(provider);
+
+        // Pause `provider` mid-fetch within `setLocale`
+        var older = ConcurrentTestHelper.background(() -> localize.setLocale(Locale.JAPANESE));
+        provider.awaitPaused();
+
+        localize.setLocale(Locale.KOREAN);
+        provider.resume();
+        older.join();
+
+        // Locale becomes korean (newer call) despite japanese (older call) finishing after
+        assertEquals(Locale.KOREAN, localize.getLocale());
+    }
+
+    @Test void raceBetweenSetLocaleAndPutProvider() {
+        for (int i = 0; i < ConcurrentTestHelper.ITERATIONS; i++) {
+            Localize localize = Localize.of(Locale.ENGLISH);
+
+            ConcurrentTestHelper.race(
+                () -> localize.setLocale(Locale.CHINESE),
+                () -> localize.putProvider("key", new ConcurrentProviderProbe(TEST_PROVIDER))
+            );
+
+            Localize.ProviderEntry entry = localize.getProviderEntry("key");
+
+            assertEquals(Locale.CHINESE, localize.getLocale());
+            assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
+        }
     }
 }
