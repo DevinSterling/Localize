@@ -294,12 +294,14 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
             setterCallback
         );
 
+        // Update to initial value
+        binding.update();
+
         if (listenerHelper != null) {
             listenerHelper.installListeners(binding);
         }
 
         registry.register(binding);
-        binding.update();
         return binding;
     }
 
