@@ -7,7 +7,7 @@ import java.util.Properties;
 final class IcuProperties {
     private static final String PROPERTIES_FILE = "localize.properties";
     private static final String FORMATTER_PROPERTY = "localize.icu4j.formatter";
-    private static final String DEFAULT_FORMATTER = "com.ibm.icu.message2.MessageFormatter";
+    private static final String DEFAULT_FORMATTER = "com.ibm.icu.text.MessageFormat";
 
     public static final IcuProperties INSTANCE = new IcuProperties(PROPERTIES_FILE);
 

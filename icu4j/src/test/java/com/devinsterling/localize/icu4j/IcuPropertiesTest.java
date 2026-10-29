@@ -10,14 +10,14 @@ public class IcuPropertiesTest {
         IcuProperties properties = new IcuProperties("non/existent/file");
 
         // Ensure defaults
-        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, properties.getMessageFormat());
+        assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, properties.getMessageFormat());
     }
 
     @Test void testPresentPropertiesFile() {
         IcuProperties properties = new IcuProperties("localize.present.properties");
 
         // Ensure set properties
-        assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, properties.getMessageFormat());
+        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, properties.getMessageFormat());
     }
 
     @Test void testMalformedPropertiesFile() {

@@ -5,9 +5,9 @@ import java.util.Objects;
 /// Configuration for [IcuFormatter] instances.
 ///
 /// ### Default Configuration
-/// | Method                            | Property                   | Default                                                                     |
-/// |-----------------------------------|----------------------------|-----------------------------------------------------------------------------|
-/// | [IcuFormatterConfig#setFormatter] | `localize.icu4j.formatter` | `com.ibm.icu.message2.MessageFormatter` ([IcuMessageFormat#MESSAGE2_FORMAT]) |
+/// | Method                            | Property                   | Default                                                               |
+/// |-----------------------------------|----------------------------|-----------------------------------------------------------------------|
+/// | [IcuFormatterConfig#setFormatter] | `localize.icu4j.formatter` | `com.ibm.icu.text.MessageFormat` ([IcuMessageFormat#MESSAGE1_FORMAT]) |
 ///
 /// ### Properties File and JVM System Properties
 ///
@@ -38,8 +38,8 @@ public class IcuFormatterConfig {
     /// ### Override Default
     /// The default version can be overridden within `localize.properties` or system properties
     /// by setting `localize.icu4j.formatter` to one of the following values:
-    /// - `com.ibm.icu.message2.MessageFormatter` (default)
-    /// - `com.ibm.icu.text.MessageFormat` (legacy)
+    /// - `com.ibm.icu.text.MessageFormat` (default)
+    /// - `com.ibm.icu.message2.MessageFormatter` (newer standard)
     ///
     /// @param formatter The ICU4J message formatter.
     /// @throws NullPointerException If `formatter` is `null`.
