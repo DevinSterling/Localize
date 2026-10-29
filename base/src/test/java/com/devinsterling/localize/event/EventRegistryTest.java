@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.devinsterling.localize.TestUtil.*;
 
@@ -152,5 +153,94 @@ public class EventRegistryTest {
         subscription.dispose();
         localize.fireTestEvent();
         assertEquals(2, localize.count.get());
+    }
+
+    @Test void captureAggregateExceptions() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+
+        var a = new FaultyEventListener(true);
+        var b = CountEventListener.doesNothing();
+        var c = new FaultyEventListener(true);
+        var d = CountEventListener.doesNothing();
+
+        localize.addListener(LocalizeEvent.class, a);
+        localize.addListener(LocalizeEvent.class, b);
+        localize.addListener(LocalizeEvent.class, c);
+        localize.addListener(LocalizeEvent.class, d);
+
+        var exception = assertThrows(
+            FaultyEventListener.FaultyException.class,
+            () -> localize.setLocale(Locale.JAPANESE)
+        );
+
+        assertSame(a.exception, exception);
+        assertEquals(3, exception.getSuppressed().length);
+        assertSame(c.exception, exception.getSuppressed()[0]);
+        // The same exception is additionally suppressed for each failed `ListenerExceptionCaught` event
+        assertSame(c.exception, exception.getSuppressed()[1]);
+        assertSame(c.exception, exception.getSuppressed()[2]);
+
+        // Despite the exception, valid listeners are still called
+        assertEquals(3, b.count);
+        assertEquals(3, d.count);
+    }
+
+    @Test void listenerRemovedMidDispatchIsNotInvoked() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        AtomicReference<Subscription> subscriptionC = new AtomicReference<>();
+
+        var d = CountEventListener.doesNothing();
+        var c = CountEventListener.doesNothing();
+        var b = CountEventListener.doesNothing();
+        var a = new CountEventListener(evt -> {
+            localize.removeListener(LocalizeEvent.class, b);
+            subscriptionC.get().dispose();
+        });
+
+        localize.addListener(LocalizeEvent.class, a);
+        localize.addListener(LocalizeEvent.class, b);
+        subscriptionC.set(localize.addListener(LocalizeEvent.class, c));
+        localize.addListener(LocalizeEvent.class, d);
+        localize.setLocale(Locale.JAPANESE);
+
+        assertEquals(1, a.count);
+        assertEquals(0, b.count);
+        assertEquals(0, c.count);
+        assertEquals(1, d.count);
+    }
+
+    private static class FaultyEventListener implements EventListener<LocalizeEvent> {
+        private final FaultyException exception = new FaultyException();
+        private final boolean throwOnInvocation;
+
+        public FaultyEventListener(boolean throwOnInvocation) {
+            this.throwOnInvocation = throwOnInvocation;
+        }
+
+        @Override public void onEvent(LocalizeEvent event) {
+            if (throwOnInvocation) {
+                throw exception;
+            }
+        }
+
+        private static class FaultyException extends RuntimeException {}
+    }
+
+    private static final class CountEventListener implements EventListener<LocalizeEvent> {
+        private final EventListener<LocalizeEvent> delegate;
+        private int count = 0;
+
+        private CountEventListener(EventListener<LocalizeEvent> delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override public void onEvent(LocalizeEvent event) {
+            count++;
+            delegate.onEvent(event);
+        }
+
+        private static CountEventListener doesNothing() {
+            return new CountEventListener(event -> {});
+        }
     }
 }

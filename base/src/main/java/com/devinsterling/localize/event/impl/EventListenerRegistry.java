@@ -29,6 +29,7 @@ public final class EventListenerRegistry {
     }
 
     public void fireEvent(Localize source, LocalizeEvent event) {
+        RuntimeException aggregate = null;
         boolean needsCleanup = false;
 
         for (LocalizeOnEventHook hook : attached) {
@@ -37,10 +38,8 @@ public final class EventListenerRegistry {
             if (instance != null) {
                 try {
                     hook.onEvent(event);
-                } catch (Exception e) {
-                    if (reportException(hook, instance, event, e)) {
-                        throw e;
-                    }
+                } catch (RuntimeException e) {
+                    aggregate = reportException(aggregate, hook, instance, event, e);
                 }
             } else {
                 needsCleanup = true;
@@ -53,28 +52,54 @@ public final class EventListenerRegistry {
 
         for (ListenerSubscription<?> subscription : subscriptions) try {
             subscription.invokeListener(event);
-        } catch (Exception e) {
-            if (reportException(subscription.listener, source, event, e)) {
-                throw e;
-            }
+        } catch (RuntimeException e) {
+            aggregate = reportException(aggregate, subscription.listener, source, event, e);
+        }
+
+        if (aggregate != null) {
+            throw aggregate;
         }
     }
 
-    private boolean reportException(
+    private RuntimeException reportException(
+        RuntimeException aggregate,
         EventListener<?> listener,
         Localize source,
         LocalizeEvent event,
-        Exception exception
+        RuntimeException exception
     ) {
+        aggregate = aggregate(source, aggregate, exception);
+
         // If the given event is an instance of `ListenerExceptionCaught`, avoid recursive handling.
         if (!(event instanceof DiagnosticEvent.ListenerExceptionCaught)) {
-            fireEvent(
-                source,
-                new EventImpls.Diagnostic.ListenerExceptionCaught(source, listener, event, exception)
-            );
+            try {
+                fireEvent(
+                    source,
+                    new EventImpls.Diagnostic.ListenerExceptionCaught(source, listener, event, exception)
+                );
+            } catch (RuntimeException e) {
+                aggregate = aggregate(source, aggregate, e);
+            }
         }
 
-        return !source.getConfig().isIgnoreListenerExceptions();
+        return aggregate;
+    }
+
+    // Aggregate exceptions from listeners.
+    // One listener should not prevent all other listeners, especially `onEvent` hooks.
+    private static RuntimeException aggregate(
+        Localize source,
+        RuntimeException aggregate,
+        RuntimeException exception
+    ) {
+        if (source.getConfig().isIgnoreListenerExceptions()) {
+            return aggregate;
+        } else if (aggregate == null) {
+            return exception;
+        } else if (aggregate != exception) {
+            aggregate.addSuppressed(exception);
+        }
+        return aggregate;
     }
 
     public synchronized <T extends LocalizeEvent> Subscription addListener(

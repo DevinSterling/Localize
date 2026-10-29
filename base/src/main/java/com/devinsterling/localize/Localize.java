@@ -1211,6 +1211,11 @@ public class Localize {
     ///
     /// The event is dispatched to the [onEvent] hook of each attached instance and corresponding event listeners.
     ///
+    /// ### Dispatch
+    /// If an [EventListener] throws a [RuntimeException], dispatch continues for subsequent listeners.
+    /// The first exception is rethrown after dispatch, with any subsequent added as suppressed exceptions.
+    /// This prevents a single faulty listener from blocking all other listeners.
+    ///
     /// @param event Event to fire and propagate.
     /// @throws NullPointerException If `event` is `null`.
     /// @since 2.0
