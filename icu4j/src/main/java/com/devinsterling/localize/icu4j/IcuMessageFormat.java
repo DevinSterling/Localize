@@ -7,7 +7,7 @@ public final class IcuMessageFormat {
     private final static String V1_PATH = "com.ibm.icu.text.MessageFormat";
     private final static String V2_PATH = "com.ibm.icu.message2.MessageFormatter";
 
-    /// Legacy ICU message format ([com.ibm.icu.text.MessageFormat]).
+    /// ICU message format ([com.ibm.icu.text.MessageFormat]).
     ///
     /// [MESSAGE2_FORMAT] is the successor of this format.
     public static final IcuMessageFormat MESSAGE1_FORMAT = new IcuMessageFormat(IcuMessageFormatStrategy.FORMAT1);

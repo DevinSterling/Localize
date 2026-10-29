@@ -7,6 +7,9 @@ import java.util.Objects;
 
 /// Processes a request to provide an ICU formatted localized string.
 ///
+/// By default, [IcuMessageFormat#MESSAGE1_FORMAT] is the selected formatter.
+/// See [IcuFormatterConfig] for more information.
+///
 /// @since 2.0
 public class IcuFormatter implements LocalizationFormatter {
     private final IcuFormatterConfig config;

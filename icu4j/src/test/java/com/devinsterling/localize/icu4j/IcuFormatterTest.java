@@ -49,7 +49,7 @@ public class IcuFormatterTest {
 
     @Test void testSetFormatterDuringRuntime() {
         Localize localize = Localize.of(Locale.ENGLISH);
-        localize.putProvider("main", MESSAGE_FORMAT2);
+        localize.putProvider("main", MESSAGE_FORMAT1);
         IcuFormatter formatter = (IcuFormatter) localize.getFormatter();
 
         LocalizationValueBuilder<?> builder = localize.get(TEST_KEY_CLICK_LABEL)
@@ -57,12 +57,12 @@ public class IcuFormatterTest {
                 .arg("click_count", 1337);
 
         // The default formatter is ICU4J's message formatter 2
-        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, formatter.getConfig().getMessageFormat());
+        assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, formatter.getConfig().getMessageFormat());
         assertEquals("Doe clicked this button 1,337 times!", builder.value());
 
         // Change the resource bundle provider as the syntax between ICU4J's formatters change
-        localize.putProvider("main", MESSAGE_FORMAT1);
-        formatter.getConfig().setFormatter(IcuMessageFormat.MESSAGE1_FORMAT);
+        localize.putProvider("main", MESSAGE_FORMAT2);
+        formatter.getConfig().setFormatter(IcuMessageFormat.MESSAGE2_FORMAT);
 
         assertEquals("Doe clicked this button 1,337 times!", builder.value());
     }

@@ -231,27 +231,27 @@ The integration module automatically registers the default
 via SPI, so no code changes are required.
 
 ICU4J's
-[MessageFormat v2](https://messageformat.unicode.org/docs/quick-start/)
+[MessageFormat (MF1)](https://unicode-org.github.io/icu/userguide/format_parse/messages/)
 is used as the default message formatter, enabling ICU MessageFormat features
-such as advanced syntax, variables, functions, and pluralization:
+such as enhanced pluralization, conditional branching, and additional formatting modes:
 ```properties
-MyApp.clickMessage=.input {$click_count :number} \
-.match $click_count \
-0 {{{$name} did not click this button!}} \
-1 {{{$name} clicked this button one time!}} \
-* {{{$name} clicked this button {$click_count} times!}}
+MyApp.clickMessage={name} clicked this button {click_count, plural,\
+=0{zero times}\
+=1{one time}\
+other{# times}}!
 ```
 
-The default ICU4J formatter can be configured within `localize.properties` under `resources`:
+The default ICU4J formatter can be configured within `localize.properties` under `resources`
+to opt in to [MessageFormat2 (MF2)](https://messageformat.unicode.org/docs/quick-start/) instead:
 ```properties
-# Prefer the original message syntax
-localize.icu4j.formatter=com.ibm.icu.text.MessageFormat
+# Prefer the newer MF2 syntax
+localize.icu4j.formatter=com.ibm.icu.message2.MessageFormatter
 ```
 
 Alternatively, the ICU4J formatter can be configured as a JVM system property,
 which takes precedence over the properties file:
-```
--Dlocalize.icu4j.formatter=com.ibm.icu.text.MessageFormat
+```properties
+-Dlocalize.icu4j.formatter=com.ibm.icu.message2.MessageFormatter
 ```
 
 ## License

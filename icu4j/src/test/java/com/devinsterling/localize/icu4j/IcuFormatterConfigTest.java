@@ -11,14 +11,14 @@ public class IcuFormatterConfigTest {
     @Test void testDefaultFormatter() {
         IcuFormatterConfig config = new IcuFormatterConfig();
 
-        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, config.getMessageFormat());
+        assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, config.getMessageFormat());
     }
 
     @Test void testSetFormatter() {
         IcuFormatterConfig config = new IcuFormatterConfig();
 
-        config.setFormatter(IcuMessageFormat.MESSAGE1_FORMAT);
-        assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, config.getMessageFormat());
+        config.setFormatter(IcuMessageFormat.MESSAGE2_FORMAT);
+        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, config.getMessageFormat());
     }
 
     @Test void testSetFormatterRejectNulls() {
@@ -40,18 +40,18 @@ public class IcuFormatterConfigTest {
         System.setProperty(property, "java.text.MessageFormat");
         assertThrows(IllegalStateException.class, IcuFormatterConfig::new);
 
-        System.setProperty(property, "com.ibm.icu.message2.MessageFormatter");
+        System.setProperty(property, "com.ibm.icu.text.MessageFormat");
         IcuFormatterConfig configA = new IcuFormatterConfig();
 
-        System.setProperty(property, "com.ibm.icu.text.MessageFormat");
+        System.setProperty(property, "com.ibm.icu.message2.MessageFormatter");
         IcuFormatterConfig configB = new IcuFormatterConfig();
 
         System.clearProperty(property);
-        // `com.ibm.icu.message2.MessageFormatter` by default
+        // `com.ibm.icu.text.MessageFormat` by default
         IcuFormatterConfig configC = new IcuFormatterConfig();
 
-        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, configA.getMessageFormat());
-        assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, configB.getMessageFormat());
-        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, configC.getMessageFormat());
+        assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, configA.getMessageFormat());
+        assertEquals(IcuMessageFormat.MESSAGE2_FORMAT, configB.getMessageFormat());
+        assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, configC.getMessageFormat());
     }
 }
