@@ -34,10 +34,20 @@ final class BindingsManager implements BindingRegistry {
         // which could trigger creation of a new StringBinding.
         Binding<?>[] snapshot = bindings.toArray(new Binding<?>[0]);
         boolean needsCleanup = false;
+        // Aggregate exceptions to avoid a single faulty update blocking the rest
+        RuntimeException aggregate = null;
 
         for (Binding<?> binding : snapshot) {
             if (binding.isActive()) {
-                binding.update();
+                try {
+                    binding.update();
+                } catch (RuntimeException e) {
+                    if (aggregate == null) {
+                        aggregate = e;
+                    } else if (aggregate != e) {
+                        aggregate.addSuppressed(e);
+                    }
+                }
             } else {
                 needsCleanup = true;
             }
@@ -45,6 +55,10 @@ final class BindingsManager implements BindingRegistry {
 
         if (needsCleanup) {
             cleanup();
+        }
+
+        if (aggregate != null) {
+            throw aggregate;
         }
     }
 
