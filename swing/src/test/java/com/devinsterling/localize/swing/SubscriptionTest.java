@@ -58,6 +58,52 @@ public class SubscriptionTest {
         assertEquals(0, count.get());
     }
 
+    @Test void captureAggregateExceptions() {
+        PropertyChangeManager manager = new PropertyChangeManager();
+
+        var a = new FaultyPropertyChangeListener(true);
+        var b = PropertyChangeCountListener.doesNothing();
+        var c = new FaultyPropertyChangeListener(true);
+        var d = PropertyChangeCountListener.doesNothing();
+
+        manager.addPropertyChangeListener(a);
+        manager.addPropertyChangeListener(b);
+        manager.addPropertyChangeListener(c);
+        manager.addPropertyChangeListener(d);
+
+        var exception = assertThrows(
+            FaultyPropertyChangeListener.FaultyException.class,
+            () -> manager.notifyChangeListeners(this, Locale.ENGLISH, Locale.FRENCH)
+        );
+
+        assertSame(a.exception, exception);
+        assertArrayEquals(new Throwable[] { c.exception }, exception.getSuppressed());
+
+        // Despite the exception, valid listeners are still called
+        assertEquals(1, b.count);
+        assertEquals(1, d.count);
+    }
+
+    @Test void aggregateExceptionCannotSuppressItself() {
+        PropertyChangeManager manager = new PropertyChangeManager();
+        RuntimeException exception = new RuntimeException();
+
+        manager.addPropertyChangeListener(evt -> {
+            throw exception;
+        });
+        manager.addPropertyChangeListener(evt -> {
+            throw exception;
+        });
+
+        var caught = assertThrows(
+            RuntimeException.class,
+            () -> manager.notifyChangeListeners(this, Locale.ENGLISH, Locale.FRENCH)
+        );
+
+        assertSame(caught, exception);
+        assertEquals(0, caught.getSuppressed().length);
+    }
+
     @Test void listenerRemovedMidDispatchIsNotInvoked() {
         PropertyChangeManager manager = new PropertyChangeManager();
         AtomicReference<Subscription> subscriptionC = new AtomicReference<>();
@@ -80,6 +126,23 @@ public class SubscriptionTest {
         assertEquals(0, b.count);
         assertEquals(0, c.count);
         assertEquals(1, d.count);
+    }
+
+    private static class FaultyPropertyChangeListener implements PropertyChangeListener {
+        private final FaultyException exception = new FaultyException();
+        private final boolean throwOnInvocation;
+
+        public FaultyPropertyChangeListener(boolean throwOnInvocation) {
+            this.throwOnInvocation = throwOnInvocation;
+        }
+
+        @Override public void propertyChange(PropertyChangeEvent evt) {
+            if (throwOnInvocation) {
+                throw exception;
+            }
+        }
+
+        private static class FaultyException extends RuntimeException {}
     }
 
     private static final class PropertyChangeCountListener implements PropertyChangeListener {
