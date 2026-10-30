@@ -889,10 +889,18 @@ public class Localize {
     /// Useful for reloading bundles from external sources (e.g., disk)
     /// after their contents have changed during runtime.
     ///
+    /// ### Exception Handling
+    /// If a faulty [ResourceBundleProvider] throws an unexpected [RuntimeException],
+    /// refreshing continues for all subsequent providers and listeners.
+    /// If [exceptions are not ignored][LocalizeConfig#isIgnoreProviderExceptions()],
+    /// the first exception is rethrown with any subsequent added as suppressed.
+    /// This prevents a single faulty provider from blocking all others.
+    ///
     /// @return `true` if any providers were refreshed, or `false` if none were refreshed.
     public boolean refreshProviders() {
         record VersionEntryBundle(ProviderEntry entry, ResourceBundle bundle) {}
 
+        RuntimeException aggregate = null;
         LocalizeEvent.Cause cause = LocalizeEvent.Cause.DIRECT;
         LocaleState.Snapshot snapshot = data.locale.snapshot();
         long ticket = data.ticketGenerator.incrementAndGet();
@@ -905,8 +913,12 @@ public class Localize {
                 return false;
             }
 
-            ResourceBundle bundle = getResourceBundle(cause, entry, snapshot.current);
-            refreshedProviders.temp.add(new VersionEntryBundle(entry, bundle));
+            try {
+                ResourceBundle bundle = getResourceBundle(cause, entry, snapshot.current);
+                refreshedProviders.temp.add(new VersionEntryBundle(entry, bundle));
+            } catch (RuntimeException e) {
+                aggregate = ExceptionHelper.aggregate(aggregate, e);
+            }
         }
 
         // Apply the new bundles
@@ -920,8 +932,14 @@ public class Localize {
 
         boolean hasRefreshed = data.locale.isCurrent(snapshot) && !refreshedProviders.refreshed.isEmpty();
 
-        if (hasRefreshed) {
+        if (hasRefreshed) try {
             fireRefreshedProvidersEvent(cause, refreshedProviders);
+        } catch (RuntimeException e) {
+            aggregate = ExceptionHelper.aggregate(aggregate, e);
+        }
+
+        if (aggregate != null) {
+            throw aggregate;
         }
 
         return hasRefreshed;

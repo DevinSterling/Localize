@@ -2,6 +2,7 @@ package com.devinsterling.localize;
 
 import com.devinsterling.localize.concurrent.ConcurrentProviderProbe;
 import com.devinsterling.localize.concurrent.ConcurrentTestHelper;
+import com.devinsterling.localize.event.ProviderEvent;
 
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,7 @@ import java.util.Collection;
 import java.util.ListResourceBundle;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -459,5 +461,33 @@ class LocalizeTest {
         // A newer locale version takes precedence over plain ticket value ordering.
         assertEquals(Locale.CHINESE, localize.getLocale());
         assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
+    }
+
+    @Test void refreshProvidersAggregatesProviderAndListenerExceptions() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+
+        var providerException = new IllegalStateException("Provider failed");
+        var listenerException = new IllegalArgumentException("Listener failed");
+        var count = new AtomicInteger();
+
+        var faultyProvider = new ConcurrentProviderProbe(TEST_PROVIDER).throwOnFail(() -> providerException);
+
+        localize.addProvider(faultyProvider);
+        localize.addProvider(locale -> {
+            count.incrementAndGet();
+            return TEST_PROVIDER.getBundle(locale);
+        });
+        localize.addListener(ProviderEvent.Refreshed.class, event -> {
+            throw listenerException;
+        });
+        localize.addListener(ProviderEvent.Refreshed.class, event -> count.incrementAndGet());
+
+        faultyProvider.failOn(Locale.ENGLISH);
+        var caught = assertThrows(IllegalStateException.class, localize::refreshProviders);
+
+        // `+ 1` because calling `addProvider` invokes the provider once
+        assertEquals(3, count.get());
+        assertSame(caught, providerException);
+        assertArrayEquals(new Throwable[] { listenerException }, caught.getSuppressed());
     }
 }
