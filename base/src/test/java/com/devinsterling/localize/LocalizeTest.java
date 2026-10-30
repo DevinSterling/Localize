@@ -364,6 +364,23 @@ class LocalizeTest {
         assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
     }
 
+    @Test void setLocaleOldCallIsSupersededABA() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        var pauser = new ConcurrentProviderProbe(TEST_PROVIDER).pauseOn(Locale.JAPANESE);
+        var entry = localize.addProvider(pauser);
+
+        var slowTask = ConcurrentTestHelper.background(() -> localize.setLocale(Locale.JAPANESE));
+        pauser.awaitPaused();
+
+        // Change back to english
+        localize.setLocale(Locale.ENGLISH);
+        pauser.resume();
+        slowTask.join();
+
+        assertEquals(Locale.ENGLISH, localize.getLocale());
+        assertEquals("hi",entry.getBundle().getString(TEST_KEY_GREET));
+    }
+
     @Test void raceBetweenSetLocaleAndPutProvider() {
         for (int i = 0; i < ConcurrentTestHelper.ITERATIONS; i++) {
             Localize localize = Localize.of(Locale.ENGLISH);
@@ -378,5 +395,69 @@ class LocalizeTest {
             assertEquals(Locale.CHINESE, localize.getLocale());
             assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
         }
+    }
+
+    @Test void bulkRefreshSupersededByLocaleChange() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        var pauser = new ConcurrentProviderProbe(TEST_PROVIDER);
+        var entry = localize.addProvider(pauser);
+
+        pauser.pauseOn(Locale.ENGLISH);
+        var refreshTask = ConcurrentTestHelper.background(localize::refreshProviders);
+        pauser.awaitPaused();
+
+        localize.setLocale(Locale.CHINESE);
+        pauser.resume();
+        boolean performedBulkRefresh = refreshTask.join();
+
+        // Despite the refresh task finishing after, the setLocale call has higher precedence
+        assertFalse(performedBulkRefresh);
+        assertEquals(Locale.CHINESE, localize.getLocale());
+        assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
+    }
+
+    @Test void individualRefreshSupersededByBulkRefresh() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        AtomicReference<String> output = new AtomicReference<>();
+        var pauser = new ConcurrentProviderProbe(locale -> new ListResourceBundle() {
+            private final String value = output.get();
+
+            @Override protected Object[][] getContents() {
+                return new Object[][] {{ TEST_KEY_TEST, value }};
+            }
+        });
+        var entry = localize.addProvider(pauser);
+
+        pauser.pauseOn(Locale.ENGLISH);
+        var individualTask = ConcurrentTestHelper.background(() -> localize.refreshProvider(entry.getKey()));
+        pauser.awaitPaused();
+
+        output.set("bulk");
+        localize.refreshProviders();
+
+        output.set("individual");
+        pauser.resume();
+        boolean performedIndividualRefresh = individualTask.join();
+
+        // Despite the individual refresh finishing later, the bulk refresh takes precedence
+        assertFalse(performedIndividualRefresh);
+        assertEquals("bulk", entry.getBundle().getString(TEST_KEY_TEST));
+    }
+
+    @Test void setLocaleSupersedesNewerRefreshForOldLocale() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        var pauser = new ConcurrentProviderProbe(TEST_PROVIDER).pauseOn(Locale.CHINESE);
+        var entry = localize.addProvider(pauser);
+
+        var setLocaleTask = ConcurrentTestHelper.background(() -> localize.setLocale(Locale.CHINESE));
+        pauser.awaitPaused();
+
+        entry.refresh();
+        pauser.resume();
+        setLocaleTask.join();
+
+        // A newer locale version takes precedence over plain ticket value ordering.
+        assertEquals(Locale.CHINESE, localize.getLocale());
+        assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
     }
 }

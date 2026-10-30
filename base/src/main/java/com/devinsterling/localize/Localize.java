@@ -169,20 +169,17 @@ import java.util.concurrent.atomic.AtomicLong;
 /// @since 1.0
 public class Localize {
     private static final class Data {
-        /// Lock to synchronize [ProviderEntry#bundle] replacements
-        private final Object providerEntryBundleLock = new Object();
-        /// Lock to synchronize whenever the locale changes.
-        ///
-        /// **NOTE:**
-        /// When both locks are needed, this lock must be acquired
-        /// ***before*** [providerEntryBundleLock] to avoid deadlocks.
-        private final Object localeChangeLock = new Object();
         private final EventListenerRegistry listeners = new EventListenerRegistry();
         private final ProviderStore providers = new ProviderStore();
         private final LocaleState locale;
         private final LocalizeConfig config;
         // NOTE: In the future, `data.formatter` can be changed into a `VersionedFormatter`, if the need arises.
         private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
+
+        // Concurrency control
+        /// Lock to synchronize whenever the locale changes.
+        private final Object localeChangeLock = new Object();
+        private final AtomicLong ticketGenerator = new AtomicLong();
 
         private Data(Locale locale, LocalizeConfig config) {
             this.locale = new LocaleState(assertLocale(locale));
@@ -438,9 +435,9 @@ public class Localize {
             }
         }
 
+        long ticket = data.ticketGenerator.incrementAndGet();
         // If the new locale to set is equivalent to the current, return early
-        long ticket = data.locale.beginTicket(assertLocale(locale));
-        if (ticket == LocaleState.NO_CHANGE) {
+        if (!data.locale.begin(ticket, assertLocale(locale))) {
             return;
         }
 
@@ -483,19 +480,11 @@ public class Localize {
             }
 
             // Finalize; commit changes
-            synchronized (data.providerEntryBundleLock) {
-                for (SetLocalePendingBundles.FetchedBundle entry : pending.refreshed.temp) {
-                    ProviderEntry providerEntry = entry.provider;
+            for (SetLocalePendingBundles.FetchedBundle entry : pending.refreshed.temp) {
+                ProviderEntry providerEntry = entry.provider;
 
-                    if (// A refresh occurs if at least one of the bundles is non-null
-                        (entry.bundle != null || providerEntry.bundle != null)
-                        && providerEntry.isActive()
-                    ) {
-                        // Force set the bundle and increment the version
-                        providerEntry.version.incrementAndGet();
-                        providerEntry.bundle = entry.bundle;
-                        pending.refreshed.refreshed.add(providerEntry);
-                    }
+                if (providerEntry.tryCommit(snapshot.version, ticket, entry.bundle)) {
+                    pending.refreshed.refreshed.add(providerEntry);
                 }
             }
 
@@ -895,10 +884,11 @@ public class Localize {
     ///
     /// @return `true` if any providers were refreshed, or `false` if none were refreshed.
     public boolean refreshProviders() {
-        record VersionEntryBundle(ProviderEntry entry, ResourceBundle bundle, long version) {}
+        record VersionEntryBundle(ProviderEntry entry, ResourceBundle bundle) {}
 
         LocalizeEvent.Cause cause = LocalizeEvent.Cause.DIRECT;
         LocaleState.Snapshot snapshot = data.locale.snapshot();
+        long ticket = data.ticketGenerator.incrementAndGet();
         int sizeHint = data.providers.providers.size();
         RefreshedProviders<VersionEntryBundle> refreshedProviders = new RefreshedProviders<>(sizeHint);
 
@@ -908,33 +898,26 @@ public class Localize {
                 return false;
             }
 
-            long version = entry.version.incrementAndGet();
             ResourceBundle bundle = getResourceBundle(cause, entry, snapshot.current);
-            refreshedProviders.temp.add(new VersionEntryBundle(entry, bundle, version));
+            refreshedProviders.temp.add(new VersionEntryBundle(entry, bundle));
         }
 
         // Apply the new bundles
-        synchronized (data.providerEntryBundleLock) {
-            if (data.locale.isCurrent(snapshot)) {
-                for (VersionEntryBundle versionEntryBundle : refreshedProviders.temp) {
-                    ProviderEntry entry = versionEntryBundle.entry;
-                    ResourceBundle newBundle = versionEntryBundle.bundle;
+        for (VersionEntryBundle versionEntryBundle : refreshedProviders.temp) {
+            ProviderEntry entry = versionEntryBundle.entry;
 
-                    if (// A refresh occurs if at least one of the bundles is non-null.
-                        (entry.bundle != null || newBundle != null)
-                        && entry.isActive()
-                        && entry.version.get() == versionEntryBundle.version
-                    ) {
-                        entry.bundle = newBundle;
-                        refreshedProviders.refreshed.add(entry);
-                    }
-                }
+            if (entry.tryCommit(snapshot.version, ticket, versionEntryBundle.bundle)) {
+                refreshedProviders.refreshed.add(entry);
             }
         }
 
-        fireRefreshedProvidersEvent(cause, refreshedProviders);
+        boolean hasRefreshed = data.locale.isCurrent(snapshot) && !refreshedProviders.refreshed.isEmpty();
 
-        return !refreshedProviders.refreshed.isEmpty();
+        if (hasRefreshed) {
+            fireRefreshedProvidersEvent(cause, refreshedProviders);
+        }
+
+        return hasRefreshed;
     }
 
     /// Returns a builder for formatting a localized value from the given pattern.
@@ -1146,24 +1129,11 @@ public class Localize {
     private boolean refreshProvider(ProviderEntry entry) {
         if (!entry.isActive()) return false;
 
-        boolean isRefreshed = false;
-        long version = entry.version.incrementAndGet();
+        long ticket = data.ticketGenerator.incrementAndGet();
         LocaleState.Snapshot snapshot = data.locale.snapshot();
         ResourceBundle newBundle = getResourceBundle(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
 
-        synchronized (data.providerEntryBundleLock) {
-            if (// A refresh occurs if at least one of the bundles is non-null.
-                (entry.bundle != null || newBundle != null)
-                && entry.isActive()
-                && data.locale.isCurrent(snapshot)
-                && version == entry.version.get()
-            ) {
-                entry.bundle = newBundle;
-                isRefreshed = true;
-            }
-        }
-
-        return isRefreshed;
+        return entry.tryCommit(snapshot.version, ticket, newBundle);
     }
 
     private void removeProvider(ProviderEntry entry) {
@@ -1287,10 +1257,13 @@ public class Localize {
     public static final class ProviderEntry {
         private final ProviderKey key;
         private final ResourceBundleProvider provider;
-        /// A counter to stop stale refreshes early.
-        private final AtomicLong version = new AtomicLong();
         private volatile ResourceBundle bundle;
         private volatile Localize root;
+
+        // Concurrency control for `bundle` updates
+        // `committedLocaleVersion` and `committedTicket` form a composite ticket
+        private long committedLocaleVersion;
+        private long committedTicket;
 
         /// @see ofInactive
         private ProviderEntry(ProviderKey key, ResourceBundleProvider provider) {
@@ -1380,8 +1353,26 @@ public class Localize {
             root = source;
         }
 
-        private void dispose() {
-            version.incrementAndGet();
+        private synchronized boolean tryCommit(long localeVersion, long ticket, ResourceBundle newBundle) {
+            if (
+                !isActive() ||
+                // Reject unchanged `null` bundles
+                (bundle == null && newBundle == null) ||
+                // Reject superseded composite ticket
+                (localeVersion < committedLocaleVersion ||
+                (localeVersion == committedLocaleVersion && ticket <= committedTicket))
+            ) {
+                return false;
+            }
+
+            committedLocaleVersion = localeVersion;
+            committedTicket = ticket;
+            bundle = newBundle;
+            return true;
+        }
+
+        private synchronized void dispose() {
+            committedLocaleVersion = committedTicket = Long.MAX_VALUE;
             root = null;
             bundle = null;
         }
@@ -1479,11 +1470,7 @@ public class Localize {
         private static final long NO_CHANGE = Long.MIN_VALUE;
         private volatile long version;
         private volatile Locale locale;
-
-        // Optimistic concurrency control for `locale` updates.
-        // These fields are not volatile as they are locked behind the synchronized guards.
         private long committedTicket;
-        private long nextTicket;
 
         private LocaleState(Locale locale) {
             this.locale = locale;
@@ -1493,21 +1480,19 @@ public class Localize {
         /// @return Ticket ID.
         ///         If the requested locale is equivalent to the current,
         ///         a negative ticket ID is returned, indicating no change required.
-        private synchronized long beginTicket(Locale requested) {
-            long ticket = ++nextTicket;
-
+        private synchronized boolean begin(long ticket, Locale requested) {
             // Even a no-op request must advance the committed ticket so that
             // an older in-process request cannot override the latest call:
             // ENGLISH (initial) -> JAPANESE (in-process) -> ENGLISH (latest; wins)
             if (locale.equals(requested)) {
                 committedTicket = ticket;
-                return NO_CHANGE;
+                return false;
             }
 
-            return ticket;
+            return true;
         }
 
-        /// @param ticket Commit ticket retrieved from [beginTicket].
+        /// @param ticket Commit ticket.
         /// @param newLocale New locale to set.
         /// @return Locale change snapshot.
         ///         If the new locale is equivalent to the current or the ticket has been superseded,
