@@ -110,10 +110,12 @@ public interface LocalizationFormatter {
         /// Builder to create a [Request] for string formatting.
         ///
         /// @see Builder#of(String)
-        static final class Builder {
+        public static final class Builder {
             private String pattern;
             private Arguments arguments = Arguments.NONE;
             private Locale locale;
+
+            private Builder() {}
 
             /// Creates a builder instance with the given request.
             ///
