@@ -8,6 +8,7 @@ import com.devinsterling.localize.event.ProviderEvent;
 import com.devinsterling.localize.event.Subscription;
 import com.devinsterling.localize.event.impl.EventImpls;
 import com.devinsterling.localize.event.impl.EventListenerRegistry;
+import com.devinsterling.localize.internal.ExceptionHelper;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -421,20 +422,6 @@ public class Localize {
     /// @throws NullPointerException If locale is `null`.
     /// @see LocalizeConfig#setIgnoreProviderExceptions
     public void setLocale(Locale locale) {
-        record Replaced(LocaleState.Snapshot snapshot, Localize getSource) implements LocaleEvent.Replaced {
-            @Override public Locale getOldLocale() {
-                return snapshot.previous;
-            }
-
-            @Override public Locale getNewLocale() {
-                return snapshot.current;
-            }
-
-            @Override public boolean isValid() {
-                return getSource.data.locale.isCurrent(snapshot);
-            }
-        }
-
         long ticket = data.ticketGenerator.incrementAndGet();
         // If the new locale to set is equivalent to the current, return early
         if (!data.locale.begin(ticket, assertLocale(locale))) {
@@ -458,8 +445,7 @@ public class Localize {
 
         // If the locale successfully changed, fire the associated events
         if (!snapshot.isUnchanged()) {
-            fireEvent(new Replaced(snapshot, this));
-            fireRefreshedProvidersEvent(LocalizeEvent.Cause.LOCALE_CHANGE, pending.refreshed);
+            fireLocaleReplacedEvent(snapshot, pending.refreshed);
         }
     }
 
@@ -490,6 +476,27 @@ public class Localize {
 
             return snapshot;
         }
+    }
+
+    private void fireLocaleReplacedEvent(LocaleState.Snapshot snapshot, RefreshedProviders<?> refreshed) {
+        record Replaced(LocaleState.Snapshot snapshot, Localize getSource) implements LocaleEvent.Replaced {
+            @Override public Locale getOldLocale() {
+                return snapshot.previous;
+            }
+
+            @Override public Locale getNewLocale() {
+                return snapshot.current;
+            }
+
+            @Override public boolean isValid() {
+                return getSource.data.locale.isCurrent(snapshot);
+            }
+        }
+
+        ExceptionHelper.runAllAggregating(
+            () -> fireEvent(new Replaced(snapshot, this)),
+            () -> fireRefreshedProvidersEvent(LocalizeEvent.Cause.LOCALE_CHANGE, refreshed)
+        );
     }
 
     /// Helper when changing the locale.
