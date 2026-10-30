@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public class ConcurrentProviderProbe implements ResourceBundleProvider {
     private final ResourceBundleProvider delegate;
@@ -19,6 +20,7 @@ public class ConcurrentProviderProbe implements ResourceBundleProvider {
 
     private volatile Locale pauseOn;
     private volatile Locale failOn;
+    private volatile Supplier<RuntimeException> throwOnFail;
 
     public ConcurrentProviderProbe(ResourceBundleProvider delegate) {
         this.delegate = delegate;
@@ -34,6 +36,11 @@ public class ConcurrentProviderProbe implements ResourceBundleProvider {
     /// Every call to [getBundle] matching the given `locale` throws.
     public ConcurrentProviderProbe failOn(Locale locale) {
         this.failOn = locale;
+        return this;
+    }
+
+    public ConcurrentProviderProbe throwOnFail(Supplier<RuntimeException> throwOnFail) {
+        this.throwOnFail = throwOnFail;
         return this;
     }
 
@@ -57,7 +64,10 @@ public class ConcurrentProviderProbe implements ResourceBundleProvider {
             paused.countDown();
             await(resume, "never resumed");
         } else if (locale.equals(failOn)) {
-            throw new IllegalStateException("probe failure for " + locale);
+            Supplier<RuntimeException> throwOnFail = this.throwOnFail;
+            throw throwOnFail == null
+                ? new IllegalStateException("probe failure for " + locale)
+                : throwOnFail.get();
         }
 
         return delegate.getBundle(locale);
