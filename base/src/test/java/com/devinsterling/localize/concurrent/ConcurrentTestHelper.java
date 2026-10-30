@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 public final class ConcurrentTestHelper {
     public static final int ITERATIONS = 5000;
@@ -22,11 +23,15 @@ public final class ConcurrentTestHelper {
     private ConcurrentTestHelper() {}
 
     /// Runs the given `task` on another thread.
-    public static Task background(Runnable task) {
-        return new Task(POOL.submit(() -> {
+    public static Task<Void> background(Runnable task) {
+        return new Task<>(POOL.submit(() -> {
             task.run();
             return null;
         }));
+    }
+
+    public static <T> Task<T> background(Supplier<T> task) {
+        return new Task<>(POOL.submit(task::get));
     }
 
     /// Starts all tasks simultaneously and waits for all of them.
@@ -34,7 +39,7 @@ public final class ConcurrentTestHelper {
     /// The first failure is rethrown with any subsequent appended as suppressed.
     public static void race(Runnable... runners) {
         CyclicBarrier start = new CyclicBarrier(runners.length);
-        Task[] tasks = new Task[runners.length];
+        Task<?>[] tasks = new Task[runners.length];
 
         for (int i = 0; i < runners.length; i++) {
             Runnable runner = runners[i];
@@ -81,10 +86,10 @@ public final class ConcurrentTestHelper {
         }
     }
 
-    public record Task(Future<?> future) {
-        public void join() {
+    public record Task<T>(Future<T> future) {
+        public T join() {
             try {
-                future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                return future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (ExecutionException e) {
                 throw asRuntimeException(e.getCause());
             } catch (InterruptedException e) {
