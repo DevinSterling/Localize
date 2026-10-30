@@ -5,6 +5,7 @@ import com.devinsterling.localize.event.DiagnosticEvent;
 import com.devinsterling.localize.event.EventListener;
 import com.devinsterling.localize.event.LocalizeEvent;
 import com.devinsterling.localize.event.Subscription;
+import com.devinsterling.localize.internal.ExceptionHelper;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
@@ -94,12 +95,9 @@ public final class EventListenerRegistry {
     ) {
         if (source.getConfig().isIgnoreListenerExceptions()) {
             return aggregate;
-        } else if (aggregate == null) {
-            return exception;
-        } else if (aggregate != exception) {
-            aggregate.addSuppressed(exception);
+        } else {
+            return ExceptionHelper.aggregate(aggregate, exception);
         }
-        return aggregate;
     }
 
     public synchronized <T extends LocalizeEvent> Subscription addListener(
