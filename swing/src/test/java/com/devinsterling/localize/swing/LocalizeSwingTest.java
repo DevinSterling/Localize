@@ -26,8 +26,8 @@ public class LocalizeSwingTest {
 
     @Test void testCompositionConstructor() {
         Localize localize = Localize.of();
-        LocalizeSwing swingA = LocalizeSwing.attach(localize);
-        LocalizeSwing swingB = LocalizeSwing.attach(localize);
+        LocalizeSwing swingA = localize.attach(LocalizeSwing::new);
+        LocalizeSwing swingB = localize.attach(LocalizeSwing::new);
 
         assertNotEquals(localize, swingA);
         assertNotEquals(swingA, swingB);

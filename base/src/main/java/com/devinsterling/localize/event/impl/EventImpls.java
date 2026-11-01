@@ -7,12 +7,14 @@ import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.event.DiagnosticEvent;
 import com.devinsterling.localize.event.EventListener;
 import com.devinsterling.localize.event.FormatterEvent;
+import com.devinsterling.localize.event.LocaleEvent;
 import com.devinsterling.localize.event.LocalizeEvent;
 import com.devinsterling.localize.event.ProviderEvent;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BooleanSupplier;
 
 public final class EventImpls {
 
@@ -46,6 +48,20 @@ public final class EventImpls {
             LocalizationFormatter.Request getRequest,
             Exception getException
         ) implements FormatterEvent.ExceptionCaught {}
+    }
+
+    public interface Locales {
+        record Replaced(
+            Cause getCause,
+            Localize getSource,
+            Locale getOldLocale,
+            Locale getNewLocale,
+            BooleanSupplier isValidSupplier
+        ) implements LocaleEvent.Replaced {
+             @Override public boolean isValid() {
+                 return isValidSupplier.getAsBoolean();
+             }
+        }
     }
 
     public interface Provider {

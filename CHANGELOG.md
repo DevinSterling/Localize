@@ -26,9 +26,10 @@ and enables domain-specific instances with shared state.
   - `setIgnoreListenerExceptions`/`isIgnoreListenerExceptions`
 
 - New constructor for `Localize`:
-  - `Localize(Localize)`: Shares internal state with an existing instance.
+  - `Localize(Source)`: Shares internal state with an existing instance.
 
 - New methods for `Localize`:
+  - `attach(Localize)`: Shares internal state with the given instance. 
   - `addListener`: Registers an event listener.
   - `removeListener`: Deregisters an event listener.
   - `putProvider(ProviderKey, String)`/`addProvider(String)`:
