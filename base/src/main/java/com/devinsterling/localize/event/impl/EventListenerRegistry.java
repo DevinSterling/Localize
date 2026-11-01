@@ -25,8 +25,28 @@ public final class EventListenerRegistry {
     /// ```
     private final CopyOnWriteArrayList<ListenerSubscription<?>> subscriptions = new CopyOnWriteArrayList<>();
 
-    public void attach(OnEventHook onEventHook, Localize localize) {
-        attached.add(new LocalizeOnEventHook(onEventHook, localize));
+    public LocalizeOnEventHook attach(OnEventHook onEventHook, Localize localize) {
+        LocalizeOnEventHook hook = new LocalizeOnEventHook(onEventHook, localize);
+        attached.add(hook);
+        return hook;
+    }
+
+    public void detach(LocalizeOnEventHook hook) {
+        attached.remove(hook);
+    }
+
+    public void fireEventToHook(LocalizeOnEventHook hook, LocalizeEvent event) {
+        Localize instance = hook.reference.get();
+
+        try {
+            hook.onEvent(event);
+        } catch (RuntimeException e) {
+            RuntimeException caught = reportException(null, hook, instance, event, e);
+
+            if (caught != null) {
+                throw caught;
+            }
+        }
     }
 
     public void fireEvent(Localize source, LocalizeEvent event) {
@@ -180,7 +200,7 @@ public final class EventListenerRegistry {
         }
     }
 
-    private record LocalizeOnEventHook(
+    public record LocalizeOnEventHook(
         OnEventHook hook,
         WeakReference<Localize> reference
     ) implements EventListener<LocalizeEvent> {

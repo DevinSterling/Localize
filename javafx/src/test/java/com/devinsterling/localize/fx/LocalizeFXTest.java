@@ -26,8 +26,8 @@ class LocalizeFXTest {
 
     @Test void testCompositionConstructor() {
         Localize localize = Localize.of();
-        LocalizeFX swingA = LocalizeFX.attach(localize);
-        LocalizeFX swingB = LocalizeFX.attach(localize);
+        LocalizeFX swingA = localize.attach(LocalizeFX::new);
+        LocalizeFX swingB = localize.attach(LocalizeFX::new);
 
         assertNotEquals(localize, swingA);
         assertNotEquals(swingA, swingB);

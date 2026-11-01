@@ -12,6 +12,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static com.devinsterling.localize.TestUtil.*;
 
@@ -144,16 +145,17 @@ public class LocalizeHookTest {
 
         AtomicInteger counter = new AtomicInteger(0);
         Localize localize = Localize.of();
-        WeakReference<Localize> attached1 = new WeakReference<>(new Localize(localize) {
+
+        Function<Localize.Source, Localize> factory = source -> new Localize(source) {
             @Override protected void onEvent(LocalizeEvent event) {
-                counter.incrementAndGet();
+                if (event instanceof TestEvent) {
+                    counter.incrementAndGet();
+                }
             }
-        });
-        WeakReference<Localize> attached2 = new WeakReference<>(new Localize(localize) {
-            @Override protected void onEvent(LocalizeEvent event) {
-                counter.incrementAndGet();
-            }
-        });
+        };
+
+        WeakReference<Localize> attached1 = new WeakReference<>(localize.attach(factory));
+        WeakReference<Localize> attached2 = new WeakReference<>(localize.attach(factory));
 
         localize.fireEvent(new TestEvent(localize));
         assertEquals(2, counter.get());

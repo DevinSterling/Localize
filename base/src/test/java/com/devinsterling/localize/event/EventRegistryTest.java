@@ -1,6 +1,7 @@
 package com.devinsterling.localize.event;
 
 import com.devinsterling.localize.Localize;
+import com.devinsterling.localize.LocalizeConfig;
 
 import org.junit.jupiter.api.Test;
 
@@ -126,7 +127,7 @@ public class EventRegistryTest {
             final AtomicInteger count = new AtomicInteger();
 
             protected LocalizeTest() {
-                super(Localize.of());
+                super(Locale.ENGLISH, new LocalizeConfig());
             }
 
             public void fireTestEvent() {

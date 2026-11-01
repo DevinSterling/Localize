@@ -31,8 +31,8 @@ import java.util.Locale;
 /// If a shared-state instance is preferred over an independent instance, [attach] can be used alternatively:
 /// ```
 /// Localize localize = Localize.of();
-/// LocalizeSwing swing = LocalizeSwing.attach(localize);
-/// LocalizeFX fx = LocalizeFX.attach(localize); // JavaFX integration: localize-javafx
+/// LocalizeSwing swing = localize.attach(LocalizeSwing::new);
+/// LocalizeFX fx = localize.attach(LocalizeFX::new); // JavaFX integration: localize-javafx
 /// ```
 ///
 /// ### Example
@@ -64,15 +64,16 @@ public class LocalizeSwing extends Localize {
     /// Creates a [LocalizeSwing] instance attached to the same internal state as the given source,
     /// sharing the same [locale][getLocale], [formatter][getFormatter], [providers][getProviderEntries],
     /// [configuration][getConfig], [core event listeners][addListener],
-    /// and is [notified of events made by either][fireEvent].
+    /// and are [notified of events made by either][fireEvent].
     ///
     /// **The given source is not used as a delegate. Method calls will not be routed through it.**
     /// Aside from the shared internal state, both instances are independent.
     ///
     /// @param source Instance with the internal state to attach to.
     /// @throws NullPointerException If `source` is `null`.
+    /// @see attach
     /// @since 2.0
-    protected LocalizeSwing(Localize source) {
+    public LocalizeSwing(Source source) {
         super(source);
     }
 
@@ -80,25 +81,9 @@ public class LocalizeSwing extends Localize {
     ///
     /// @param locale Initial locale.
     /// @param config Main localize configuration.
-    /// @throws NullPointerException If `config` is `null`.
-    protected LocalizeSwing(Locale locale, LocalizeConfig config) {
+    /// @throws NullPointerException If `locale` or `config` is `null`.
+    public LocalizeSwing(Locale locale, LocalizeConfig config) {
         super(locale, config);
-    }
-
-    /// Creates a new [LocalizeSwing] instance attached to the same internal state as the given source,
-    /// sharing the same [locale][getLocale], [formatter][getFormatter], [providers][getProviderEntries],
-    /// [configuration][getConfig], [core event listeners][addListener],
-    /// and is [notified of events made by either][fireEvent].
-    ///
-    /// **The given source is not used as a delegate. Method calls will not be routed through it.**
-    /// Aside from the shared internal state, both instances are independent.
-    ///
-    /// @param source Instance with the internal state to attach to.
-    /// @return       **Thread-safe** LocalizeSwing instance attached to the same internal state of `source`.
-    /// @throws NullPointerException If `source` is `null`.
-    /// @since 2.0
-    public static LocalizeSwing attach(Localize source) {
-        return new LocalizeSwing(source);
     }
 
     /// Creates a new [LocalizeSwing] instance with the

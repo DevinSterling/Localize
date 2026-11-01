@@ -46,6 +46,10 @@ public interface LocalizeEvent {
         /// The locale change itself is already reported through [LocaleEvent].
         Cause LOCALE_CHANGE = createCause("LOCALE_CHANGE");
 
+        /// A cause triggered as a side effect of [attaching][Localize#attach]
+        /// the state of a [Localize] instance to another.
+        Cause ATTACHED = createCause("ATTACHED");
+
         private static Cause createCause(String cause) {
             record LocalizeCause(String cause) implements Cause {
                 @Override public String toString() {

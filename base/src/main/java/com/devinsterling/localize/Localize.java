@@ -22,7 +22,9 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 /// Base class to handle localization.
 ///
@@ -150,8 +152,8 @@ import java.util.concurrent.atomic.AtomicLong;
 /// Aside from the shared internal state, instances are independent:
 /// ```java
 /// Localize localize = Localize.of(Locale.ENGLISH);
-/// LocalizeFX javaFX = LocalizeFX.attach(localize); // JavaFX integration: localize-fx
-/// LocalizeSwing swing = LocalizeSwing.attach(localize); // Swing integration: localize-swing
+/// LocalizeFX javaFX = localize.attach(LocalizeFX::new); // JavaFX integration: localize-fx
+/// LocalizeSwing swing = localize.attach(LocalizeSwing::new); // Swing integration: localize-swing
 ///
 /// // Changes made to one are reflected to all instances:
 /// javaFX.setLocale(Locale.JAPANESE);
@@ -193,41 +195,116 @@ public class Localize {
     /// Without this, it can lead to subtle bugs:
     /// ```
     /// // LocalizeLogger can be GC'd too early if the wrapper doesn't keep a reference.
-    /// Localize a = LocalizeFX.attach(
-    ///     LocalizeLogger.attach(
-    ///         Localize.of()
-    ///     )
-    /// );
+    /// Localize source = Localize.of();
+    /// LocalizeLogger logger = source.attach(LocalizeLogger::new);
+    /// return logger.attach(LocalizeFX::new);
     /// ```
     private final Localize parent;
 
     private Localize(Localize parent, Data data) {
         this.parent = parent;
         this.data = data;
-        data.listeners.attach(Localize::onEvent, this);
     }
 
     /// Creates a [Localize] instance attached to the same internal state as the given source,
     /// sharing the same [locale][getLocale], [formatter][getFormatter], [providers][getProviderEntries],
-    /// [configuration][getConfig], [listeners][addListener], and is [notified of events made by either][fireEvent].
+    /// [configuration][getConfig], [listeners][addListener], and are [notified of events made by either][fireEvent].
     ///
     /// **The given source is not used as a delegate. Method calls will not be routed through it.**
     /// Aside from the shared internal state, both instances are independent.
     ///
     /// @param source Instance with the internal state to attach to.
     /// @throws NullPointerException If `source` is `null`.
+    /// @see attach
     /// @since 2.0
-    protected Localize(Localize source) {
-        this(Objects.requireNonNull(source, "source must not be null"), source.data);
+    public Localize(Source source) {
+        // If source is `null`, implicit NPE on source field access
+        this(source.parent, source.parent.data);
+        source.register(this);
     }
 
     /// Creates a [Localize] instance with the given locale and configuration.
     ///
     /// @param locale Initial locale.
     /// @param config Main localize configuration.
-    /// @throws NullPointerException If `config` is `null`.
-    protected Localize(Locale locale, LocalizeConfig config) {
+    /// @throws NullPointerException If `locale` or `config` is `null`.
+    public Localize(Locale locale, LocalizeConfig config) {
         this(null, new Data(locale, config));
+        data.listeners.attach(Localize::onEvent, this);
+    }
+
+    /// Creates a [Localize] instance attached to the same internal state as `this` source instance,
+    /// sharing the same [locale][getLocale], [formatter][getFormatter], [providers][getProviderEntries],
+    /// [configuration][getConfig], [core event listeners][addListener],
+    /// and are [notified of events made by either][fireEvent].
+    ///
+    /// **This instance is not used as a delegate in the attached instance.
+    /// Method calls will not be routed through it.**
+    /// Aside from the shared internal state, both instances are independent.
+    ///
+    /// ### Locale Synchronization
+    /// A synthetic [LocaleEvent.Replaced] event is fired on the returned instance's
+    /// [event hook][onLocaleReplaced] to synchronize locale state, if needed.
+    /// The [old locale][LocaleEvent.Replaced#getOldLocale] and
+    /// [new locale][LocaleEvent.Replaced#getNewLocale] fields will be equivalent to the current locale.
+    ///
+    /// ### Example
+    /// Attaching instances to the same source:
+    /// ```java
+    /// Localize source = Localize.of();
+    ///
+    /// // JavaFX integration: localize-fx
+    /// LocalizeFX fx = source.attach(LocalizeFX::new);
+    /// // Swing integration: localize-swing
+    /// LocalizeSwing swing = source.attach(LocalizeSwing::new);
+    /// ```
+    /// @param <T> Type of the attached instance.
+    /// @param factory Factory to provide an instance to attach to.
+    /// @return Localize instance attached to the same internal state of `this` instance.
+    /// @throws NullPointerException If `factory` or its returned instance is `null`.
+    /// @throws IllegalStateException If `factory` attempts to apply the source more than once
+    ///                               or returns an instance not registered within this method's scope.
+    /// @see Localize(Source)
+    /// @since 2.0
+    public final <T extends Localize> T attach(Function<? super Source, ? extends T> factory) {
+        Objects.requireNonNull(factory, "factory must not be null");
+        Source source = new Source(this);
+        T instance;
+
+        try {
+            instance = Objects.requireNonNull(
+                factory.apply(source),
+                "Returned instance from factory must not be null"
+            );
+            source.checkAttached(instance);
+        } finally {
+            source.close();
+        }
+
+        boolean success = false;
+        EventListenerRegistry.LocalizeOnEventHook hook = data.listeners.attach(Localize::onEvent, instance);
+        // Fire a locale replaced event to sync the locale with the attached instance.
+        // If the locale is stale by the time the attached instance receives it, `isValid` will return `false`.
+        LocaleState.Snapshot snapshot = data.locale.snapshot();
+
+        try {
+            data.listeners.fireEventToHook(hook, new EventImpls.Locales.Replaced(
+                LocalizeEvent.Cause.ATTACHED,
+                instance,
+                snapshot.previous,
+                snapshot.current,
+                () -> data.locale.isCurrent(snapshot)
+            ));
+            success = true;
+        } finally {
+            // Detach on failure to prevent the unreturned instance
+            // from receiving subsequent events before the GC collects it.
+            if (!success) {
+                data.listeners.detach(hook);
+            }
+        }
+
+        return instance;
     }
 
     /// Creates a new [Localize] instance with the
@@ -479,22 +556,14 @@ public class Localize {
     }
 
     private void fireLocaleReplacedEvent(LocaleState.Snapshot snapshot, RefreshedProviders<?> refreshed) {
-        record Replaced(LocaleState.Snapshot snapshot, Localize getSource) implements LocaleEvent.Replaced {
-            @Override public Locale getOldLocale() {
-                return snapshot.previous;
-            }
-
-            @Override public Locale getNewLocale() {
-                return snapshot.current;
-            }
-
-            @Override public boolean isValid() {
-                return getSource.data.locale.isCurrent(snapshot);
-            }
-        }
-
         ExceptionHelper.runAllAggregating(
-            () -> fireEvent(new Replaced(snapshot, this)),
+            () -> fireEvent(new EventImpls.Locales.Replaced(
+                LocalizeEvent.Cause.DIRECT,
+                this,
+                snapshot.previous,
+                snapshot.current,
+                () -> data.locale.isCurrent(snapshot))
+            ),
             () -> fireRefreshedProvidersEvent(LocalizeEvent.Cause.LOCALE_CHANGE, refreshed)
         );
     }
@@ -1217,6 +1286,47 @@ public class Localize {
     protected final void fireEvent(LocalizeEvent event) {
         Objects.requireNonNull(event, "event must not be null");
         data.listeners.fireEvent(this, event);
+    }
+
+    /// A single-use source referencing a [Localize] instance to attach to.
+    ///
+    /// A source must be used within the scope of a [`Localize.attach`][Localize#attach] call
+    /// to create exactly one [Localize] instance, which must be returned by the factory:
+    /// ```java
+    /// Localize main = Localize.of();
+    ///
+    /// // Attach via constructor reference
+    /// Localize attached1 = main.attach(Localize::new);
+    ///
+    /// // Attach via explicit constructor
+    /// MyLocalize attached2 = main.attach(s -> new MyLocalize(s, otherArguments));
+    /// ```
+    /// @see Localize(Source)
+    /// @see Localize#attach
+    /// @since 2.0
+    public static final class Source {
+        private final AtomicReference<Object> attached = new AtomicReference<>();
+        private final Localize parent;
+
+        private Source(Localize parent) {
+            this.parent = parent;
+        }
+
+        private void register(Localize instance) {
+            if (!attached.compareAndSet(null, instance)) {
+                throw new IllegalStateException("Source can only be used once within a Localize.attach scope");
+            }
+        }
+
+        private void checkAttached(Localize instance) {
+            if (attached.get() != instance) {
+                throw new IllegalStateException("Factory returned a mismatched or unattached instance");
+            }
+        }
+
+        private void close() {
+            attached.set(Boolean.FALSE);
+        }
     }
 
     /// A unique key associated with a [ResourceBundleProvider] [entry][ProviderEntry].
