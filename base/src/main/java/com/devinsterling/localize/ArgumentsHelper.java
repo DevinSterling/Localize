@@ -65,7 +65,24 @@ final class ArgumentsHelper {
         Arguments getUnmodifiable();
     }
 
-    public static final class PositionalMapArguments extends MapArguments {
+    private abstract static class BaseArguments implements MutableArguments {
+
+        @Override public String toString() {
+            return isPositional() ? toList().toString() : toNamedMap().toString();
+        }
+
+        @Override public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Arguments other) || type() != other.type()) return false;
+            return isPositional() ? toList().equals(other.toList()) : toNamedMap().equals(other.toNamedMap());
+        }
+
+        @Override public int hashCode() {
+            return Objects.hash(type(), isPositional() ? toList() : toNamedMap());
+        }
+    }
+
+    private static final class PositionalMapArguments extends MapArguments {
 
         private PositionalMapArguments() {
             super(new LinkedHashMap<>());
@@ -83,6 +100,10 @@ final class ArgumentsHelper {
             return new LinkedHashMap<>(arguments);
         }
 
+        @Override protected Object resolve(Resolver resolver, int position, String name, Object value) {
+            return resolver.resolve(position, value);
+        }
+
         @Override public void add(Object value) {
             arguments.put(intToString(arguments.size()), value);
         }
@@ -96,7 +117,7 @@ final class ArgumentsHelper {
         }
     }
 
-    public static final class NamedMapArguments extends MapArguments {
+    private static final class NamedMapArguments extends MapArguments {
 
         private NamedMapArguments() {
             super(new LinkedHashMap<>());
@@ -106,7 +127,7 @@ final class ArgumentsHelper {
             super(arguments);
         }
 
-        public static NamedMapArguments ofUnmodifiable(Map<String, ?> arguments) {
+        private static NamedMapArguments ofUnmodifiable(Map<String, ?> arguments) {
             return new NamedMapArguments(Collections.unmodifiableMap(arguments));
         }
 
@@ -116,6 +137,10 @@ final class ArgumentsHelper {
 
         @Override protected Map<String, Object> copyArgumentsMap() {
             return new LinkedHashMap<>(arguments);
+        }
+
+        @Override protected Object resolve(Resolver resolver, int position, String name, Object value) {
+            return resolver.resolve(name, value);
         }
 
         @Override public void add(Object value) {
@@ -131,7 +156,7 @@ final class ArgumentsHelper {
         }
     }
 
-    private static abstract class MapArguments implements MutableArguments {
+    private static abstract class MapArguments extends BaseArguments {
         protected final Map<String, Object> arguments;
 
         private MapArguments(Map<String, Object> arguments) {
@@ -141,6 +166,8 @@ final class ArgumentsHelper {
         protected abstract MapArguments createUnmodifiable(Map<String, ?> arguments);
 
         protected abstract Map<String, Object> copyArgumentsMap();
+
+        protected abstract Object resolve(Resolver resolver, int position, String name, Object value);
 
         @Override public Arguments getUnmodifiableSnapshot() {
             // `Map.copyOf` is not used here as argument values can be `null`
@@ -166,11 +193,12 @@ final class ArgumentsHelper {
         @Override public Arguments resolve(Resolver resolver) {
             Objects.requireNonNull(resolver, NULL_RESOLVER_MESSAGE);
             Map<String, Object> resolved = null;
+            int i = 0;
 
             for (Map.Entry<String, Object> entry : arguments.entrySet()) {
                 String key = entry.getKey();
                 Object originalValue = entry.getValue();
-                Object resolvedValue = resolver.resolve(key, originalValue);
+                Object resolvedValue = resolve(resolver, i++, key, originalValue);
 
                 if (!Objects.equals(originalValue, resolvedValue)) {
                     if (resolved == null) {
@@ -185,7 +213,7 @@ final class ArgumentsHelper {
         }
     }
 
-    public static final class PositionalListArguments implements MutableArguments {
+    private static final class PositionalListArguments extends BaseArguments {
         private final List<Object> arguments;
 
         private PositionalListArguments() {
@@ -196,7 +224,7 @@ final class ArgumentsHelper {
             this.arguments = arguments;
         }
 
-        public static Arguments ofUnmodifiable(List<?> arguments) {
+        private static Arguments ofUnmodifiable(List<?> arguments) {
             return new PositionalListArguments(Collections.unmodifiableList(arguments));
         }
 

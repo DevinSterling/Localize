@@ -276,5 +276,17 @@ public interface Arguments {
             Objects.requireNonNull(resolver, "resolver must not be null");
             return this;
         }
+
+        @Override public String toString() {
+            return "()";
+        }
+
+        @Override public boolean equals(Object o) {
+            return o == this || o instanceof Arguments other && other.type() == Type.NONE;
+        }
+
+        @Override public int hashCode() {
+            return Type.NONE.hashCode();
+        }
     };
 }
