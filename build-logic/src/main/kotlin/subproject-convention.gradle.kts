@@ -35,7 +35,7 @@ tasks {
             val sourceSetDirectories = sourceSets.main.get().java.sourceDirectories.joinToString(":")
             addStringOption("-source-path", sourceSetDirectories)
             // Internal modules to not show
-            exclude("**/impl/**")
+            exclude("**/impl/**", "**/internal/**")
         }
     }
 }
