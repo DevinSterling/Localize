@@ -149,7 +149,7 @@ public class LocalizeFX extends Localize {
         if (Platform.isFxApplicationThread()) {
             localeProperty.forceFireValueChanged();
         } else {
-            Platform.runLater(localeProperty::forceFireValueChanged);
+            runLater(localeProperty::forceFireValueChanged);
         }
     }
 
@@ -157,7 +157,7 @@ public class LocalizeFX extends Localize {
         if (Platform.isFxApplicationThread()) {
             onLocaleReplacedFxThread(event);
         } else if (event.isValid()) {
-            Platform.runLater(() -> onLocaleReplacedFxThread(event));
+            runLater(() -> onLocaleReplacedFxThread(event));
         }
     }
 
@@ -224,6 +224,17 @@ public class LocalizeFX extends Localize {
     /// @see #getValue(LocalizationKey)
     public StringBinding getBinding(LocalizationKey key) {
         return getBinding(key.getKey());
+    }
+
+    private static void runLater(Runnable runnable) {
+        try {
+            Platform.runLater(runnable);
+        } catch (IllegalStateException e) {
+            // If there is no UI thread, run on the current thread instead.
+            // This is to avoid LocalizeFX becoming unusable, primarily in synchronous environments,
+            // when the JavaFX thread has not started.
+            runnable.run();
+        }
     }
 
     /// NOTE: All methods of this class must be called from the JavaFX UI thread, if available.
