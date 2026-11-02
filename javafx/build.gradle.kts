@@ -19,3 +19,27 @@ javafx {
 dependencies {
     api(project(":base"))
 }
+
+val headlessTestPattern = "**/HeadlessTest.*"
+val headlessTest = tasks.register<Test>("headlessTest") {
+    description = "Runs headless tests with uninitialized JavaFX toolkit"
+    group = "verification"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+
+    useJUnitPlatform()
+    include(headlessTestPattern)
+}
+
+tasks.test {
+    exclude(headlessTestPattern)
+}
+
+tasks.check {
+    dependsOn(headlessTest)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(headlessTest)
+    executionData(headlessTest.get())
+}
