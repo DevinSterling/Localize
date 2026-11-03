@@ -4,6 +4,8 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Locale;
+
 public class ValueBasedTest {
 
     @Test void testLocalizationRequestEquality() {
@@ -16,7 +18,8 @@ public class ValueBasedTest {
     @Test void testLocalizationFormatterRequestEquality() {
         EqualsVerifier.simple()
                       .forClass(LocalizationFormatter.Request.class)
-                      .withNonnullFields("pattern", "arguments", "locale")
+                      .withNonnullFields("localize", "pattern", "arguments", "locale")
+                      .withPrefabValues(Localize.class, Localize.of(Locale.ENGLISH), Localize.of(Locale.JAPANESE))
                       .verify();
     }
 }

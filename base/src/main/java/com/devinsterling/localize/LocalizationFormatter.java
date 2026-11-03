@@ -60,17 +60,20 @@ public interface LocalizationFormatter {
     /// avoid identity checks (`==`), and never use instances for synchronization,
     /// or unpredictable behavior may occur. For example, in a future release, synchronization may fail.
     ///
-    /// @see Builder#of(String)
+    /// @see Builder#of
     /// @since 2.0
     final class Request {
+        private final Localize localize;
+        private final Locale locale;
         private final String pattern;
         private final Arguments arguments;
-        private final Locale locale;
 
-        private Request(String pattern, Arguments arguments, Locale locale) {
-            this.pattern = Objects.requireNonNull(pattern, "pattern must not be null");
-            this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
-            this.locale = Objects.requireNonNull(locale, "locale must not be null");
+        private Request(Localize localize, Locale locale, String pattern, Arguments arguments) {
+            // A null check is not required here as that's handled by the builder
+            this.localize = localize;
+            this.locale = locale;
+            this.pattern = pattern;
+            this.arguments = arguments;
         }
 
         /// Returns the message pattern to format.
@@ -94,40 +97,58 @@ public interface LocalizationFormatter {
             return locale;
         }
 
+        /// Returns the source Localize instance where the request originates from.
+        ///
+        /// The source instance allows formatters to perform advanced operations,
+        /// such as resolving nested keys within patterns.
+        ///
+        /// ### Recursion
+        /// When recursively resolving keys, implementers are recommended to guard against circular references
+        /// (e.g., Key A references Key B, and vice versa) to prevent a [StackOverflowError].
+        ///
+        /// @return Source Localize instance.
+        public Localize getLocalize() {
+            return localize;
+        }
+
         // When value classes become stable, equals and hashcode will be removed here
         @Override public boolean equals(Object obj) {
             if (obj == this) return true;
             if (!(obj instanceof Request other)) return false;
-            return pattern.equals(other.pattern)
-                    && arguments.equals(other.arguments)
-                    && locale.equals(other.locale);
+            return localize.equals(other.localize)
+                    && locale.equals(other.locale)
+                    && pattern.equals(other.pattern)
+                    && arguments.equals(other.arguments);
         }
 
         @Override public int hashCode() {
-            return Objects.hash(pattern, arguments, locale);
+            return Objects.hash(localize, locale, pattern, arguments);
         }
 
         /// Builder to create a [Request] for string formatting.
         ///
-        /// @see Builder#of(String)
+        /// @see Builder#of
         public static final class Builder {
+            private Localize localize;
+            private Locale locale;
             private String pattern;
             private Arguments arguments = Arguments.NONE;
-            private Locale locale;
 
             private Builder() {}
 
             /// Creates a builder instance with the given request.
             ///
-            /// ### Note
-            /// [`locale`][locale(Locale)] must be set before calling [build].
-            /// Otherwise, an [NullPointerException] will be thrown.
+            /// By default, the [`locale`][locale(Locale)] is set to [Localize#getLocale].
             ///
-            /// @param pattern Message pattern to format.
-            /// @return Builder instance.
-            /// @throws NullPointerException If `request` is `null`.
-            public static Builder of(String pattern) {
-                return new Builder().pattern(pattern);
+            /// @param localize Source Localize instance.
+            /// @param pattern  Message pattern to format.
+            /// @return         Builder instance.
+            /// @throws NullPointerException If `localize` or `pattern` is `null`.
+            public static Builder of(Localize localize, String pattern) {
+                return new Builder()
+                    .localize(localize)
+                    .locale(localize.getLocale())
+                    .pattern(pattern);
             }
 
             /// Sets the message pattern to format.
@@ -160,12 +181,21 @@ public interface LocalizationFormatter {
                 return this;
             }
 
+            /// Sets the source [Localize] instance, indicating where requests originate from.
+            ///
+            /// @param localize Source localize instance.
+            /// @return         This builder instance.
+            /// @throws NullPointerException If `localize` is `null`.
+            public Builder localize(Localize localize) {
+                this.localize = Objects.requireNonNull(localize, "localize must not be null");
+                return this;
+            }
+
             /// Builds a [Request] instance.
             ///
             /// @return Formatter request.
-            /// @throws NullPointerException If [`locale`][locale(Locale)] is `null`.
             public Request build() {
-                return new Request(this.pattern, this.arguments, this.locale);
+                return new Request(localize, locale, pattern, arguments);
             }
         }
     }

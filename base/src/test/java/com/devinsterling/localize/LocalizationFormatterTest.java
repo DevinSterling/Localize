@@ -3,6 +3,8 @@ package com.devinsterling.localize;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ListResourceBundle;
+import java.util.Locale;
 
 import static com.devinsterling.localize.TestUtil.*;
 
@@ -77,5 +79,30 @@ public class LocalizationFormatterTest {
             IllegalStateException.class,
             () -> localize.get(TEST_KEY_NUMBERED).args(0).arg("mixed", 1)
         );
+    }
+
+    @Test void nestedFormatterCall() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        localize.addProvider(locale -> new ListResourceBundle() {
+            @Override protected Object[][] getContents() {
+                return new Object[][] {
+                    { "$outer$", "Hello $inner$!" },
+                    { "$inner$", "world" },
+                };
+            }
+        });
+        localize.setFormatter(request -> {
+            String nestedKey = "$inner$";
+            String pattern = request.getPattern();
+
+            if (pattern.contains(nestedKey)) {
+                String nested = request.getLocalize().getValue(nestedKey);
+                pattern = pattern.replace(nestedKey, nested);
+            }
+
+            return pattern;
+        });
+
+        assertEquals("Hello world!", localize.getValue("$outer$"));
     }
 }
