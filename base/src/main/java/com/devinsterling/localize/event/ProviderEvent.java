@@ -21,8 +21,8 @@ import java.util.Locale;
 ///  ### Example Usage
 /// Inspecting events using pattern matching:
 /// ```java
-/// @Override protected void onProviderChanged(ProviderEvent event) {
-///     super.onProviderChanged(event);
+/// @Override protected void onProviderEvent(ProviderEvent event) {
+///     super.onProviderEvent(event);
 ///
 ///     switch (event) {
 ///         case ProviderEvent.Added added -> {

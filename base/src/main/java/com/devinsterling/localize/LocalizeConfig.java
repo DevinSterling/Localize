@@ -102,7 +102,7 @@ public class LocalizeConfig {
     /// [key][LocalizationRequestSource.Key].
     ///
     /// This is a convenience method, equivalent to calling:
-    /// ```
+    /// ```java
     /// setMissingValueHandler(MissingValueHandler.of(defaultValue));
     /// ```
     ///

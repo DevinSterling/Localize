@@ -7,9 +7,9 @@ import com.devinsterling.localize.Localize;
 /// To prevent memory leaks, listeners must be removed when no longer needed
 /// using [Subscription#dispose] or [Localize#removeListener].
 ///
-/// ### Example Usage
+/// ### Example
 /// Listener lifecycle:
-/// ```
+/// ```java
 /// Localize localize = Localize.of(Locale.ENGLISH);
 /// // Creating a listener
 /// EventListener<LocaleEvent.Replaced> listener = event -> {

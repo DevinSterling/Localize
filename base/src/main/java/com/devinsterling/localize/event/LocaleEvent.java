@@ -17,8 +17,15 @@ public interface LocaleEvent extends LocalizeEvent {
     /// The previous locale is retrievable via [getOldLocale], and the newly set one via [getNewLocale].
     ///
     /// In multithreaded applications, events may be propagated asynchronously across threads.
-    /// Handlers should check [isValid] before processing [getNewLocale] to discard stale updates.
-    ///
+    /// Handlers should check [isValid] before processing [getNewLocale] to discard stale updates:
+    /// ```java
+    /// localize.addListener(LocaleEvent.Replaced.class, replaced -> {
+    ///     // Check if the locale is not stale before printing
+    ///     if (replaced.isValid()) {
+    ///         System.out.println("Locale is now " + replaced.getNewLocale());
+    ///     }
+    /// });
+    /// ```
     /// @see Localize#setLocale
     interface Replaced extends LocaleEvent {
         /// Returns the locale that was set before this change.

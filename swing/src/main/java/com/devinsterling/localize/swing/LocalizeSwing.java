@@ -30,7 +30,7 @@ import java.util.Locale;
 /// - [of(Locale, LocalizeConfig)]
 ///
 /// If a shared-state instance is preferred over an independent instance, [attach] can be used alternatively:
-/// ```
+/// ```java
 /// Localize localize = Localize.of();
 /// LocalizeSwing swing = localize.attach(LocalizeSwing::new);
 /// LocalizeFX fx = localize.attach(LocalizeFX::new); // JavaFX integration: localize-javafx
@@ -38,12 +38,12 @@ import java.util.Locale;
 ///
 /// ### Example
 /// Properties file (`messages_en.properties`):
-/// ```
+/// ```properties
 /// MyApp.buttonClick = Click to increment
 /// MyApp.clickCount = Clicked {click_count, choice, 0 #zero times| 1 #one time| 1 <{click_count} times}!
 /// ```
 /// Swing code:
-/// ```
+/// ```java
 /// LocalizeSwing localize = LocalizeSwing.of();
 /// localize.addProvider("messages");
 ///

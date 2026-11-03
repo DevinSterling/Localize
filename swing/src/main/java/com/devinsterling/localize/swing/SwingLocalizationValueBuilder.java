@@ -142,8 +142,8 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
     ///
     /// Triggers are installed when methods such as [bind(Component)] are called.
     ///
-    /// ### Example Usage
-    /// ```
+    /// ### Example
+    /// ```java
     /// JLabel label = ...;
     /// JButton clickButton = ...;
     /// AtomicInteger count = new AtomicInteger(0);
@@ -184,7 +184,7 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
     /// will throw an [IllegalArgumentException].
     /// For unsupported components, see [bind(Object, SetText)].
     ///
-    /// ### Example Usage
+    /// ### Example
     /// Binding to a [JLabel]:
     /// ```java
     /// JLabel label = new JLabel();
@@ -260,7 +260,7 @@ public class SwingLocalizationValueBuilder<B extends SwingLocalizationValueBuild
     ///
     /// **This method is intended to be called on the Swing UI (EDT) thread only.**
     ///
-    /// ### Example Usage
+    /// ### Example
     /// Binding to a custom component:
     /// ```java
     /// MessageComponent message = new MessageComponent();

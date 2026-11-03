@@ -21,7 +21,7 @@ import com.devinsterling.localize.LocalizationFormatter;
 /// public final class MyFormatter implements LocalizationFormatter {
 ///     private final CustomArgumentsFormatter formatter = new CustomArgumentsFormatter();
 ///
-///     @Override String format(Request request) {
+///     @Override public String format(Request request) {
 ///         String pattern = request.getPattern();
 ///         Locale locale = request.getLocale();
 ///         Arguments arguments = request.getArguments();
@@ -30,7 +30,7 @@ import com.devinsterling.localize.LocalizationFormatter;
 ///     }
 ///
 ///     // Creating a provider for SPI
-///     public final class MyProvider implements LocalizationFormatterProvider {
+///     public static final class MyProvider implements LocalizationFormatterProvider {
 ///
 ///         @Override MyFormatter provide() {
 ///             return new MyFormatter();
@@ -41,7 +41,7 @@ import com.devinsterling.localize.LocalizationFormatter;
 /// Register the provider in `module-info.java`:
 /// ```java
 /// provides com.devinsterling.localize.spi.LocalizationFormatterProvider
-///     with com.example.app.MyCustomFormatter.MyProvider;
+///     with com.example.app.MyFormatter.MyProvider;
 /// ```
 ///
 /// @since 2.0

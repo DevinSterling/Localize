@@ -30,7 +30,7 @@ public interface Subscription {
 
     /// Returns `true` if the subscription is currently active.
     ///
-    /// @return `true` if the subscription is active, or `false` if not disposed.
+    /// @return `true` if the subscription is active, or `false` if disposed.
     boolean isActive();
 
     /// Returns a new [Subscription] with this and another subscription combined into one.
