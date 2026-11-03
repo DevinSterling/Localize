@@ -4,6 +4,7 @@ import com.devinsterling.localize.LocalizationKey;
 import com.devinsterling.localize.LocalizationRequestSource;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
+import com.devinsterling.localize.event.DiagnosticEvent;
 import com.devinsterling.localize.event.FormatterEvent;
 import com.devinsterling.localize.event.LocaleEvent;
 import com.devinsterling.localize.event.ProviderEvent;
@@ -174,6 +175,10 @@ public class LocalizeFX extends Localize {
 
     // In a future release, events will be used to optimize provider-scoped listeners (uncommon case)
     @Override protected void onProviderEvent(ProviderEvent event) {
+        // Filter out diagnostic events from notifying listeners
+        if (event instanceof DiagnosticEvent) {
+            return;
+        }
         // Optimization NOTE:
         // Ignore any events caused by a locale change; it is already handled on `onLocaleReplaced`.
         // This avoids unnecessarily recomputing bindings more than once in quick succession.
