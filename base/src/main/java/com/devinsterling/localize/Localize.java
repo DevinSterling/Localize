@@ -1152,9 +1152,8 @@ public class Localize {
         // Since a pattern is given, `defaultValue` is not used here as a value will always be present
         return handleFormatterRequest(
             LocalizationFormatter.Request.Builder
-                .of(source.value())
+                .of(this, source.value())
                 .arguments(request.getArguments())
-                .locale(getLocale())
                 .build()
         );
     }
@@ -1170,10 +1169,8 @@ public class Localize {
             String pattern = bundle.getString(key);
             value = handleFormatterRequest(
                 LocalizationFormatter.Request.Builder
-                    .of(pattern)
+                    .of(this, pattern)
                     .arguments(request.getArguments())
-                    // Locale can change mid-loop, so it's always set here
-                    .locale(getLocale())
                     .build()
             );
 
