@@ -123,6 +123,7 @@ public interface LocalizationFormatter {
             /// [`locale`][locale(Locale)] must be set before calling [build].
             /// Otherwise, an [NullPointerException] will be thrown.
             ///
+            /// @param pattern Message pattern to format.
             /// @return Builder instance.
             /// @throws NullPointerException If `request` is `null`.
             public static Builder of(String pattern) {
@@ -131,7 +132,8 @@ public interface LocalizationFormatter {
 
             /// Sets the message pattern to format.
             ///
-            /// @return This builder instance.
+            /// @param pattern Message pattern to format.
+            /// @return        This builder instance.
             /// @throws NullPointerException If `pattern` is `null`.
             public Builder pattern(String pattern) {
                 this.pattern = Objects.requireNonNull(pattern, "pattern must not be null");
@@ -140,7 +142,8 @@ public interface LocalizationFormatter {
 
             /// Sets the arguments to format with.
             ///
-            /// @return This builder instance.
+            /// @param arguments Arguments to format with.
+            /// @return          This builder instance.
             /// @throws NullPointerException If `arguments` is `null`.
             public Builder arguments(Arguments arguments) {
                 this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
@@ -149,7 +152,8 @@ public interface LocalizationFormatter {
 
             /// Sets the locale to format by.
             ///
-            /// @return This builder instance.
+            /// @param locale Locale to format by
+            /// @return       This builder instance.
             /// @throws NullPointerException If `locale` is `null`.
             public Builder locale(Locale locale) {
                 this.locale = Objects.requireNonNull(locale, "locale must not be null");

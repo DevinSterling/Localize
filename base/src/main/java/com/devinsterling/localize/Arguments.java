@@ -145,7 +145,7 @@ public interface Arguments {
     ///
     /// ### Example
     /// Resolving arguments to obfuscate text:
-    /// ```
+    /// ```java
     /// Arguments resolved = arguments.resolve(value -> {
     ///     if (value instanceof PasswordField password) {
     ///         value = password.obfuscatedText();

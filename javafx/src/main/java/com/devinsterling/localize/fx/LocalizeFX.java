@@ -38,12 +38,12 @@ import java.util.Locale;
 ///
 /// ### Example
 /// Properties file (`messages_en.properties`):
-/// ```
+/// ```properties
 /// MyApp.buttonClick = Click to increment
 /// MyApp.clickCount = Clicked {click_count, choice, 0 #zero times| 1 #one time| 1 <{click_count} times}!
 /// ```
 /// JavaFX code:
-/// ```
+/// ```java
 /// LocalizeFX localize = LocalizeFX.of();
 /// localize.addProvider("messages");
 ///
@@ -203,8 +203,8 @@ public class LocalizeFX extends Localize {
     ///
     /// **This method is intended to be called on the JavaFX Application thread only.**
     ///
-    /// ### Example Usage
-    /// ```
+    /// ### Example
+    /// ```java
     /// Button button = new Button();
     /// button.textProperty().bind(localize.getBinding("MyApp.button"));
     /// ```

@@ -199,7 +199,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     /// [key][LocalizationRequestSource.Key].
     ///
     /// This is a convenience method, equivalent to calling:
-    /// ```
+    /// ```java
     /// defaultValue(MissingValueHandler.of(defaultValue));
     /// ```
     ///
@@ -245,7 +245,7 @@ public class LocalizationValueBuilder<B extends LocalizationValueBuilder<B>> {
     ///
     /// ### Note
     /// When overriding, subclasses may call `super.interceptValue` to preserve default behavior.
-    /// ```
+    /// ```java
     /// @Override protected Object interceptValue(Object value) {
     ///     if (value instanceof TextField field) {
     ///         registerListener(field, TextField::addListener, TextField::removeListener);

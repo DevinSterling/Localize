@@ -130,7 +130,7 @@ import java.util.function.Function;
 /// ```
 /// Subclasses can override protected hooks to handle events
 /// without registering listeners or managing their lifecycle:
-/// ```
+/// ```java
 /// class Custom extends Localize {
 ///     ...
 ///     @Override protected void onLocaleReplaced(LocaleEvent.Replaced event) {
@@ -675,7 +675,7 @@ public class Localize {
     /// If multiple providers have the same resource property keys,
     /// the value from the highest-priority provider is used.
     ///
-    /// ### Example Usage
+    /// ### Example
     /// ```java
     /// Localize.ProviderKey key = Localize.ProviderKey.of("myKey");
     /// Localize.ProviderKey key2 = Localize.ProviderKey.of("myKey2");
@@ -715,7 +715,7 @@ public class Localize {
     /// [putProvider(ProviderKey, ResourceBundleProvider)]
     /// with [ProviderKey#of(String)].
     ///
-    /// ### Example Usage
+    /// ### Example
     /// ```java
     /// localize.putProvider("myKey", locale -> {
     ///     return ResourceBundle.getBundle("i18n.messages", locale);
@@ -743,7 +743,7 @@ public class Localize {
     /// using [ResourceBundle#getBundle(String)].
     ///
     /// This is a convenience method, equivalent to calling:
-    /// ```
+    /// ```java
     /// putProvider(key, locale -> ResourceBundle.getBundle(baseName, locale));
     /// ```
     /// @param key                    Key associated with `provider`.
@@ -793,7 +793,7 @@ public class Localize {
     /// Shorthand for [addProvider(ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
     ///
     /// This is a convenience method, equivalent to calling:
-    /// ```
+    /// ```java
     /// addProvider(locale -> ResourceBundle.getBundle(baseName, locale));
     /// ```
     /// @param resourceBundleBaseName The base name of a [ResourceBundle].
@@ -1019,7 +1019,7 @@ public class Localize {
     /// The format syntax depends on the [current][getFormatter] [LocalizationFormatter]
     /// (e.g., [LocalizationFormatter#STANDARD]).
     ///
-    /// ### Example Usage
+    /// ### Example
     /// Using a pattern with positional arguments:
     /// ```java
     /// String value = localize.format("Hello {0} {1}!")
@@ -1041,7 +1041,7 @@ public class Localize {
 
     /// Returns a builder for formatting a localized value retrieved from the given resource key.
     ///
-    /// ### Example Usage
+    /// ### Example
     /// Within a resource bundle (e.g., `my-app-i18n.properties`):
     /// ```properties
     /// MyApp.greet=Hello {first} {last}!
@@ -1132,6 +1132,7 @@ public class Localize {
     /// @throws NullPointerException If `request` is `null`.
     /// @see format(String)
     /// @see get(String)
+    /// @see LocalizeConfig#setIgnoreFormatterExceptions
     /// @since 2.0
     public String formatValue(LocalizationRequest request) {
         LocalizationRequestSource localizationRequestSource = request.getSource();
@@ -1301,7 +1302,7 @@ public class Localize {
     /// // Attach via explicit constructor
     /// MyLocalize attached2 = main.attach(s -> new MyLocalize(s, otherArguments));
     /// ```
-    /// @see Localize(Source)
+    /// @see Localize#Localize(Source)
     /// @see Localize#attach
     /// @since 2.0
     public static final class Source {
@@ -1341,9 +1342,9 @@ public class Localize {
     public interface ProviderKey {
         /// Returns a new unique key that is only equal to itself.
         ///
-        /// ### Example Usage
+        /// ### Example
         /// Comparing equality:
-        /// ```
+        /// ```java
         /// Localize.ProviderKey a = Localize.ProviderKey.of();
         /// Localize.ProviderKey b = Localize.ProviderKey.of();
         ///
@@ -1357,9 +1358,9 @@ public class Localize {
 
         /// Returns a wrapper over a string key.
         ///
-        /// ### Example Usage
+        /// ### Example
         /// Comparing equality:
-        /// ```
+        /// ```java
         /// Localize.ProviderKey a = Localize.ProviderKey.of("foo");
         /// Localize.ProviderKey b = Localize.ProviderKey.of("foo");
         /// Localize.ProviderKey c = Localize.ProviderKey.of("bar");
