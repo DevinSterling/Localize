@@ -2,6 +2,7 @@ package com.devinsterling.localize.event;
 
 import com.devinsterling.localize.Localize;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /// An event subscription to dispose or cancel an action.
@@ -89,6 +90,8 @@ public interface Subscription {
 
         Objects.requireNonNull(subscriptions, "subscriptions must not be null");
         if (subscriptions.length == 0) return EMPTY;
+
+        subscriptions = Arrays.copyOf(subscriptions, subscriptions.length);
 
         for (Subscription subscription : subscriptions) {
             Objects.requireNonNull(subscription, "subscription entries must not be null");
