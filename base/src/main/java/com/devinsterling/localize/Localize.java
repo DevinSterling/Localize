@@ -177,7 +177,7 @@ public class Localize {
         private final LocaleState locale;
         private final LocalizeConfig config;
         // NOTE: In the future, `data.formatter` can be changed into a `VersionedFormatter`, if the need arises.
-        private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.PROVIDER.provide();
+        private volatile LocalizationFormatter formatter = LocalizationFormatterLocator.provide();
 
         // Concurrency control
         /// Lock to synchronize whenever the locale changes.
