@@ -19,7 +19,10 @@ final class LocalizationFormatterLocator {
             provider = ServiceLoader.load(LocalizationFormatterProvider.class)
                     .stream()
                     .map(ServiceLoader.Provider::get)
-                    .max(Comparator.comparingInt(LocalizationFormatterProvider::getPriority))
+                    .max(
+                        Comparator.comparingInt(LocalizationFormatterProvider::getPriority)
+                            .thenComparing(p -> p.getClass().getName())
+                    )
                     .orElse(() -> LocalizationFormatter.STANDARD);
         } catch (ServiceConfigurationError | RuntimeException e) {
             failure = e;
