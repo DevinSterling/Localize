@@ -759,6 +759,7 @@ public class Localize {
     /// @see ProviderKey#of(String)
     /// @since 2.0
     public ResourceBundleProvider putProvider(ProviderKey key, String resourceBundleBaseName) {
+        Objects.requireNonNull(resourceBundleBaseName, "resourceBundleBaseName name must not be null");
         return putProvider(key, locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
     }
 
@@ -807,6 +808,7 @@ public class Localize {
     /// @see putProvider(ProviderKey, String)
     /// @since 2.0
     public ProviderEntry addProvider(String resourceBundleBaseName) {
+        Objects.requireNonNull(resourceBundleBaseName, "resourceBundleBaseName name must not be null");
         return addProvider(locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
     }
 
@@ -1404,8 +1406,8 @@ public class Localize {
 
         /// @see ofInactive
         private ProviderEntry(ProviderKey key, ResourceBundleProvider provider) {
-            this.key = key;
-            this.provider = provider;
+            this.key = Objects.requireNonNull(key, "key must not be null");
+            this.provider = Objects.requireNonNull(provider, "provider must not be null");
         }
 
         /// Creates an inactive entry that can be activated via [activate].

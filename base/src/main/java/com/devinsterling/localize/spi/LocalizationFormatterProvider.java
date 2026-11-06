@@ -48,7 +48,7 @@ import com.devinsterling.localize.LocalizationFormatter;
 public interface LocalizationFormatterProvider {
     /// Returns a formatter.
     ///
-    /// @return Formatter to format requests.
+    /// @return **Non-null** formatter to format requests.
     /// @implSpec This method must be thread-safe.
     LocalizationFormatter provide();
 

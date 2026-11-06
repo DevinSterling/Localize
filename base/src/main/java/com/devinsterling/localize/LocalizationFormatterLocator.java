@@ -3,6 +3,7 @@ package com.devinsterling.localize;
 import com.devinsterling.localize.spi.LocalizationFormatterProvider;
 
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
@@ -39,7 +40,11 @@ final class LocalizationFormatterLocator {
             );
         }
 
-        return PROVIDER_ACCESSOR.provider.provide();
+        return Objects.requireNonNull(
+            PROVIDER_ACCESSOR.provider.provide(),
+            "`LocalizationFormatterProvider.provide()` must not return null; provider: "
+                + PROVIDER_ACCESSOR.provider.getClass().getName()
+        );
     }
 
     private record Accessor(LocalizationFormatterProvider provider, Throwable failure) {}
