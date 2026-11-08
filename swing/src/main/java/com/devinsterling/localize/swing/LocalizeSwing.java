@@ -282,12 +282,28 @@ public class LocalizeSwing extends Localize {
     }
 
     private void onLocaleReplacedEdtThread(LocaleEvent.Replaced event) {
-        if (event.isValid()) {
+        // Aggregate runtime exceptions, so a single faulty listener does not block the rest
+        RuntimeException aggregate = null;
+
+        if (event.isValid()) try {
             notifyListeners();
+        } catch (RuntimeException e) {
+            aggregate = e;
         }
+
         // After notifying all listeners, recheck if the held locale is still the current one
-        if (event.isValid()) {
+        if (event.isValid()) try {
             propertyChangeManager.notifyChangeListeners(this, event.getOldLocale(), event.getNewLocale());
+        } catch (RuntimeException e) {
+            if (aggregate == null) {
+                aggregate = e;
+            } else if (aggregate != e) {
+                aggregate.addSuppressed(e);
+            }
+        }
+
+        if (aggregate != null) {
+            throw aggregate;
         }
     }
 

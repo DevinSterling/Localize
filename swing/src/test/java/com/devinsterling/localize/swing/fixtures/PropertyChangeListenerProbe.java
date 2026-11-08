@@ -4,10 +4,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class PropertyChangeListenerProbe implements PropertyChangeListener {
-    public final ListenerException exception = new ListenerException();
+    public RuntimeException exception = new ListenerException();
     public final PropertyChangeListener delegate;
     public boolean throwOnCall;
-    public int count = 0;
+    public int count;
 
     public PropertyChangeListenerProbe() {
         this(event -> {});
@@ -19,6 +19,11 @@ public class PropertyChangeListenerProbe implements PropertyChangeListener {
 
     public PropertyChangeListenerProbe throwOnCall(boolean throwOnCall) {
         this.throwOnCall = throwOnCall;
+        return this;
+    }
+
+    public PropertyChangeListenerProbe exception(RuntimeException exception) {
+        this.exception = exception;
         return this;
     }
 

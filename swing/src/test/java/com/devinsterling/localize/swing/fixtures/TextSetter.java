@@ -1,16 +1,17 @@
 package com.devinsterling.localize.swing.fixtures;
 
 public class TextSetter {
-    public SetTextException exception = new SetTextException();
+    public RuntimeException exception = new SetTextException();
     public boolean throwOnSetText;
     public String text;
+    public int count;
 
     public TextSetter throwOnSetText(boolean throwOnSetText) {
         this.throwOnSetText = throwOnSetText;
         return this;
     }
 
-    public TextSetter exception(SetTextException exception) {
+    public TextSetter exception(RuntimeException exception) {
         this.exception = exception;
         return this;
     }
@@ -20,6 +21,7 @@ public class TextSetter {
             throw exception;
         }
         this.text = text;
+        count++;
     }
 
     public static class SetTextException extends RuntimeException {}
