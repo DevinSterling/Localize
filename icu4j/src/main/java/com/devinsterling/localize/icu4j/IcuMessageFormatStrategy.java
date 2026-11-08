@@ -9,7 +9,10 @@ interface IcuMessageFormatStrategy {
     String format(LocalizationFormatter.Request request);
 
     IcuMessageFormatStrategy FORMAT1 = request -> {
-        if (request.getArguments().isEmpty()) return request.getPattern();
+        // Return early; nothing for `MessageFormat` to do as there are no arguments or quotes to unescape.
+        if (request.getArguments().isEmpty() && request.getPattern().indexOf('\'') < 0) {
+            return request.getPattern();
+        }
 
         MessageFormat formatter = new MessageFormat(request.getPattern(), request.getLocale());
 

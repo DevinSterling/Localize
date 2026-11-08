@@ -47,6 +47,13 @@ public class IcuFormatterTest {
         assertEquals("?", localize.getValue("non-existent"));
     }
 
+    @Test void testMF1UnescapeQuotesWithNoArguments() {
+        Localize localize = getMessageFormat1Instance();
+
+        // Unescaped text
+        assertEquals("It's 'It's'", localize.format("It''s 'It''s'").value());
+    }
+
     @Test void testSetFormatterDuringRuntime() {
         Localize localize = Localize.of(Locale.ENGLISH);
         localize.putProvider("main", MESSAGE_FORMAT1);
