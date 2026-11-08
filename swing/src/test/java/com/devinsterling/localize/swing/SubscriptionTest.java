@@ -1,13 +1,12 @@
 package com.devinsterling.localize.swing;
 
 import com.devinsterling.localize.event.Subscription;
+import com.devinsterling.localize.swing.fixtures.PropertyChangeListenerProbe;
 import com.devinsterling.localize.swing.junit.SwingEdtExtension;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,10 +60,10 @@ public class SubscriptionTest {
     @Test void captureAggregateExceptions() {
         PropertyChangeManager manager = new PropertyChangeManager();
 
-        var a = new FaultyPropertyChangeListener(true);
-        var b = PropertyChangeCountListener.doesNothing();
-        var c = new FaultyPropertyChangeListener(true);
-        var d = PropertyChangeCountListener.doesNothing();
+        var a = new PropertyChangeListenerProbe().throwOnCall(true);
+        var b = new PropertyChangeListenerProbe();
+        var c = new PropertyChangeListenerProbe().throwOnCall(true);
+        var d = new PropertyChangeListenerProbe();
 
         manager.addPropertyChangeListener(a);
         manager.addPropertyChangeListener(b);
@@ -72,7 +71,7 @@ public class SubscriptionTest {
         manager.addPropertyChangeListener(d);
 
         var exception = assertThrows(
-            FaultyPropertyChangeListener.FaultyException.class,
+            PropertyChangeListenerProbe.ListenerException.class,
             () -> manager.notifyChangeListeners(this, Locale.ENGLISH, Locale.FRENCH)
         );
 
@@ -108,10 +107,10 @@ public class SubscriptionTest {
         PropertyChangeManager manager = new PropertyChangeManager();
         AtomicReference<Subscription> subscriptionC = new AtomicReference<>();
 
-        var d = PropertyChangeCountListener.doesNothing();
-        var c = PropertyChangeCountListener.doesNothing();
-        var b = PropertyChangeCountListener.doesNothing();
-        var a = new PropertyChangeCountListener(evt -> {
+        var d = new PropertyChangeListenerProbe();
+        var c = new PropertyChangeListenerProbe();
+        var b = new PropertyChangeListenerProbe();
+        var a = new PropertyChangeListenerProbe(evt -> {
             manager.removePropertyChangeListener(b);
             subscriptionC.get().dispose();
         });
@@ -126,40 +125,5 @@ public class SubscriptionTest {
         assertEquals(0, b.count);
         assertEquals(0, c.count);
         assertEquals(1, d.count);
-    }
-
-    private static class FaultyPropertyChangeListener implements PropertyChangeListener {
-        private final FaultyException exception = new FaultyException();
-        private final boolean throwOnInvocation;
-
-        public FaultyPropertyChangeListener(boolean throwOnInvocation) {
-            this.throwOnInvocation = throwOnInvocation;
-        }
-
-        @Override public void propertyChange(PropertyChangeEvent evt) {
-            if (throwOnInvocation) {
-                throw exception;
-            }
-        }
-
-        private static class FaultyException extends RuntimeException {}
-    }
-
-    private static final class PropertyChangeCountListener implements PropertyChangeListener {
-        private final PropertyChangeListener delegate;
-        private int count = 0;
-
-        private PropertyChangeCountListener(PropertyChangeListener delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override public void propertyChange(PropertyChangeEvent evt) {
-            count++;
-            delegate.propertyChange(evt);
-        }
-
-        private static PropertyChangeCountListener doesNothing() {
-            return new PropertyChangeCountListener(evt -> {});
-        }
     }
 }

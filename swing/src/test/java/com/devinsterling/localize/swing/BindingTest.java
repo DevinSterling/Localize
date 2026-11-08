@@ -1,5 +1,6 @@
 package com.devinsterling.localize.swing;
 
+import com.devinsterling.localize.swing.fixtures.TextSetter;
 import com.devinsterling.localize.swing.junit.SwingEdtExtension;
 
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,7 @@ public class BindingTest {
         assertFalse(binding.isActive());
     }
 
+    @SuppressWarnings({ "UnusedAssignment" })
     @Test void testGarbageCollectedBinding() {
         LocalizeSwing localize = getLocalizeSwingInstance();
         JLabel label = new JLabel();
@@ -80,11 +82,11 @@ public class BindingTest {
 
     @Test void failedBindingIsNotRegistered() {
         LocalizeSwing localize = getLocalizeSwingInstance();
-        FaultyText faulty = new FaultyText(true);
+        TextSetter faulty = new TextSetter().throwOnSetText(true);
 
         assertThrows(
-            FaultyText.FaultyException.class,
-            () -> localize.get(TEST_KEY_CLICK_ME).bind(faulty, FaultyText::setText)
+            TextSetter.SetTextException.class,
+            () -> localize.get(TEST_KEY_CLICK_ME).bind(faulty, TextSetter::setText)
         );
 
         // Since the previous call failed, the binding was not registered,
@@ -94,17 +96,17 @@ public class BindingTest {
 
     @Test void aggregateExceptionCannotSuppressItself() {
         LocalizeSwing localize = getLocalizeSwingInstance();
-        FaultyText.FaultyException exception = new FaultyText.FaultyException();
-        FaultyText faulty1 = new FaultyText(false, exception);
-        FaultyText faulty2 = new FaultyText(false, exception);
+        TextSetter.SetTextException exception = new TextSetter.SetTextException();
+        TextSetter faulty1 = new TextSetter().exception(exception);
+        TextSetter faulty2 = new TextSetter().exception(exception);
 
-        localize.get(TEST_KEY_CLICK_ME).bind(faulty1, FaultyText::setText);
-        localize.get(TEST_KEY_CLICK_ME).bind(faulty2, FaultyText::setText);
+        localize.get(TEST_KEY_CLICK_ME).bind(faulty1, TextSetter::setText);
+        localize.get(TEST_KEY_CLICK_ME).bind(faulty2, TextSetter::setText);
 
         faulty1.throwOnSetText = faulty2.throwOnSetText = true;
 
         var caught = assertThrows(
-            FaultyText.FaultyException.class,
+            TextSetter.SetTextException.class,
             () -> localize.setLocale(Locale.JAPANESE)
         );
 
@@ -114,20 +116,20 @@ public class BindingTest {
 
     @Test void aggregateBindingExceptions() {
         LocalizeSwing localize = getLocalizeSwingInstance();
-        FaultyText faulty1 = new FaultyText(false);
-        FaultyText faulty2 = new FaultyText(false);
-        JLabel label1 = new JLabel();
-        JLabel label2 = new JLabel();
+        TextSetter faulty1 = new TextSetter();
+        TextSetter faulty2 = new TextSetter();
+        TextSetter text1 = new TextSetter();
+        TextSetter text2 = new TextSetter();
 
-        localize.get(TEST_KEY_CLICK_ME).bind(faulty1, FaultyText::setText);
-        localize.bind(TEST_KEY_CLICK_ME, label1);
-        localize.get(TEST_KEY_CLICK_ME).bind(faulty2, FaultyText::setText);
-        localize.bind(TEST_KEY_CLICK_ME, label2);
+        localize.get(TEST_KEY_CLICK_ME).bind(faulty1, TextSetter::setText);
+        localize.get(TEST_KEY_CLICK_ME).bind(text1, TextSetter::setText);
+        localize.get(TEST_KEY_CLICK_ME).bind(faulty2, TextSetter::setText);
+        localize.get(TEST_KEY_CLICK_ME).bind(text2, TextSetter::setText);
 
         faulty1.throwOnSetText = faulty2.throwOnSetText = true;
 
         var exception = assertThrows(
-            FaultyText.FaultyException.class,
+            TextSetter.SetTextException.class,
             () -> localize.setLocale(Locale.JAPANESE)
         );
 
@@ -135,29 +137,7 @@ public class BindingTest {
         assertArrayEquals(new Throwable[] { faulty2.exception }, exception.getSuppressed());
 
         // Despite the exception, valid bindings are still resolved
-        assertEquals("クリック！", label1.getText());
-        assertEquals(label1.getText(), label2.getText());
-    }
-
-    private static class FaultyText {
-        private final FaultyException exception;
-        private boolean throwOnSetText;
-
-        public FaultyText(boolean throwOnSetText) {
-            this(throwOnSetText, new FaultyException());
-        }
-
-        public FaultyText(boolean throwOnSetText, FaultyException exception) {
-            this.throwOnSetText = throwOnSetText;
-            this.exception = exception;
-        }
-
-        private void setText(String text) {
-            if (throwOnSetText) {
-                throw exception;
-            }
-        }
-
-        private static class FaultyException extends RuntimeException {}
+        assertEquals("クリック！", text1.text);
+        assertEquals(text1.text, text2.text);
     }
 }
