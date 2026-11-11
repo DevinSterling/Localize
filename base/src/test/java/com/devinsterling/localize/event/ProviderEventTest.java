@@ -45,10 +45,11 @@ public class ProviderEventTest {
         localize.putProvider(entry1.getKey(), NULL_PROVIDER); // 1
         Localize.ProviderEntry entry1B = localize.getProviderEntry(entry1.getKey());
 
-        localize.putProvider("abc", NULL_PROVIDER);
-        Localize.ProviderEntry entry2 = localize.getProviderEntry("abc");
-        localize.putProvider("abc", NULL_PROVIDER); // 2
-        Localize.ProviderEntry entry2A = localize.getProviderEntry("abc");
+        var abcKey = Localize.ProviderKey.of("abc");
+        localize.putProvider(abcKey, NULL_PROVIDER);
+        Localize.ProviderEntry entry2 = localize.getProviderEntry(abcKey);
+        localize.putProvider(abcKey, NULL_PROVIDER); // 2
+        Localize.ProviderEntry entry2A = localize.getProviderEntry(abcKey);
 
         assertEquals(3, localize.capturedEventsCount());
 

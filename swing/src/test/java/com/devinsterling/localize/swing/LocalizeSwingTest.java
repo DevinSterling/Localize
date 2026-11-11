@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
 public class LocalizeSwingTest {
+    private final Localize.ProviderKey providerKey = Localize.ProviderKey.of("provider");
 
     @Test void testCompositionConstructor() {
         Localize localize = Localize.of();
@@ -127,10 +128,10 @@ public class LocalizeSwingTest {
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("Click!", label.getText());
 
-        localize.putProvider("provider", TEST2_PROVIDER);
+        localize.putProvider(providerKey, TEST2_PROVIDER);
         assertEquals("Click!?", label.getText());
     }
 
@@ -139,10 +140,10 @@ public class LocalizeSwingTest {
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("クリック！", label.getText());
 
-        localize.removeProvider("provider");
+        localize.removeProvider(providerKey);
         assertEquals("", label.getText());
     }
 
@@ -151,11 +152,11 @@ public class LocalizeSwingTest {
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("クリック！", label.getText());
 
-        localize.removeProvider("");
-        localize.removeProvider("Provider");
+        localize.removeProvider(Localize.ProviderKey.of(""));
+        localize.removeProvider(Localize.ProviderKey.of("Provider"));
         assertEquals("クリック！", label.getText());
     }
 
@@ -167,7 +168,7 @@ public class LocalizeSwingTest {
         localize.refreshProviders();
         assertEquals("", label.getText());
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("", label.getText());
     }
 
@@ -178,16 +179,16 @@ public class LocalizeSwingTest {
 
         assertEquals("", label.getText());
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("クリック！", label.getText());
 
         localize.refreshProviders();
         assertEquals("クリック！", label.getText());
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("クリック！", label.getText());
 
-        localize.refreshProvider("nonexistent");
+        localize.refreshProvider(Localize.ProviderKey.of("nonexistent"));
         assertEquals("クリック！", label.getText());
     }
 
@@ -203,14 +204,14 @@ public class LocalizeSwingTest {
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
-        localize.putProvider("provider", locale -> currentBundle.get());
+        localize.putProvider(providerKey, locale -> currentBundle.get());
         assertEquals("abc", label.getText());
 
         // Realistically, this would be the file changing on disk or similar
         currentBundle.set(bundleFactory.apply("xyz"));
         assertEquals("abc", label.getText());
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("xyz", label.getText());
     }
 

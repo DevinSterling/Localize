@@ -76,6 +76,9 @@ public class LocalizeHookTest {
                 counter.incrementAndGet();
             }
         };
+        var key = Localize.ProviderKey.of("key");
+        var key2 = Localize.ProviderKey.of("key2");
+        var nonExistentKey = Localize.ProviderKey.of("non-existent key");
 
         assertEquals(0, counter.get());
 
@@ -83,17 +86,17 @@ public class LocalizeHookTest {
         assertEquals(1, counter.get());
 
         localize.addProvider(TEST_PROVIDER);
-        localize.putProvider("key", TEST2_PROVIDER);
-        localize.putProvider("key", TEST2_PROVIDER_NAME);
-        localize.putProvider(Localize.ProviderKey.of("key2"), TEST_PROVIDER);
+        localize.putProvider(key, TEST2_PROVIDER);
+        localize.putProvider(key, TEST2_PROVIDER_NAME);
+        localize.putProvider(key2, TEST_PROVIDER);
         assertEquals(5, counter.get());
 
-        localize.removeProvider("non-existent key");
-        localize.refreshProvider("non-existent key");
+        localize.removeProvider(nonExistentKey);
+        localize.refreshProvider(nonExistentKey);
         assertEquals(5, counter.get());
 
-        localize.removeProvider("key");
-        localize.refreshProvider("key2");
+        localize.removeProvider(key);
+        localize.refreshProvider(key2);
         assertEquals(7, counter.get());
 
         localize.refreshProviders();

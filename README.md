@@ -34,8 +34,11 @@ Localize is designed to be straightforward to set up and use, simplifying intern
    ```
 2. Add a provider for resource bundles:
    ```java
-   // Insert using a unique key
-   localize.putProvider("ProviderKey", locale -> ResourceBundle.getBundle("i18n.sample", locale));
+   // Insert using a predefined key
+   localize.putProvider(
+       ProviderKey.of("key"),
+       locale -> ResourceBundle.getBundle("i18n.sample", locale)
+   );
    // Or without
    localize.addProvider(locale -> ResourceBundle.getBundle("i18n.sample", locale));
    // Or by resource bundle base name
@@ -56,12 +59,12 @@ A `Localize` instance accepts multiple providers as additional sources or fallba
 which can be removed dynamically.
 Configuration can control scenarios such as where no value or when a resource bundle is not found.
 ```java
-localize.putProvider("Provider1", locale -> ResourceBundle.getBundle("i18n.sample", locale));
-localize.addProvider("i18n.other");
-...
+localize.putProvider(key, locale -> ResourceBundle.getBundle("i18n.sample", locale));
+ProviderEntry entry = localize.addProvider("i18n.other");
 
 // Removing a provider when no longer needed:
-localize.removeProvider("Provider1");
+localize.removeProvider(key);
+entry.remove();
 
 // If a value is not found in any provider, configure a global fallback:
 localize.getConfig().setDefaultMissingValue("Missing value");

@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(JavaFXExtension.class)
 class LocalizeFXTest {
+    Localize.ProviderKey providerKey = Localize.ProviderKey.of("provider");
 
     @Test void testCompositionConstructor() {
         Localize localize = Localize.of();
@@ -85,7 +86,7 @@ class LocalizeFXTest {
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
         assertEquals("", binding.get());
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.addProvider(TEST_PROVIDER);
         assertEquals("클릭!", binding.get());
     }
 
@@ -93,10 +94,10 @@ class LocalizeFXTest {
         LocalizeFX localize = getEmptyLocalizeFXInstance();
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("Click!", binding.get());
 
-        localize.putProvider("provider", TEST2_PROVIDER);
+        localize.putProvider(providerKey, TEST2_PROVIDER);
         assertEquals("Click!?", binding.get());
     }
 
@@ -104,10 +105,10 @@ class LocalizeFXTest {
         LocalizeFX localize = getEmptyLocalizeFXInstance(Locale.JAPANESE);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("クリック！", binding.get());
 
-        localize.removeProvider("provider");
+        localize.removeProvider(providerKey);
         assertEquals("", binding.get());
     }
 
@@ -115,11 +116,11 @@ class LocalizeFXTest {
         LocalizeFX localize = getEmptyLocalizeFXInstance(Locale.JAPANESE);
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("クリック！", binding.get());
 
-        localize.removeProvider("");
-        localize.removeProvider("Provider");
+        localize.removeProvider(Localize.ProviderKey.of(""));
+        localize.removeProvider(Localize.ProviderKey.of("Provider"));
         assertEquals("クリック！", binding.get());
     }
 
@@ -130,7 +131,7 @@ class LocalizeFXTest {
         localize.refreshProviders();
         assertEquals("", binding.get());
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("", binding.get());
     }
 
@@ -140,16 +141,16 @@ class LocalizeFXTest {
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_ME);
         assertEquals("", binding.get());
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("Click!", binding.get());
 
         localize.refreshProviders();
         assertEquals("Click!", binding.get());
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("Click!", binding.get());
 
-        localize.refreshProvider("nonexistent");
+        localize.refreshProvider(Localize.ProviderKey.of("non-existent"));
         assertEquals("Click!", binding.get());
     }
 
@@ -164,14 +165,14 @@ class LocalizeFXTest {
         LocalizeFX localize = getEmptyLocalizeFXInstance();
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_LABEL);
 
-        localize.putProvider("provider", locale -> currentBundle.get());
+        localize.putProvider(providerKey, locale -> currentBundle.get());
         assertEquals("abc", binding.get());
 
         // Realistically, this would be the file changing on disk or similar
         currentBundle.set(bundleFactory.apply("xyz"));
         assertEquals("abc", binding.get());
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("xyz", binding.get());
     }
 

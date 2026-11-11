@@ -1,5 +1,6 @@
 package com.devinsterling.localize.fx;
 
+import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.ResourceBundleProvider;
 
 import javafx.application.Platform;
@@ -25,7 +26,7 @@ public final class TestUtil {
     /// - [TEST_PROVIDER] present.
     public static LocalizeFX getLocalizeFXInstance() {
         LocalizeFX localize = getEmptyLocalizeFXInstance();
-        localize.putProvider("key", TEST_PROVIDER);
+        localize.addProvider(TEST_PROVIDER);
         return localize;
     }
 

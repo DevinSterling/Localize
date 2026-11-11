@@ -40,10 +40,10 @@ class LocalizeConfigTest {
         ResourceBundleProvider provider = l -> ResourceBundle.getBundle("missing", l);
 
         // Resource bundles
-        assertThrows(MissingResourceException.class, () -> localize.putProvider("key", provider));
+        assertThrows(MissingResourceException.class, () -> localize.addProvider(provider));
 
         config.setIgnoreProviderExceptions(true);
-        assertDoesNotThrow(() -> localize.putProvider("key", provider));
+        assertDoesNotThrow(() -> localize.addProvider(provider));
     }
 
     @Test void testValueNotFound() {

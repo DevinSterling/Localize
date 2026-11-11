@@ -20,6 +20,9 @@ import static com.devinsterling.localize.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LocalizeTest {
+    private final Localize.ProviderKey providerKey = Localize.ProviderKey.of("key");
+    private final Localize.ProviderKey otherKey = Localize.ProviderKey.of("Key");
+    private final Localize.ProviderKey missingKey = Localize.ProviderKey.of("missing");
 
     @Test void testDefaultLocale() {
         Locale defaultLocale = Locale.getDefault();
@@ -36,29 +39,27 @@ class LocalizeTest {
     @Test void testPutProvider() {
         Localize localize = Localize.of();
         Collection<Localize.ProviderEntry> entries = localize.getProviderEntries();
-        String key = "key";
 
         assertTrue(entries.isEmpty());
-        assertNull(localize.putProvider(key, TEST_PROVIDER));
-        assertSame(TEST_PROVIDER, localize.putProvider(key, TEST2_PROVIDER));
+        assertNull(localize.putProvider(providerKey, TEST_PROVIDER));
+        assertSame(TEST_PROVIDER, localize.putProvider(providerKey, TEST2_PROVIDER));
         assertEquals(1, entries.size());
 
-        assertSame(TEST2_PROVIDER, localize.removeProvider(key));
+        assertSame(TEST2_PROVIDER, localize.removeProvider(providerKey));
         assertTrue(entries.isEmpty());
 
-        assertNull(localize.putProvider(key, TEST_PROVIDER));
-        assertNull(localize.putProvider("other", TEST_PROVIDER));
+        assertNull(localize.putProvider(providerKey, TEST_PROVIDER));
+        assertNull(localize.putProvider(otherKey, TEST_PROVIDER));
         assertEquals(2, entries.size());
     }
 
     @Test void testPutProviderByBaseName() {
         Localize localize = Localize.of();
-        String key = "key";
 
         // NOTE: these methods delegate to `putProvider(String, ResourceBundleProvider)`
-        localize.putProvider(key, TEST_PROVIDER_NAME);
-        localize.putProvider(key, TEST2_PROVIDER_NAME);
-        localize.putProvider("other", TEST2_PROVIDER_NAME);
+        localize.putProvider(providerKey, TEST_PROVIDER_NAME);
+        localize.putProvider(providerKey, TEST2_PROVIDER_NAME);
+        localize.putProvider(otherKey, TEST2_PROVIDER_NAME);
         assertEquals(2, localize.getProviderEntries().size());
     }
 
@@ -88,22 +89,21 @@ class LocalizeTest {
 
     @Test void testPutNullReturningProvider() {
         Localize localize = Localize.of();
-        String key = "key";
 
-        localize.putProvider(key, _unusedLocale -> null);
+        localize.putProvider(providerKey, _unusedLocale -> null);
         assertEquals("[missing]", localize.getValue("missing"));
     }
 
     @Test void testReturnedProviderFromRemove() {
         Localize localize = Localize.of();
 
-        assertNull(localize.removeProvider("key"));
-        assertNull(localize.removeProvider("key4"));
+        assertNull(localize.removeProvider(providerKey));
+        assertNull(localize.removeProvider(otherKey));
 
-        localize.putProvider("key", TEST_PROVIDER);
-        assertSame(TEST_PROVIDER, localize.removeProvider("key"));
-        localize.putProvider("key3", TEST_PROVIDER);
-        assertSame(TEST_PROVIDER, localize.removeProvider("key3"));
+        localize.putProvider(providerKey, TEST_PROVIDER);
+        assertSame(TEST_PROVIDER, localize.removeProvider(providerKey));
+        localize.putProvider(otherKey, TEST_PROVIDER);
+        assertSame(TEST_PROVIDER, localize.removeProvider(otherKey));
     }
 
     @Test void testLocale() {
@@ -127,7 +127,7 @@ class LocalizeTest {
         assertEquals("", localize.getValue(TEST_KEY_GREET));
         assertEquals("", localize.getValue(() -> TEST_KEY_TEST));
 
-        localize.putProvider("key", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
         assertEquals("test", localize.getValue(() -> TEST_KEY_TEST));
         assertEquals("", localize.getValue("missing1"));
@@ -154,48 +154,48 @@ class LocalizeTest {
 
     @Test void testContainsProvider() {
         Localize localize = Localize.of();
-        Function<String, Boolean> contains = localize::containsProvider;
+        Function<Localize.ProviderKey, Boolean> contains = localize::containsProvider;
 
-        assertFalse(contains.apply("key"));
+        assertFalse(contains.apply(providerKey));
 
-        localize.putProvider("key", TEST_PROVIDER);
-        assertFalse(contains.apply("Key"));
-        assertFalse(contains.apply("other"));
-        assertTrue(contains.apply("key"));
+        localize.putProvider(providerKey, TEST_PROVIDER);
+        assertFalse(contains.apply(otherKey));
+        assertFalse(contains.apply(missingKey));
+        assertTrue(contains.apply(providerKey));
         assertThrows(NullPointerException.class, () -> contains.apply(null));
 
-        localize.removeProvider("key");
-        assertFalse(contains.apply("key"));
+        localize.removeProvider(providerKey);
+        assertFalse(contains.apply(providerKey));
     }
 
     @Test void testReplaceProvider() {
         Localize localize = getEmptyLocalizeInstance(Locale.JAPANESE);
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("おはよう", localize.getValue(TEST_KEY_GREET));
 
-        localize.putProvider("provider", TEST2_PROVIDER);
+        localize.putProvider(providerKey, TEST2_PROVIDER);
         assertEquals("おはようございます", localize.getValue(TEST_KEY_GREET));
     }
 
     @Test void testRemoveProvider() {
         Localize localize = getEmptyLocalizeInstance(Locale.CHINESE);
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("早上好", localize.getValue(TEST_KEY_GREET));
 
-        localize.removeProvider("provider");
+        localize.removeProvider(providerKey);
         assertEquals("", localize.getValue(TEST_KEY_GREET));
     }
 
     @Test void testRemoveProviderMissingKey() {
         Localize localize = getEmptyLocalizeInstance();
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
 
-        localize.removeProvider("");
-        localize.removeProvider("Provider");
+        localize.removeProvider(missingKey);
+        localize.removeProvider(otherKey);
         assertEquals("hi", localize.getValue(TEST_KEY_GREET));
     }
 
@@ -219,7 +219,7 @@ class LocalizeTest {
         localize.refreshProviders();
         assertEquals("", localize.getValue(TEST_KEY_GREET));
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("", localize.getValue(TEST_KEY_GREET));
     }
 
@@ -229,16 +229,16 @@ class LocalizeTest {
 
         assertEquals("", supplier.get());
 
-        localize.putProvider("provider", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertEquals("hi", supplier.get());
 
         localize.refreshProviders();
         assertEquals("hi", supplier.get());
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("hi", supplier.get());
 
-        localize.refreshProvider("nonexistent");
+        localize.refreshProvider(missingKey);
         assertEquals("hi", supplier.get());
     }
 
@@ -248,7 +248,7 @@ class LocalizeTest {
         Collection<ResourceBundle> snapshotA = localize.getResourceBundles();
         assertTrue(snapshotA.isEmpty());
 
-        localize.putProvider("key", TEST_PROVIDER);
+        localize.putProvider(providerKey, TEST_PROVIDER);
         assertTrue(snapshotA.isEmpty());
 
         Collection<ResourceBundle> snapshotB = localize.getResourceBundles();
@@ -274,14 +274,14 @@ class LocalizeTest {
         AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
         Localize localize = getEmptyLocalizeInstance();
 
-        localize.putProvider("provider", locale -> currentBundle.get());
+        localize.putProvider(providerKey, locale -> currentBundle.get());
         assertEquals("abc", localize.getValue(TEST_KEY_TEST));
 
         // Realistically, this would be the file changing on disk or similar
         currentBundle.set(bundleFactory.apply("xyz"));
         assertEquals("abc", localize.getValue(TEST_KEY_TEST)); // still stale
 
-        localize.refreshProvider("provider");
+        localize.refreshProvider(providerKey);
         assertEquals("xyz", localize.getValue(TEST_KEY_TEST));
     }
 
@@ -290,20 +290,20 @@ class LocalizeTest {
 
         // Use a provider that will pause mid-fetch within `setLocale`
         var pauser = new ConcurrentProviderProbe(TEST_PROVIDER).pauseOn(Locale.CHINESE);
-        localize.putProvider("pauseSetLocale", pauser);
+        localize.addProvider(pauser);
 
         var setLocaleTask = ConcurrentTestHelper.background(() -> localize.setLocale(Locale.CHINESE));
         pauser.awaitPaused();
 
         var insertedDuringSetLocale = new ConcurrentProviderProbe(TEST_PROVIDER);
         // This method completes while `setLocale` is paused
-        localize.putProvider("Z", insertedDuringSetLocale);
+        localize.putProvider(providerKey, insertedDuringSetLocale);
 
         pauser.resume();
         setLocaleTask.join();
 
         assertEquals(Locale.CHINESE, localize.getLocale());
-        assertEquals("早上好", localize.getProviderEntry("Z").getBundle().getString(TEST_KEY_GREET));
+        assertEquals("早上好", localize.getProviderEntry(providerKey).getBundle().getString(TEST_KEY_GREET));
         assertEquals(1, insertedDuringSetLocale.calls(Locale.CHINESE));
     }
 
@@ -312,7 +312,7 @@ class LocalizeTest {
         // Provider that pauses mid-fetch within `putProvider`
         var pauser = new ConcurrentProviderProbe(TEST_PROVIDER).pauseOn(Locale.ENGLISH);
 
-        var insertTask = ConcurrentTestHelper.background(() -> localize.putProvider("Z", pauser));
+        var insertTask = ConcurrentTestHelper.background(() -> localize.putProvider(providerKey, pauser));
         pauser.awaitPaused();
 
         // Change the locale while `putProvider` is paused
@@ -320,7 +320,7 @@ class LocalizeTest {
         pauser.resume();
         insertTask.join();
 
-        assertEquals("早上好", localize.getProviderEntry("Z").getBundle().getString(TEST_KEY_GREET));
+        assertEquals("早上好", localize.getProviderEntry(providerKey).getBundle().getString(TEST_KEY_GREET));
         assertEquals(1, pauser.calls(Locale.ENGLISH));
         assertEquals(1, pauser.calls(Locale.CHINESE));
     }
@@ -389,10 +389,10 @@ class LocalizeTest {
 
             ConcurrentTestHelper.race(
                 () -> localize.setLocale(Locale.CHINESE),
-                () -> localize.putProvider("key", new ConcurrentProviderProbe(TEST_PROVIDER))
+                () -> localize.putProvider(providerKey, new ConcurrentProviderProbe(TEST_PROVIDER))
             );
 
-            Localize.ProviderEntry entry = localize.getProviderEntry("key");
+            Localize.ProviderEntry entry = localize.getProviderEntry(providerKey);
 
             assertEquals(Locale.CHINESE, localize.getLocale());
             assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));

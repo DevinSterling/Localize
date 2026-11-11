@@ -7,7 +7,6 @@ import com.devinsterling.localize.LocalizationRequestSource;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static com.devinsterling.localize.TestUtil.*;
 

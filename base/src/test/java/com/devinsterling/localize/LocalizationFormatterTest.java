@@ -23,7 +23,7 @@ public class LocalizationFormatterTest {
         // No bundles contained
         assertEquals("", localize.getValue(TEST_KEY_GREET));
 
-        localize.putProvider("key", TEST_PROVIDER);
+        localize.addProvider(TEST_PROVIDER);
         assertEquals(mock, localize.getFormatter());
         assertEquals(sample, localize.getValue(TEST_KEY_GREET));
         assertEquals(sample, localize.getValue(() -> TEST_KEY_TEST));
