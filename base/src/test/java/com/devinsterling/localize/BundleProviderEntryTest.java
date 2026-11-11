@@ -56,7 +56,7 @@ public class BundleProviderEntryTest {
 
         entry1.remove();
         assertFalse(entry1.isActive());
-        assertNull(entry1.getBundle());
+        assertNotNull(entry1.getBundle());
         assertNull(localize.getProviderEntry(entry1.getKey()));
 
         entry1.remove();
@@ -69,7 +69,7 @@ public class BundleProviderEntryTest {
         entry2.remove();
 
         assertFalse(entry2.isActive());
-        assertNull(entry2.getBundle());
+        assertNotNull(entry2.getBundle());
         assertNull(localize.getProviderEntry(entry2.getKey()));
 
         Localize.ProviderEntry entry3 = localize.addProvider(TEST_PROVIDER);

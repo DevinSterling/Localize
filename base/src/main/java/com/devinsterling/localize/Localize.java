@@ -1435,8 +1435,8 @@ public class Localize {
         /// Returns the most recently computed resource bundle.
         ///
         /// ### Note
-        /// The returned bundle may be `null` if [LocalizeConfig#isIgnoreProviderExceptions()]
-        /// is set to `true` and the most recent fetch failed, or if this entry is [inactive][isActive].
+        /// The returned bundle may be `null` if the associated [provider][getProvider] returned `null`,
+        /// or [LocalizeConfig#isIgnoreProviderExceptions()] is set to `true` and the most recent fetch failed.
         ///
         /// @return Most recently computed resource bundle, or `null` if not available.
         public ResourceBundle getBundle() {
@@ -1513,7 +1513,6 @@ public class Localize {
         private synchronized void dispose() {
             committedLocaleVersion = committedTicket = Long.MAX_VALUE;
             root = null;
-            bundle = null;
         }
     }
 
