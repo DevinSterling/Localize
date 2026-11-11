@@ -1,7 +1,9 @@
 package com.devinsterling.localize;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -234,6 +236,8 @@ public interface LocalizationFormatter {
     ///
     /// Named arguments are converted to numbered arguments only [when named arguments are present][Arguments#isNamed].
     ///
+    /// The following characters are not allowed within named argument keys: `{`, `}`, `,`
+    ///
     /// #### Malformed Named Argument Syntax
     /// Nested or unclosed braces (e.g., `{x{y}}`, `{x} {y`) are not valid syntax.
     /// The underlying [MessageFormat] will throw an [IllegalArgumentException].
@@ -254,12 +258,14 @@ public interface LocalizationFormatter {
 
             Object[] positionalArguments = null;
 
-            if (hasArguments) {
+            // Check for '{' even if args are empty to avoid throwing if a named key is referenced
+            if (hasArguments || value.indexOf('{') >= 0) {
                 if (arguments.isPositional()) {
                     positionalArguments = arguments.toArray();
-                } else if (arguments.isNamed()) {
-                    positionalArguments = new Object[arguments.size()];
-                    value = convertToPositionalArgs(value, arguments.toNamedMap(), positionalArguments);
+                } else {
+                    List<Object> positional = new ArrayList<>(arguments.size());
+                    value = convertToPositionalArgs(value, arguments.toNamedMap(), positional);
+                    positionalArguments = positional.toArray();
                 }
             }
 
@@ -267,43 +273,47 @@ public interface LocalizationFormatter {
         }
 
         private static String convertToPositionalArgs(
-            String value,
-            Map<String, Object> mapArguments,
-            Object[] arguments
+            String raw,
+            Map<String, Object> source,
+            List<Object> arguments
         ) {
             Map<String, Integer> keyToIndex = new HashMap<>();
-            StringBuilder buf = new StringBuilder(value.length());
+            StringBuilder buf = new StringBuilder(raw.length());
             boolean isQuoted = false;
             int insertAt = 0;
             int start = -1;
 
-            for (int i = 0; i < value.length(); i++) {
-                char c = value.charAt(i);
+            for (int i = 0; i < raw.length(); i++) {
+                char c = raw.charAt(i);
 
                 if (start >= 0) switch (c) {
                     case '}', ',' -> {
-                        String key = value.substring(start, i);
+                        String key = checkBlank(raw.substring(start, i));
+                        start = -1;
                         // Before inserting, check if the key was visited before
                         Integer position = keyToIndex.get(key);
 
                         if (position == null) {
                             position = insertAt++;
                             keyToIndex.put(key, position);
-
-                            if (position < arguments.length) {
-                                arguments[position] = mapArguments.get(key);
-                            }
+                            // If the source does not contain the key, use a placeholder value
+                            arguments.add(source.containsKey(key) ? source.get(key) : "{" + key + "}");
                         }
-
                         buf.append(position);
-                        start = -1;
+
+                        // If the key is missing from the source, collapse the sub-pattern
+                        if (c == ',' && !source.containsKey(key)) {
+                            i = skipToMatchingClosingBrace(i, raw);
+                            buf.append("}");
+                            continue;
+                        }
                     }
                     // NOTE: If this case happens, it's a bug from the end-caller since `{0{1}}` is invalid syntax.
-                    //       `MessageFormat` will throw an exception once it receives the converted string.
-                    case '{' -> {
-                        buf.append(value, start, i);
-                        start = i + 1;
-                    }
+                    //       `MessageFormat` would throw if not thrown here.
+                    case '{' -> throw new IllegalArgumentException(
+                        "Can't parse argument at index " + (start - 1) +
+                        ": " + raw.substring(start, skipToMatchingClosingBrace(i, raw))
+                    );
                     default -> {
                         continue;
                     }
@@ -316,14 +326,47 @@ public interface LocalizationFormatter {
                 buf.append(c);
             }
 
-            // If there's an unclosed brace, add the content after
-            // NOTE: If this case happens, it's a bug from the end-caller since braces must be closed.
-            //       `MessageFormat` will throw an exception once it receives the converted string.
-            if (start > 0) {
-                buf.append(value, start, value.length());
-            }
+            // If there's an unclosed brace, throw an exception
+            throwIfMissingBrace(start > 0);
 
             return buf.toString();
+        }
+
+        private static int skipToMatchingClosingBrace(int i, String s) {
+            boolean isQuoted = false;
+            int depth = 1;
+
+            while (i < s.length()) {
+                char c = s.charAt(i);
+
+                if (c == '\'') {
+                    isQuoted = !isQuoted;
+                } else if (!isQuoted && c == '{') {
+                    depth++;
+                } else if (!isQuoted && c == '}' && --depth == 0) {
+                    break;
+                }
+                i++;
+            }
+
+            throwIfMissingBrace(isQuoted || depth > 0);
+
+            return i;
+        }
+
+        public static String checkBlank(String key) {
+            // Just like native positional arguments, throw if no argument reference is present (e.g., "{}", "{ }")
+            if (key.isBlank()) {
+                throw new IllegalArgumentException("Can't parse blank argument: {}");
+            }
+
+            return key;
+        }
+
+        public static void throwIfMissingBrace(boolean isMissingBrace) {
+            if (isMissingBrace) {
+                throw new IllegalArgumentException("Unmatched braces in the pattern.");
+            }
         }
     };
 }

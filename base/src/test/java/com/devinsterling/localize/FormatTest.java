@@ -41,11 +41,11 @@ public class FormatTest {
 
     @Test void testMissingNamedArguments() {
         Localize localize = Localize.of(Locale.ENGLISH);
-        String value = localize.format("{x} {y} {z}")
+        String value = localize.format("{x} {y, number, 0.00} {z}")
                 .arg("x", 0)
                 .value();
 
-        assertEquals("0 {1} {2}", value);
+        assertEquals("0 {y} {z}", value);
     }
 
     @Test void testUnescapeQuotes() {
@@ -56,20 +56,32 @@ public class FormatTest {
     }
 
     @MethodSource("formatFailCases")
-    @ParameterizedTest void testUnmatchedNamedBrace(FailCase testCase) {
+    @ParameterizedTest void testNamedArgumentsThrows(FailCase testCase) {
         Localize localize = Localize.of(Locale.ENGLISH);
         LocalizationValueBuilder<?> builder = localize.format(testCase.pattern).args(testCase.arguments);
 
-        // An exception will be thrown since the brace for `y` is not closed
         assertThrows(IllegalArgumentException.class, builder::value);
     }
 
     static Stream<FailCase> formatFailCases() {
         return Stream.of(
+            // Blank
+            new FailCase("{} {x}", Map.of("x", 0)),
+            new FailCase("{x} {  }", Map.of("x", 0)),
+            // First brace unclosed
             new FailCase("{y {x}", Map.of("x", 0, "y", 1)),
+            // Second brace unclosed
             new FailCase("{x} {y", Map.of("x", 0, "y", 1)),
+            // Nested braces
             new FailCase("{x{y}}", Map.of("x", 0, "y", 1)),
-            new FailCase("{x, number, {yx}", Map.of("x", 0))
+            // First brace unclosed for sub-pattern
+            new FailCase("{x, number, {yx}", Map.of("x", 0)),
+            // Unclosed skipped element
+            new FailCase("{m, choice, 0#x", Map.of("x", 1)),
+            // Inner brace unclosed
+            new FailCase("{m, choice, 0#{x}", Map.of("x", 1)),
+            // Stray quote in skipped element
+            new FailCase("{m, choice, 0# ' {x}} z", Map.of("x", 1))
         );
     }
 
@@ -83,13 +95,28 @@ public class FormatTest {
 
     static Stream<Case> formatSuccessCases() {
         return Stream.of(
+            new Case("it''s {missing}", "it's {missing}", Map.of()),
+            new Case("{missing} {x}", "{missing} 1", Map.of("x", 1)),
+            // Quoting
             new Case("{x} '''{ignored}''' {x}", "1 '{ignored}' 1", Map.of("x", 1)),
             new Case("{x} '{ignored}' {x}", "2 {ignored} 2", Map.of("x", 2)),
             new Case("{x} '{ignored} {x}'", "3 {ignored} {x}", Map.of("x", 3)),
             new Case("{x} '{ignored} {x}", "4 {ignored} {x}", Map.of("x", 4)),
             new Case("{x} '{x", "5 {x", Map.of("x", 5)),
+            // Escaped argument
             new Case("'{x}' {x}", "{x} 6", Map.of("x", 6)),
+            // Missing argument within sub-pattern
+            new Case("{x, choice, 0<{missing} y}", "{missing} y", Map.of("x", 1)),
+            // Missing typed element nested inside a present choice branch
+            new Case("{x, choice, 1<{missing, choice, 0#a} y}", "{missing} y", Map.of("x", 2)),
+            // Collapse dangling sup-pattern with an apostrophe and a nested key inside it
+            new Case("{missing, choice, 0#it''s {x}} y", "{missing} y", Map.of("x", 1)),
+            // Collapse dangling sup-pattern with nested quoted brace
+            new Case("{missing, choice, 0#'}'} y", "{missing} y", Map.of("x", 1)),
+            // Repeated missing key, simple and typed, sharing one slot
+            new Case("{z} {z, number}", "{z} {z}", Map.of("x", 1)),
             new Case("{x} {x, number} '{x, number}'", "7 7 {x, number}", Map.of("x", 7)),
+            // Mixed
             new Case(
                 "{x} {y} '{x} {y}' '{z}' a={a, number,0.00}",
                 "Doe 1,234 {x} {y} {z} a=9876.50",
