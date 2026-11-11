@@ -704,7 +704,7 @@ public class Localize {
     /// @throws NullPointerException If `key` or `provider` is `null`.
     /// @see putProvider(ProviderKey, String)
     /// @see addProvider(ResourceBundleProvider)
-    /// @see ProviderKey#of(String)
+    /// @see ProviderKey#of(Object)
     public ResourceBundleProvider putProvider(ProviderKey key, ResourceBundleProvider provider) {
         ProviderEntry entry = ProviderEntry.ofInactive(key, provider);
         ProviderEntry previous = insertProvider(entry);
@@ -723,7 +723,7 @@ public class Localize {
     /// @return                       Previous provider associated with `key`, or `null` if there was none.
     /// @throws NullPointerException If `key` or `resourceBundleBaseName` is `null`.
     /// @see addProvider(String)
-    /// @see ProviderKey#of(String)
+    /// @see ProviderKey#of(Object)
     /// @since 2.0
     public ResourceBundleProvider putProvider(ProviderKey key, String resourceBundleBaseName) {
         Objects.requireNonNull(resourceBundleBaseName, "resourceBundleBaseName name must not be null");
@@ -769,7 +769,7 @@ public class Localize {
     /// @param key Key of the provider to retrieve the entry for.
     /// @return    Provider entry or `null` if not present.
     /// @throws NullPointerException If `key` is `null`.
-    /// @see ProviderKey#of(String)
+    /// @see ProviderKey#of(Object)
     /// @since 2.0
     public ProviderEntry getProviderEntry(ProviderKey key) {
         return data.providers.get(Objects.requireNonNull(key, "key must not be null"));
@@ -780,7 +780,7 @@ public class Localize {
     /// @param key Key to check if the associated provider is present.
     /// @return    `true` if the associated provider is present.
     /// @throws NullPointerException If `key` is `null`.
-    /// @see ProviderKey#of(String)
+    /// @see ProviderKey#of(Object)
     /// @since 2.0
     public boolean containsProvider(ProviderKey key) {
         return data.providers.contains(Objects.requireNonNull(key, "key must not be null"));
@@ -791,7 +791,7 @@ public class Localize {
     /// @param key Key associated with the provider to remove.
     /// @return    The removed provider or `null` if the requested provider was not found.
     /// @throws NullPointerException if `key` is `null`.
-    /// @see ProviderKey#of(String)
+    /// @see ProviderKey#of(Object)
     public ResourceBundleProvider removeProvider(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
         ProviderEntry removed = data.providers.remove(key);
@@ -838,7 +838,7 @@ public class Localize {
     ///            Otherwise, `false` is returned if the provider was not found or superseded by a newer refresh.
     /// @throws NullPointerException If `key` is `null`.
     /// @see putProvider(ProviderKey, ResourceBundleProvider)
-    /// @see ProviderKey#of(String)
+    /// @see ProviderKey#of(Object)
     public boolean refreshProvider(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
         ProviderEntry entry = data.providers.get(key);
@@ -1230,7 +1230,7 @@ public class Localize {
     ///
     /// Keys are created using the static factory methods listed here:
     /// - [of()] to create a unique key.
-    /// - [of(String)] to create a string key.
+    /// - [of(Object)] to create a key from an object.
     ///
     /// @implSpec Implementations must ensure [Object#equals] and [Object#hashCode] are properly overridden, if needed.
     /// @see ProviderEntry
@@ -1241,37 +1241,40 @@ public class Localize {
         /// ### Example
         /// Comparing equality:
         /// ```java
-        /// Localize.ProviderKey a = Localize.ProviderKey.of();
-        /// Localize.ProviderKey b = Localize.ProviderKey.of();
+        /// ProviderKey a = ProviderKey.of();
+        /// ProviderKey b = ProviderKey.of();
         ///
         /// assert !a.equals(b);
         /// ```
         /// @return New unique key.
-        /// @see of(String)
+        /// @see of(Object)
         static ProviderKey of() {
             return new ProviderKey() {};
         }
 
-        /// Returns a wrapper over a string key.
+        /// Returns a wrapper around the given key object.
+        ///
+        /// [`equals`][Object#equals] and [`hashCode`][Object#hashCode]
+        /// are based on the wrapped object's implementation.
         ///
         /// ### Example
         /// Comparing equality:
         /// ```java
-        /// Localize.ProviderKey a = Localize.ProviderKey.of("foo");
-        /// Localize.ProviderKey b = Localize.ProviderKey.of("foo");
-        /// Localize.ProviderKey c = Localize.ProviderKey.of("bar");
+        /// ProviderKey a = ProviderKey.of("foo");
+        /// ProviderKey b = ProviderKey.of("foo");
+        /// ProviderKey c = ProviderKey.of("bar");
         ///
         /// assert a.equals(b); // true
         /// assert !b.equals(c);
         /// ```
-        /// @param key String key to wrap.
-        /// @return    Wrapped string key.
+        /// @param key Key object to wrap.
+        /// @return    Wrapped around `key`.
         /// @throws NullPointerException If `key` is `null`.
         /// @see of()
-        static ProviderKey of(String key) {
-            record NamedKey(String key) implements ProviderKey {
+        static ProviderKey of(Object key) {
+            record NamedKey(Object key) implements ProviderKey {
                 @Override public String toString() {
-                    return key;
+                    return key.toString();
                 }
             }
 
