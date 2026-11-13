@@ -41,8 +41,6 @@ Localize is designed to be straightforward to set up and use, simplifying intern
    );
    // Or without
    localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("i18n.sample", locale)));
-   // Or by resource bundle base name
-   localize.addProvider("i18n.sample");
    ``` 
 3. Retrieve localized values by key:
    ```java
@@ -145,7 +143,7 @@ Each time the `Button` is clicked or the `TextField` is edited,
 the associated localized values are updated:
 ```java
 LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-localize.addProvider("messages");
+localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("messages", locale)));
 
 DoubleProperty clickCount = new SimpleDoubleProperty();
 Label clickDetails = new Label();
@@ -189,7 +187,7 @@ Each time the `JButton` is clicked or the `JTextField` is edited,
 the associated localized values are updated:
 ```java
 LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
-localize.addProvider("messages");
+localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("messages", locale)));
 
 AtomicInteger clickCount = new AtomicInteger();
 JLabel clickDetails = new JLabel();

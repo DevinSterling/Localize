@@ -51,16 +51,6 @@ class LocalizeTest {
         assertEquals(2, entries.size());
     }
 
-    @Test void testPutProviderByBaseName() {
-        Localize localize = Localize.of();
-
-        // NOTE: these methods delegate to `putProvider(String, PatternSourceProvider)`
-        localize.putProvider(providerKey, TEST_PROVIDER_NAME);
-        localize.putProvider(providerKey, TEST2_PROVIDER_NAME);
-        localize.putProvider(otherKey, TEST2_PROVIDER_NAME);
-        assertEquals(2, localize.getProviderEntries().size());
-    }
-
     @Test void testAddProvider() {
         Localize localize = Localize.of();
         Collection<Localize.ProviderEntry> entries = localize.getProviderEntries();
@@ -74,15 +64,6 @@ class LocalizeTest {
 
         localize.putProvider(entry2.getKey(), TEST_PROVIDER);
         assertEquals(1, entries.size());
-    }
-
-    @Test void testAddProviderByBaseName() {
-        Localize localize = Localize.of();
-
-        // NOTE: these methods delegate to `addProvider(PatternSourceProvider)`
-        localize.addProvider(TEST_PROVIDER_NAME);
-        localize.addProvider(TEST2_PROVIDER_NAME);
-        assertEquals(2, localize.getProviderEntries().size());
     }
 
     @Test void testPutNullReturningProvider() {

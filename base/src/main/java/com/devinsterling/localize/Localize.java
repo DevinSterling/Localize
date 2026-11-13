@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Objects;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
@@ -72,11 +71,9 @@ import java.util.function.Function;
 /// 1 <are {num_people} people} on {location}.
 /// ```
 ///
-/// The following localization files may be called as such:
+/// The resource file is accessed as such by using [PatternSource]:
 /// ```java
 /// Localize localize = Localize.of();
-/// localize.addProvider("sample.message");
-/// // Or alternatively for more control
 /// localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("sample.message", locale)));
 ///
 /// // We may now change the locale a number of times.
@@ -702,32 +699,12 @@ public class Localize {
     /// @param provider Provider called upon calling refresh to fetch a [PatternSource] instance.
     /// @return         Previous provider associated with `key`, or `null` if there was none.
     /// @throws NullPointerException If `key` or `provider` is `null`.
-    /// @see putProvider(ProviderKey, String)
     /// @see addProvider(PatternSourceProvider)
     /// @see ProviderKey#of(Object)
     public PatternSourceProvider putProvider(ProviderKey key, PatternSourceProvider provider) {
         ProviderEntry entry = ProviderEntry.ofInactive(key, provider);
         ProviderEntry previous = insertProvider(entry);
         return previous != null ? previous.getProvider() : null;
-    }
-
-    /// Shorthand for [putProvider(ProviderKey, PatternSourceProvider)]
-    /// using [ResourceBundle#getBundle(String)].
-    ///
-    /// This is a convenience method, equivalent to calling:
-    /// ```java
-    /// putProvider(key, locale -> PatternSource.of(ResourceBundle.getBundle(baseName, locale)));
-    /// ```
-    /// @param key                    Key associated with `provider`.
-    /// @param resourceBundleBaseName The base name of a [ResourceBundle].
-    /// @return                       Previous provider associated with `key`, or `null` if there was none.
-    /// @throws NullPointerException If `key` or `resourceBundleBaseName` is `null`.
-    /// @see addProvider(String)
-    /// @see ProviderKey#of(Object)
-    /// @since 2.0
-    public PatternSourceProvider putProvider(ProviderKey key, String resourceBundleBaseName) {
-        Objects.requireNonNull(resourceBundleBaseName, "resourceBundleBaseName name must not be null");
-        return putProvider(key, locale -> PatternSource.of(ResourceBundle.getBundle(resourceBundleBaseName, locale)));
     }
 
     /// Adds the given provider and returns the associated provider entry.
@@ -738,30 +715,12 @@ public class Localize {
     /// @param provider Provider called upon calling refresh to get a ResourceBundle instance.
     /// @return         The provider entry, if needed.
     /// @throws NullPointerException If `provider` is `null`.
-    /// @see addProvider(String)
     /// @see putProvider(ProviderKey, PatternSourceProvider)
     /// @since 1.3
     public ProviderEntry addProvider(PatternSourceProvider provider) {
         ProviderEntry entry = ProviderEntry.ofInactive(ProviderKey.of(), provider);
         insertProvider(entry);
         return entry;
-    }
-
-    /// Shorthand for [addProvider(PatternSourceProvider)] using [ResourceBundle#getBundle(String)].
-    ///
-    /// This is a convenience method, equivalent to calling:
-    /// ```java
-    /// addProvider(locale -> PatternSource.of(ResourceBundle.getBundle(baseName, locale)));
-    /// ```
-    /// @param resourceBundleBaseName The base name of a [ResourceBundle].
-    /// @return                       The provider entry, if needed.
-    /// @throws NullPointerException If `resourceBundleBaseName` is `null`.
-    /// @see addProvider(PatternSourceProvider)
-    /// @see putProvider(ProviderKey, String)
-    /// @since 2.0
-    public ProviderEntry addProvider(String resourceBundleBaseName) {
-        Objects.requireNonNull(resourceBundleBaseName, "resourceBundleBaseName name must not be null");
-        return addProvider(locale -> PatternSource.of(ResourceBundle.getBundle(resourceBundleBaseName, locale)));
     }
 
     /// Returns the entry associated with the given key, or `null` if not present.

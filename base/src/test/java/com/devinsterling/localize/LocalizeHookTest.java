@@ -82,13 +82,13 @@ public class LocalizeHookTest {
 
         assertEquals(0, counter.get());
 
-        Localize.ProviderEntry entry1 = localize.addProvider(TEST_PROVIDER_NAME);
+        Localize.ProviderEntry entry1 = localize.addProvider(TEST_PROVIDER);
         assertEquals(1, counter.get());
 
         localize.addProvider(TEST_PROVIDER);
         localize.putProvider(key, TEST2_PROVIDER);
-        localize.putProvider(key, TEST2_PROVIDER_NAME);
-        localize.putProvider(key2, TEST_PROVIDER);
+        localize.putProvider(key, TEST_PROVIDER);
+        localize.putProvider(key2, TEST2_PROVIDER);
         assertEquals(5, counter.get());
 
         localize.removeProvider(nonExistentKey);

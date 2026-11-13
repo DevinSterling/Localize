@@ -1,6 +1,7 @@
 package com.devinsterling.localize.example;
 
 import com.devinsterling.localize.PatternSource;
+import com.devinsterling.localize.PatternSourceProvider;
 import com.devinsterling.localize.swing.LocalizeSwing;
 import com.devinsterling.localize.swing.Trigger;
 
@@ -18,9 +19,12 @@ public class Example {
     public static final LocalizeSwing LOCALIZE = LocalizeSwing.of(Locale.ENGLISH);
 
     static {
-        LOCALIZE.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("messages", locale)));
-        // Alternatively, reference a resource bundle by the base name directly.
-        LOCALIZE.addProvider("demo");
+        LOCALIZE.addProvider(bundleProvider("messages"));
+        LOCALIZE.addProvider(bundleProvider("demo"));
+    }
+
+    private static PatternSourceProvider bundleProvider(String baseName) {
+        return locale -> PatternSource.of(ResourceBundle.getBundle(baseName, locale));
     }
 
     public static void main(String[] args) {

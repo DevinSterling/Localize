@@ -25,8 +25,6 @@
 ///     );
 ///    // Or without
 ///    localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("i18n.sample", locale)));
-///    // Or by resource bundle base name
-///    localize.addProvider("i18n.sample");
 ///    ```
 /// 3. Retrieve localized values by key:
 ///    ```java

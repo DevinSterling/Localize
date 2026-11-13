@@ -1,5 +1,6 @@
 package com.devinsterling.localize.example;
 
+import com.devinsterling.localize.PatternSource;
 import com.devinsterling.localize.fx.LocalizeFX;
 
 import javafx.application.Application;
@@ -15,12 +16,13 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.Locale;
+import java.util.ResourceBundle;
 
 public class ClickCount extends Application {
 
     @Override public void start(Stage stage) {
         LocalizeFX localize = LocalizeFX.of(Locale.ENGLISH);
-        localize.addProvider("messages");
+        localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("messages", locale)));
 
         // Properties
         DoubleProperty clickCount = new SimpleDoubleProperty();

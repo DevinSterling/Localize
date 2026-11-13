@@ -12,7 +12,7 @@
 /// the associated localized values are updated:
 /// ```java
 /// LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
-/// localize.addProvider("messages");
+/// localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("messages", locale)));
 ///
 /// AtomicInteger clickCount = new AtomicInteger();
 /// JLabel clickDetails = new JLabel();

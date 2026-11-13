@@ -45,7 +45,7 @@ import java.util.Locale;
 /// JavaFX code:
 /// ```java
 /// LocalizeFX localize = LocalizeFX.of();
-/// localize.addProvider("messages");
+/// localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("messages", locale)));
 ///
 /// Button button = new Button();
 /// Label label = new Label();

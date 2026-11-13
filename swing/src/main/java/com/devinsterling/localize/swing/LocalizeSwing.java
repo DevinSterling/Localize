@@ -45,7 +45,7 @@ import java.util.Locale;
 /// Swing code:
 /// ```java
 /// LocalizeSwing localize = LocalizeSwing.of();
-/// localize.addProvider("messages");
+/// localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("messages", locale)));
 ///
 /// JButton button = new JButton();
 /// JLabel label = new JLabel();
@@ -143,9 +143,6 @@ public class LocalizeSwing extends Localize {
     /// call [Subscription#dispose] or [removePropertyChangeListener]:
     ///
     /// ```java
-    /// LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
-    /// localize.addProvider("sample.messages");
-    ///
     /// PropertyChangeListener listener = event -> {
     ///     System.out.println("New locale: " + event.getNewValue());
     /// };
@@ -205,9 +202,6 @@ public class LocalizeSwing extends Localize {
     /// call [Subscription#dispose] or [removeLocaleListener]:
     ///
     /// ```java
-    /// LocalizeSwing localize = LocalizeSwing.of(Locale.ENGLISH);
-    /// localize.addProvider("sample.messages");
-    ///
     /// LocaleChangeListener listener = (oldLocale, newLocale) -> {
     ///     System.out.println("New locale: " +  newLocale);
     /// };
