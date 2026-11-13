@@ -2,12 +2,12 @@ package com.devinsterling.localize.event;
 
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
-import com.devinsterling.localize.ResourceBundleProvider;
+import com.devinsterling.localize.PatternSourceProvider;
 
 import java.util.List;
 import java.util.Locale;
 
-/// An [event][LocalizeEvent] associated with one or more [ResourceBundleProvider]s.
+/// An [event][LocalizeEvent] associated with one or more [PatternSourceProvider]s.
 ///
 /// ### Events
 /// - [Added]
@@ -39,8 +39,8 @@ import java.util.Locale;
 public interface ProviderEvent extends LocalizeEvent {
     /// An event indicating that a single entry was added.
     ///
-    /// @see Localize#putProvider(Localize.ProviderKey, ResourceBundleProvider)
-    /// @see Localize#addProvider(ResourceBundleProvider)
+    /// @see Localize#putProvider(Localize.ProviderKey, PatternSourceProvider)
+    /// @see Localize#addProvider(PatternSourceProvider)
     interface Added extends ProviderEvent {
         /// Returns the added entry.
         ///
@@ -50,7 +50,7 @@ public interface ProviderEvent extends LocalizeEvent {
 
     /// An event indicating that a single entry was replaced.
     ///
-    /// @see Localize#putProvider(Localize.ProviderKey, ResourceBundleProvider)
+    /// @see Localize#putProvider(Localize.ProviderKey, PatternSourceProvider)
     /// @see Localize.ProviderEntry#remove
     interface Replaced extends ProviderEvent {
         /// Returns the old entry.
@@ -107,7 +107,7 @@ public interface ProviderEvent extends LocalizeEvent {
     }
 
     /// An event indicating that an unexpected [Exception] was
-    /// [caught][getException] while calling [ResourceBundleProvider#getBundle].
+    /// [caught][getException] while calling [PatternSourceProvider#provide].
     ///
     /// This event is propagated regardless of whether
     /// [LocalizeConfig#isIgnoreProviderExceptions()] is toggled or not.
@@ -121,11 +121,11 @@ public interface ProviderEvent extends LocalizeEvent {
         /// Returns the provider where the [unexpected exception][getException] occurred from.
         ///
         /// @return Source provider.
-        default ResourceBundleProvider getProvider() {
+        default PatternSourceProvider getProvider() {
             return getEntry().getProvider();
         }
 
-        /// Returns the locale passed to [ResourceBundleProvider#getBundle].
+        /// Returns the locale passed to [PatternSourceProvider#provide].
         ///
         /// @return Source locale.
         Locale getLocale();

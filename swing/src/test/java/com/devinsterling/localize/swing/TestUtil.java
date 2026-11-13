@@ -1,14 +1,18 @@
 package com.devinsterling.localize.swing;
 
-import com.devinsterling.localize.ResourceBundleProvider;
+import com.devinsterling.localize.PatternSource;
+import com.devinsterling.localize.PatternSourceProvider;
 
 import java.lang.ref.WeakReference;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 public final class TestUtil {
-    public static final ResourceBundleProvider TEST_PROVIDER = locale -> ResourceBundle.getBundle("test", locale);
-    public static final ResourceBundleProvider TEST2_PROVIDER = locale -> ResourceBundle.getBundle("test2", locale);
+    public static final PatternSourceProvider TEST_PROVIDER =
+        locale -> PatternSource.of(ResourceBundle.getBundle("test", locale));
+    public static final PatternSourceProvider TEST2_PROVIDER =
+        locale -> PatternSource.of(ResourceBundle.getBundle("test2", locale));
+
     public static final String TEST_KEY_CLICK_ME = "MyApp.clickMe";
     public static final String TEST_KEY_CLICK_LABEL = "MyApp.clickLabel";
     public static final String TEST_KEY_PRINT = "MyApp.print";

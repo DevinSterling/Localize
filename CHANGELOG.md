@@ -115,6 +115,8 @@ As new modules introduced in 2.0, see their documentation for more info:
 - Replace `LocalizationValueBuilder#getDefaultValue` with `#getMissingValueHandler`.
 - Replace `LocalizationRequest#getDefaultValue` with `#getMissingValueHandler`.
 - Replace `LocalizationRequest.Builder#defaultValue` with `#missingValueHandler`.
+- Replace `ResourceBundleProvider` with `PatternSourceProvider`
+- Replace `ResourceBundleProvider#getBundle` with `PatternSourceProvider#provide`, and change return type to `PatternSource`.
 
 ## 1.3.0 (2026-08-03)
 ### Additions　**＋**

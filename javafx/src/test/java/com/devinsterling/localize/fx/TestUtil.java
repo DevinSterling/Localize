@@ -1,7 +1,7 @@
 package com.devinsterling.localize.fx;
 
-import com.devinsterling.localize.Localize;
-import com.devinsterling.localize.ResourceBundleProvider;
+import com.devinsterling.localize.PatternSource;
+import com.devinsterling.localize.PatternSourceProvider;
 
 import javafx.application.Platform;
 
@@ -12,8 +12,11 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TestUtil {
-    public static final ResourceBundleProvider TEST_PROVIDER = locale -> ResourceBundle.getBundle("test", locale);
-    public static final ResourceBundleProvider TEST2_PROVIDER = locale -> ResourceBundle.getBundle("test2", locale);
+    public static final PatternSourceProvider TEST_PROVIDER =
+        locale -> PatternSource.of(ResourceBundle.getBundle("test", locale));
+    public static final PatternSourceProvider TEST2_PROVIDER =
+        locale -> PatternSource.of(ResourceBundle.getBundle("test2", locale));
+
     public static final String TEST_KEY_CLICK_ME = "MyApp.clickMe";
     public static final String TEST_KEY_CLICK_LABEL = "MyApp.clickLabel";
     private static final String DEFAULT_VALUE = "";

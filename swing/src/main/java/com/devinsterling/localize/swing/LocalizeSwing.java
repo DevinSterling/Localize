@@ -344,7 +344,7 @@ public class LocalizeSwing extends Localize {
     /// The component's text is automatically updated whenever a refresh occurs or the locale changes.
     /// For a list of supported components, see [SwingLocalizationValueBuilder#bind(Component)].
     ///
-    /// @param key       Resource bundle key associated with the value to bind.
+    /// @param key       Resource key associated with the value to bind.
     /// @param component Component to bind.
     /// @return          Weak string binding. **(Usage is optional)**
     /// @throws NullPointerException If `component` is null.
@@ -361,7 +361,7 @@ public class LocalizeSwing extends Localize {
     ///
     /// **This method is intended to be called on the Swing UI (EDT) thread only.**
     ///
-    /// @param key       Resource bundle key associated with the value to bind.
+    /// @param key       Resource key associated with the value to bind.
     /// @param component Component to bind.
     /// @return          Weak string binding. **(Usage is optional)**
     /// @throws NullPointerException If `component` is null.
@@ -377,7 +377,7 @@ public class LocalizeSwing extends Localize {
     ///
     /// Component tooltip text is automatically updated whenever a refresh occurs or the locale changes.
     ///
-    /// @param key       Resource bundle key associated with the value to bind.
+    /// @param key       Resource key associated with the value to bind.
     /// @param component Component to bind.
     /// @return          Weak string binding. **(Usage is optional)**
     /// @throws NullPointerException If `component` is null.
@@ -391,7 +391,7 @@ public class LocalizeSwing extends Localize {
     ///
     /// **This method is intended to be called on the Swing UI (EDT) thread only.**
     ///
-    /// @param key       Resource bundle key associated with the value to bind.
+    /// @param key       Resource key associated with the value to bind.
     /// @param component Component to bind.
     /// @return          Weak string binding. **(Usage is optional)**
     /// @throws NullPointerException If `component` is null.

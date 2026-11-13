@@ -77,7 +77,7 @@ import java.util.function.Function;
 /// Localize localize = Localize.of();
 /// localize.addProvider("sample.message");
 /// // Or alternatively for more control
-/// localize.addProvider(locale -> ResourceBundle.getBundle("sample.message", locale));
+/// localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("sample.message", locale)));
 ///
 /// // We may now change the locale a number of times.
 /// localize.setLocale(Locale.CHINESE);
@@ -499,7 +499,7 @@ public class Localize {
     /// When multiple [setLocale] calls overlap, the most recent call takes priority.
     /// If the call fails due to a faulty provider, priority falls back to the most recent successful call.
     ///
-    /// @param locale Locale to fetch associated resource bundles.
+    /// @param locale New locale.
     /// @throws NullPointerException If locale is `null`.
     /// @see LocalizeConfig#setIgnoreProviderExceptions
     public void setLocale(Locale locale) {
@@ -509,15 +509,15 @@ public class Localize {
             return;
         }
 
-        SetLocalePendingBundles pending = new SetLocalePendingBundles(data.providers.providers.size());
+        SetLocalePendingSources pending = new SetLocalePendingSources(data.providers.providers.size());
         LocaleState.Snapshot snapshot = null;
 
         while (snapshot == null) {
-            // Fetch new bundles for each provider
+            // Fetch new pattern sources for each provider
             for (ProviderEntry entry : data.providers) {
                 if (pending.covered.add(entry)) {
-                    ResourceBundle bundle = getResourceBundle(LocalizeEvent.Cause.LOCALE_CHANGE, entry, locale);
-                    pending.refreshed.temp.add(new SetLocalePendingBundles.FetchedBundle(entry, bundle));
+                    PatternSource source = getPatternSource(LocalizeEvent.Cause.LOCALE_CHANGE, entry, locale);
+                    pending.refreshed.temp.add(new SetLocalePendingSources.FetchedSource(entry, source));
                 }
             }
 
@@ -530,10 +530,10 @@ public class Localize {
         }
     }
 
-    private LocaleState.Snapshot tryCommitLocale(long ticket, Locale locale, SetLocalePendingBundles pending) {
+    private LocaleState.Snapshot tryCommitLocale(long ticket, Locale locale, SetLocalePendingSources pending) {
         // NOTE: Inserts also hold this lock, so every entry inserted prior is visible below
         synchronized (data.localeChangeLock) {
-            // Recheck for providers inserted right before acquiring the lock as their bundles may be stale
+            // Recheck for providers inserted right before acquiring the lock as their pattern sources may be stale
             for (ProviderEntry entry : data.providers) {
                 if (entry.isActive() && !pending.covered.contains(entry)) {
                     return null;
@@ -547,10 +547,10 @@ public class Localize {
             }
 
             // Finalize; commit changes
-            for (SetLocalePendingBundles.FetchedBundle entry : pending.refreshed.temp) {
+            for (SetLocalePendingSources.FetchedSource entry : pending.refreshed.temp) {
                 ProviderEntry providerEntry = entry.provider;
 
-                if (providerEntry.tryCommit(snapshot.version, ticket, entry.bundle)) {
+                if (providerEntry.tryCommit(snapshot.version, ticket, entry.source)) {
                     pending.refreshed.refreshed.add(providerEntry);
                 }
             }
@@ -576,15 +576,15 @@ public class Localize {
     ///
     /// @param covered Keeps track of which providers have been refreshed for O(1) coverage lookups.
     /// @param refreshed Stores all providers that have been refreshed.
-    private record SetLocalePendingBundles(Set<ProviderEntry> covered, RefreshedProviders<FetchedBundle> refreshed) {
-        public SetLocalePendingBundles(int sizeHint) {
+    private record SetLocalePendingSources(Set<ProviderEntry> covered, RefreshedProviders<FetchedSource> refreshed) {
+        public SetLocalePendingSources(int sizeHint) {
             this(
                 Collections.newSetFromMap(new IdentityHashMap<>(sizeHint)),
                 new RefreshedProviders<>(sizeHint)
             );
         }
 
-        record FetchedBundle(ProviderEntry provider, ResourceBundle bundle) {}
+        record FetchedSource(ProviderEntry provider, PatternSource source) {}
     }
 
     /// Returns the current locale.
@@ -641,16 +641,16 @@ public class Localize {
         ProviderEntry previous;
 
         // If the locale changes between the snapshot and provider insertion,
-        // "refresh" to ensure the bundle matches the current locale.
+        // "refresh" to ensure the pattern source matches the current locale.
         while (true) {
             LocaleState.Snapshot snapshot = data.locale.snapshot();
-            entry.bundle = getResourceBundle(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
+            entry.patternSource = getPatternSource(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
 
             // NOTE: The locale does not change under this lock
             synchronized (data.localeChangeLock) {
                 if (data.locale.isCurrent(snapshot)) {
-                    // Insert after retrieving the bundle.
-                    // If an exception occurs from `getResourceBundle`, the faulty provider is not inserted.
+                    // Insert after retrieving the pattern source.
+                    // If an exception occurs from `getPatternSource`, the faulty provider is not inserted.
                     entry.activate(this);
                     previous = data.providers.put(entry);
                     break;
@@ -669,7 +669,7 @@ public class Localize {
 
     /// Adds the given provider to retrieve localized values from.
     ///
-    /// The provider is called each time the locale changes to fetch the corresponding [ResourceBundle].
+    /// The provider is called each time the locale changes to fetch the corresponding [PatternSource].
     ///
     /// ### Precedence
     /// Providers are prioritized in the order they are added.
@@ -685,13 +685,13 @@ public class Localize {
     /// Localize.ProviderKey key2 = Localize.ProviderKey.of("myKey2");
     ///
     /// localize.putProvider(key, locale -> {
-    ///     return ResourceBundle.getBundle("i18n.messages", locale);
+    ///     return PatternSource.of(ResourceBundle.getBundle("i18n.messages", locale));
     /// });
     ///
     /// // Has lower priority than the provider put first
     /// // (i.e., Localized value requests)
     /// localize.putProvider(key2, locale -> {
-    ///     return ResourceBundle.getBundle("i18n.other", locale);
+    ///     return PatternSource.of(ResourceBundle.getBundle("i18n.other", locale));
     /// });
     ///
     /// // Removal
@@ -699,24 +699,24 @@ public class Localize {
     /// ```
     ///
     /// @param key      Key associated with `provider`.
-    /// @param provider Provider called upon calling refresh to get a ResourceBundle instance.
+    /// @param provider Provider called upon calling refresh to fetch a [PatternSource] instance.
     /// @return         Previous provider associated with `key`, or `null` if there was none.
     /// @throws NullPointerException If `key` or `provider` is `null`.
     /// @see putProvider(ProviderKey, String)
-    /// @see addProvider(ResourceBundleProvider)
+    /// @see addProvider(PatternSourceProvider)
     /// @see ProviderKey#of(Object)
-    public ResourceBundleProvider putProvider(ProviderKey key, ResourceBundleProvider provider) {
+    public PatternSourceProvider putProvider(ProviderKey key, PatternSourceProvider provider) {
         ProviderEntry entry = ProviderEntry.ofInactive(key, provider);
         ProviderEntry previous = insertProvider(entry);
         return previous != null ? previous.getProvider() : null;
     }
 
-    /// Shorthand for [putProvider(ProviderKey, ResourceBundleProvider)]
+    /// Shorthand for [putProvider(ProviderKey, PatternSourceProvider)]
     /// using [ResourceBundle#getBundle(String)].
     ///
     /// This is a convenience method, equivalent to calling:
     /// ```java
-    /// putProvider(key, locale -> ResourceBundle.getBundle(baseName, locale));
+    /// putProvider(key, locale -> PatternSource.of(ResourceBundle.getBundle(baseName, locale)));
     /// ```
     /// @param key                    Key associated with `provider`.
     /// @param resourceBundleBaseName The base name of a [ResourceBundle].
@@ -725,43 +725,43 @@ public class Localize {
     /// @see addProvider(String)
     /// @see ProviderKey#of(Object)
     /// @since 2.0
-    public ResourceBundleProvider putProvider(ProviderKey key, String resourceBundleBaseName) {
+    public PatternSourceProvider putProvider(ProviderKey key, String resourceBundleBaseName) {
         Objects.requireNonNull(resourceBundleBaseName, "resourceBundleBaseName name must not be null");
-        return putProvider(key, locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
+        return putProvider(key, locale -> PatternSource.of(ResourceBundle.getBundle(resourceBundleBaseName, locale)));
     }
 
     /// Adds the given provider and returns the associated provider entry.
     ///
-    /// This method is equivalent to [putProvider(ProviderKey, ResourceBundleProvider)]
+    /// This method is equivalent to [putProvider(ProviderKey, PatternSourceProvider)]
     /// without the need to manually specify a key.
     ///
     /// @param provider Provider called upon calling refresh to get a ResourceBundle instance.
     /// @return         The provider entry, if needed.
     /// @throws NullPointerException If `provider` is `null`.
     /// @see addProvider(String)
-    /// @see putProvider(ProviderKey, ResourceBundleProvider)
+    /// @see putProvider(ProviderKey, PatternSourceProvider)
     /// @since 1.3
-    public ProviderEntry addProvider(ResourceBundleProvider provider) {
+    public ProviderEntry addProvider(PatternSourceProvider provider) {
         ProviderEntry entry = ProviderEntry.ofInactive(ProviderKey.of(), provider);
         insertProvider(entry);
         return entry;
     }
 
-    /// Shorthand for [addProvider(ResourceBundleProvider)] using [ResourceBundle#getBundle(String)].
+    /// Shorthand for [addProvider(PatternSourceProvider)] using [ResourceBundle#getBundle(String)].
     ///
     /// This is a convenience method, equivalent to calling:
     /// ```java
-    /// addProvider(locale -> ResourceBundle.getBundle(baseName, locale));
+    /// addProvider(locale -> PatternSource.of(ResourceBundle.getBundle(baseName, locale)));
     /// ```
     /// @param resourceBundleBaseName The base name of a [ResourceBundle].
     /// @return                       The provider entry, if needed.
     /// @throws NullPointerException If `resourceBundleBaseName` is `null`.
-    /// @see addProvider(ResourceBundleProvider)
+    /// @see addProvider(PatternSourceProvider)
     /// @see putProvider(ProviderKey, String)
     /// @since 2.0
     public ProviderEntry addProvider(String resourceBundleBaseName) {
         Objects.requireNonNull(resourceBundleBaseName, "resourceBundleBaseName name must not be null");
-        return addProvider(locale -> ResourceBundle.getBundle(resourceBundleBaseName, locale));
+        return addProvider(locale -> PatternSource.of(ResourceBundle.getBundle(resourceBundleBaseName, locale)));
     }
 
     /// Returns the entry associated with the given key, or `null` if not present.
@@ -786,13 +786,13 @@ public class Localize {
         return data.providers.contains(Objects.requireNonNull(key, "key must not be null"));
     }
 
-    /// Removes the [ResourceBundleProvider] associated with the given key.
+    /// Removes the [PatternSourceProvider] associated with the given key.
     ///
     /// @param key Key associated with the provider to remove.
     /// @return    The removed provider or `null` if the requested provider was not found.
     /// @throws NullPointerException if `key` is `null`.
     /// @see ProviderKey#of(Object)
-    public ResourceBundleProvider removeProvider(ProviderKey key) {
+    public PatternSourceProvider removeProvider(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
         ProviderEntry removed = data.providers.remove(key);
 
@@ -823,10 +823,10 @@ public class Localize {
         return isAnyRemoved;
     }
 
-    /// Triggers a refresh by fetching a new [ResourceBundle] from
-    /// the [ResourceBundleProvider] associated with the given key.
+    /// Triggers a refresh by fetching a new [PatternSource] from
+    /// the [PatternSourceProvider] associated with the given key.
     ///
-    /// Useful for reloading a specific bundle from an external source (e.g., disk)
+    /// Useful for reloading a specific [PatternSource] from an external source (e.g., disk)
     /// after its contents have changed during runtime.
     ///
     /// ### Concurrency
@@ -837,7 +837,7 @@ public class Localize {
     /// @return    `true` if the provider was refreshed.
     ///            Otherwise, `false` is returned if the provider was not found or superseded by a newer refresh.
     /// @throws NullPointerException If `key` is `null`.
-    /// @see putProvider(ProviderKey, ResourceBundleProvider)
+    /// @see putProvider(ProviderKey, PatternSourceProvider)
     /// @see ProviderKey#of(Object)
     public boolean refreshProvider(ProviderKey key) {
         Objects.requireNonNull(key, "key must not be null");
@@ -851,14 +851,14 @@ public class Localize {
         return isRefreshed;
     }
 
-    /// Triggers all providers to refresh and fetch new [ResourceBundle] instances.
+    /// Triggers all providers to refresh and fetch new [PatternSource] instances.
     /// Returns `true` if any providers were refreshed.
     ///
-    /// Useful for reloading bundles from external sources (e.g., disk)
+    /// Useful for reloading [pattern sources][PatternSource] from external sources (e.g., disk)
     /// after their contents have changed during runtime.
     ///
     /// ### Exception Handling
-    /// If a faulty [ResourceBundleProvider] throws an unexpected [RuntimeException],
+    /// If a faulty [PatternSourceProvider] throws an unexpected [RuntimeException],
     /// refreshing continues for all subsequent providers and listeners.
     /// If [exceptions are not ignored][LocalizeConfig#isIgnoreProviderExceptions()],
     /// the first exception is rethrown with any subsequent added as suppressed.
@@ -866,7 +866,7 @@ public class Localize {
     ///
     /// @return `true` if any providers were refreshed, or `false` if none were refreshed.
     public boolean refreshProviders() {
-        record VersionEntryBundle(ProviderEntry entry, ResourceBundle bundle) {}
+        record VersionEntryBundle(ProviderEntry entry, PatternSource source) {}
 
         RuntimeException aggregate = null;
         LocalizeEvent.Cause cause = LocalizeEvent.Cause.DIRECT;
@@ -882,18 +882,18 @@ public class Localize {
             }
 
             try {
-                ResourceBundle bundle = getResourceBundle(cause, entry, snapshot.current);
-                refreshedProviders.temp.add(new VersionEntryBundle(entry, bundle));
+                PatternSource source = getPatternSource(cause, entry, snapshot.current);
+                refreshedProviders.temp.add(new VersionEntryBundle(entry, source));
             } catch (RuntimeException e) {
                 aggregate = ExceptionHelper.aggregate(aggregate, e);
             }
         }
 
-        // Apply the new bundles
+        // Apply the new pattern sources
         for (VersionEntryBundle versionEntryBundle : refreshedProviders.temp) {
             ProviderEntry entry = versionEntryBundle.entry;
 
-            if (entry.tryCommit(snapshot.version, ticket, versionEntryBundle.bundle)) {
+            if (entry.tryCommit(snapshot.version, ticket, versionEntryBundle.source)) {
                 refreshedProviders.refreshed.add(entry);
             }
         }
@@ -954,7 +954,7 @@ public class Localize {
     ///
     /// assert value.equals("Hello John Doe!");
     /// ```
-    /// @param key Resource bundle key associated with the value to retrieve.
+    /// @param key Resource key associated with the value to retrieve.
     /// @return    **Non-thread-safe** builder instance to format the requested value.
     /// @throws NullPointerException If `key` is `null`.
     /// @see LocalizationValueBuilder#value
@@ -967,7 +967,7 @@ public class Localize {
     ///
     /// This method is equivalent to [get(String)].
     ///
-    /// @param key Resource bundle key associated with the value to retrieve.
+    /// @param key Resource key associated with the value to retrieve.
     /// @return    **Non-thread-safe** builder instance to format the requested value.
     /// @throws NullPointerException If `key` is `null`.
     /// @see LocalizationValueBuilder#value
@@ -975,22 +975,22 @@ public class Localize {
         return get(key.getKey());
     }
 
-    /// Retrieves the value associated with the given resource bundle key.
+    /// Retrieves the value associated with the given resource key.
     ///
-    /// @param key Resource bundle key associated with the value to retrieve.
-    /// @return    Resource bundle value or the [default value][LocalizeConfig#getMissingValueHandler] if not found.
+    /// @param key Resource key associated with the value to retrieve.
+    /// @return    Resource value or the [default value][LocalizeConfig#getMissingValueHandler] if not found.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(LocalizationKey)
     public String getValue(String key) {
         return formatValue(LocalizationRequest.ofKey(key));
     }
 
-    /// Retrieves the value associated with the given resource bundle key.
+    /// Retrieves the value associated with the given resource key.
     ///
     /// This method is equivalent to [getValue(String)].
     ///
-    /// @param key Resource bundle key associated with the value to retrieve.
-    /// @return    Resource bundle value or the [default value][LocalizeConfig#getMissingValueHandler] if not found.
+    /// @param key Resource key associated with the value to retrieve.
+    /// @return    Resource value or the [default value][LocalizeConfig#getMissingValueHandler] if not found.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(String)
     public String getValue(LocalizationKey key) {
@@ -998,7 +998,7 @@ public class Localize {
     }
 
     /// Returns an unmodifiable live view of all provider entries,
-    /// ordered by their [priority][putProvider(ProviderKey, ResourceBundleProvider)].
+    /// ordered by their [priority][putProvider(ProviderKey, PatternSourceProvider)].
     ///
     /// @return Unmodifiable live view of all entries.
     /// @since 2.0
@@ -1006,14 +1006,14 @@ public class Localize {
         return data.providers.unmodifiableView;
     }
 
-    /// Returns all contained resource bundles.
+    /// Returns all contained pattern sources.
     ///
-    /// @return Immutable snapshot of all resource bundles at the time of calling.
-    public Collection<ResourceBundle> getResourceBundles() {
+    /// @return Immutable snapshot of all pattern sources at the time of calling.
+    public Collection<PatternSource> getPatternSources() {
         return data.providers
                    .unmodifiableView
                    .stream()
-                   .map(ProviderEntry::getBundle)
+                   .map(ProviderEntry::getPatternSource)
                    .filter(Objects::nonNull)
                    .toList();
     }
@@ -1058,14 +1058,17 @@ public class Localize {
     }
 
     private String formatValue(LocalizationRequestSource.Key source, LocalizationRequest request) {
-        ResourceBundle bundle;
+        PatternSource patternSource;
         String key = source.value();
         String value = null;
+        String pattern;
 
         for (ProviderEntry entry : data.providers) {
-            if ((bundle = entry.getBundle()) == null || !bundle.containsKey(key)) continue;
+            if ((patternSource = entry.getPatternSource()) == null ||
+                (pattern = patternSource.getPattern(key)) == null) {
+                continue;
+            }
 
-            String pattern = bundle.getString(key);
             value = handleFormatterRequest(
                 LocalizationFormatter.Request.Builder
                     .of(this, pattern)
@@ -1085,9 +1088,7 @@ public class Localize {
                 value = request.getMissingValueHandler().handle(this, request, key);
             } else if (getConfig().isThrowOnMissingValue()) {
                 throw new MissingResourceException(
-                    "Cannot find resource for " + getClass().getName() +
-                            ", key " + key +
-                            ", bundles: " + getResourceBundles(),
+                    "Cannot find resource for key `" + key + "` in sources: " + getPatternSources(),
                     getClass().getName(),
                     key
                 );
@@ -1122,9 +1123,9 @@ public class Localize {
 
         long ticket = data.ticketGenerator.incrementAndGet();
         LocaleState.Snapshot snapshot = data.locale.snapshot();
-        ResourceBundle newBundle = getResourceBundle(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
+        PatternSource newSource = getPatternSource(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
 
-        return entry.tryCommit(snapshot.version, ticket, newBundle);
+        return entry.tryCommit(snapshot.version, ticket, newSource);
     }
 
     private void removeProvider(ProviderEntry entry) {
@@ -1133,13 +1134,13 @@ public class Localize {
         }
     }
 
-    /// @return The corresponding [ResourceBundle], or `null` if it was not found
+    /// @return The corresponding [PatternSource], or `null` if it was not found
     ///         and [LocalizeConfig#isIgnoreProviderExceptions()] is `true`.
-    private ResourceBundle getResourceBundle(LocalizeEvent.Cause cause, ProviderEntry entry, Locale locale) {
-        ResourceBundle bundle = null;
+    private PatternSource getPatternSource(LocalizeEvent.Cause cause, ProviderEntry entry, Locale locale) {
+        PatternSource patternSource = null;
 
         try {
-            bundle = entry.getProvider().getBundle(locale);
+            patternSource = entry.getProvider().provide(locale);
         } catch (Exception e) {
             fireEvent(new EventImpls.Provider.ExceptionCaught(this, cause, locale, e, entry));
 
@@ -1148,7 +1149,7 @@ public class Localize {
             }
         }
 
-        return bundle;
+        return patternSource;
     }
 
     private static Locale assertLocale(Locale locale) {
@@ -1226,7 +1227,7 @@ public class Localize {
         }
     }
 
-    /// A unique key associated with a [ResourceBundleProvider] [entry][ProviderEntry].
+    /// A unique key associated with a [PatternSourceProvider] [entry][ProviderEntry].
     ///
     /// Keys are created using the static factory methods listed here:
     /// - [of()] to create a unique key.
@@ -1282,26 +1283,26 @@ public class Localize {
         }
     }
 
-    /// An entry associated with a specific [ResourceBundleProvider].
+    /// An entry associated with a specific [PatternSourceProvider].
     ///
     /// Entries are containers that represent a provider registered within a [Localize] instance.
     ///
     /// @see Localize#getProviderEntry(ProviderKey)
-    /// @see Localize#addProvider(ResourceBundleProvider)
+    /// @see Localize#addProvider(PatternSourceProvider)
     /// @since 2.0
     public static final class ProviderEntry {
         private final ProviderKey key;
-        private final ResourceBundleProvider provider;
-        private volatile ResourceBundle bundle;
+        private final PatternSourceProvider provider;
+        private volatile PatternSource patternSource;
         private volatile Localize root;
 
-        // Concurrency control for `bundle` updates
+        // Concurrency control for `patternSource` updates
         // `committedLocaleVersion` and `committedTicket` form a composite ticket
         private long committedLocaleVersion;
         private long committedTicket;
 
         /// @see ofInactive
-        private ProviderEntry(ProviderKey key, ResourceBundleProvider provider) {
+        private ProviderEntry(ProviderKey key, PatternSourceProvider provider) {
             this.key = Objects.requireNonNull(key, "key must not be null");
             this.provider = Objects.requireNonNull(provider, "provider must not be null");
         }
@@ -1309,7 +1310,7 @@ public class Localize {
         /// Creates an inactive entry that can be activated via [activate].
         ///
         /// @see isActive
-        private static ProviderEntry ofInactive(ProviderKey key, ResourceBundleProvider provider) {
+        private static ProviderEntry ofInactive(ProviderKey key, PatternSourceProvider provider) {
             return new ProviderEntry(key, provider);
         }
 
@@ -1324,19 +1325,19 @@ public class Localize {
         ///
         /// @return Contained provider.
         /// @see getKey
-        public ResourceBundleProvider getProvider() {
+        public PatternSourceProvider getProvider() {
             return provider;
         }
 
-        /// Returns the most recently computed resource bundle.
+        /// Returns the most recently computed pattern source.
         ///
         /// ### Note
-        /// The returned bundle may be `null` if the associated [provider][getProvider] returned `null`,
+        /// The returned source may be `null` if the associated [provider][getProvider] returned `null`,
         /// or [LocalizeConfig#isIgnoreProviderExceptions()] is set to `true` and the most recent fetch failed.
         ///
-        /// @return Most recently computed resource bundle, or `null` if not available.
-        public ResourceBundle getBundle() {
-            return bundle;
+        /// @return Most recently computed source, or `null` if not available.
+        public PatternSource getPatternSource() {
+            return patternSource;
         }
 
         /// Removes the contained provider from the associated [Localize] instance.
@@ -1353,8 +1354,8 @@ public class Localize {
             }
         }
 
-        /// Triggers a refresh on a [Localize] instance by fetching a new [ResourceBundle] from
-        /// the [ResourceBundleProvider] associated with the given key.
+        /// Triggers a refresh on a [Localize] instance by retrieving a new [PatternSource] from
+        /// the associated [PatternSourceProvider].
         ///
         /// This method has no effect if this entry is [inactive][isActive].
         ///
@@ -1371,7 +1372,7 @@ public class Localize {
         /// Returns `true` if this entry is currently active; registered within a [Localize] instance.
         ///
         /// When the associated provider is
-        /// [replaced][Localize#putProvider(ProviderKey, ResourceBundleProvider)] or
+        /// [replaced][Localize#putProvider(ProviderKey, PatternSourceProvider)] or
         /// [removed][Localize#removeProvider(ProviderKey)]
         /// via any related operation, this flag will permanently remain `false`.
         ///
@@ -1388,11 +1389,11 @@ public class Localize {
             root = source;
         }
 
-        private synchronized boolean tryCommit(long localeVersion, long ticket, ResourceBundle newBundle) {
+        private synchronized boolean tryCommit(long localeVersion, long ticket, PatternSource newSource) {
             if (
                 !isActive() ||
-                // Reject unchanged `null` bundles
-                (bundle == null && newBundle == null) ||
+                // Reject unchanged `null` pattern sources
+                (patternSource == null && newSource == null) ||
                 // Reject superseded composite ticket
                 (localeVersion < committedLocaleVersion ||
                 (localeVersion == committedLocaleVersion && ticket <= committedTicket))
@@ -1402,7 +1403,7 @@ public class Localize {
 
             committedLocaleVersion = localeVersion;
             committedTicket = ticket;
-            bundle = newBundle;
+            patternSource = newSource;
             return true;
         }
 

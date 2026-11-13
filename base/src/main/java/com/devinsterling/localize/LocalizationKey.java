@@ -30,8 +30,8 @@ package com.devinsterling.localize;
 /// @see Localize#getValue(LocalizationKey)
 /// @since 1.0
 public interface LocalizationKey {
-    /// Returns the resource bundle key for retrieving the corresponding localized value.
+    /// Returns the resource key for retrieving the corresponding localized value.
     ///
-    /// @return Resource bundle key.
+    /// @return Resource key.
     String getKey();
 }

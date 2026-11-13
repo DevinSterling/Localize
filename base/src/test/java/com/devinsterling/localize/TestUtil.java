@@ -8,8 +8,10 @@ public final class TestUtil {
     public static final String TEST_PROVIDER_NAME = "test";
     public static final String TEST2_PROVIDER_NAME = "test2";
 
-    public static final ResourceBundleProvider TEST_PROVIDER = locale -> ResourceBundle.getBundle(TEST_PROVIDER_NAME, locale);
-    public static final ResourceBundleProvider TEST2_PROVIDER = locale -> ResourceBundle.getBundle(TEST2_PROVIDER_NAME, locale);
+    public static final PatternSourceProvider TEST_PROVIDER =
+        locale -> PatternSource.of(ResourceBundle.getBundle(TEST_PROVIDER_NAME, locale));
+    public static final PatternSourceProvider TEST2_PROVIDER =
+        locale -> PatternSource.of(ResourceBundle.getBundle(TEST2_PROVIDER_NAME, locale));
 
     public static final String TEST_KEY_GREET = "Test.greet";
     public static final String TEST_KEY_TEST = "Test.test";

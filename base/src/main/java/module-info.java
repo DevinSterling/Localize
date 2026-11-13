@@ -16,15 +16,15 @@
 ///    ```java
 ///    Localize localize = Localize.of(Locale.ENGLISH);
 ///    ```
-/// 2. Add a [`ResourceBundleProvider`][com.devinsterling.localize.ResourceBundleProvider]:
+/// 2. Add a [`PatternSourceProvider`][com.devinsterling.localize.PatternSourceProvider]:
 ///    ```java
 ///    // Insert using a predefined key
 ///    localize.putProvider(
 ///         ProviderEntry.of("key"),
-///         locale -> ResourceBundle.getBundle("i18n.sample", locale)
+///         locale -> PatternSource.of(ResourceBundle.getBundle("i18n.sample", locale))
 ///     );
 ///    // Or without
-///    localize.addProvider(locale -> ResourceBundle.getBundle("i18n.sample", locale));
+///    localize.addProvider(locale -> PatternSource.of(ResourceBundle.getBundle("i18n.sample", locale)));
 ///    // Or by resource bundle base name
 ///    localize.addProvider("i18n.sample");
 ///    ```
@@ -39,17 +39,17 @@
 /// ## Resource Bundles
 ///
 /// A [`Localize`][com.devinsterling.localize.Localize] instance accepts multiple
-/// providers as additional sources or fallbacks, which can be removed dynamically.
+/// providers as additional sources or fallbacks, which can be added and removed dynamically.
 /// Configuration can control scenarios such as where no value or when a resource bundle is not found.
 /// ```java
-/// localize.putProvider(key, locale -> ResourceBundle.getBundle("i18n.sample", locale));
-/// ProviderEntry entry = localize.addProvider("i18n.other");
+/// localize.putProvider(key, locale -> PatternSource.of(ResourceBundle.getBundle("i18n.sample", locale)));
+/// ProviderEntry entry = localize.addProvider(messageSource::resolve);
 ///
 /// // Removing a provider when no longer needed:
 /// localize.removeProvider(key);
 /// entry.remove();
 ///
-/// // If a value is not found in all providers, return the following instead:
+/// // Configure a global fallback when no provider supplies a value:
 /// localize.getConfig().setDefaultMissingValue("Missing value");
 /// ```
 ///

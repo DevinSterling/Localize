@@ -7,9 +7,7 @@ import com.devinsterling.localize.event.ProviderEvent;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
-import java.util.ListResourceBundle;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -56,7 +54,7 @@ class LocalizeTest {
     @Test void testPutProviderByBaseName() {
         Localize localize = Localize.of();
 
-        // NOTE: these methods delegate to `putProvider(String, ResourceBundleProvider)`
+        // NOTE: these methods delegate to `putProvider(String, PatternSourceProvider)`
         localize.putProvider(providerKey, TEST_PROVIDER_NAME);
         localize.putProvider(providerKey, TEST2_PROVIDER_NAME);
         localize.putProvider(otherKey, TEST2_PROVIDER_NAME);
@@ -81,7 +79,7 @@ class LocalizeTest {
     @Test void testAddProviderByBaseName() {
         Localize localize = Localize.of();
 
-        // NOTE: these methods delegate to `addProvider(ResourceBundleProvider)`
+        // NOTE: these methods delegate to `addProvider(PatternSourceProvider)`
         localize.addProvider(TEST_PROVIDER_NAME);
         localize.addProvider(TEST2_PROVIDER_NAME);
         assertEquals(2, localize.getProviderEntries().size());
@@ -123,7 +121,7 @@ class LocalizeTest {
     @Test void testGetValue() {
         Localize localize = getEmptyLocalizeInstance();
 
-        // No bundles contained
+        // No providers contained
         assertEquals("", localize.getValue(TEST_KEY_GREET));
         assertEquals("", localize.getValue(() -> TEST_KEY_TEST));
 
@@ -245,19 +243,19 @@ class LocalizeTest {
     @Test void testGetResourceBundles() {
         Localize localize = getEmptyLocalizeInstance();
 
-        Collection<ResourceBundle> snapshotA = localize.getResourceBundles();
+        Collection<PatternSource> snapshotA = localize.getPatternSources();
         assertTrue(snapshotA.isEmpty());
 
         localize.putProvider(providerKey, TEST_PROVIDER);
         assertTrue(snapshotA.isEmpty());
 
-        Collection<ResourceBundle> snapshotB = localize.getResourceBundles();
+        Collection<PatternSource> snapshotB = localize.getPatternSources();
         assertEquals(1, snapshotB.size());
         assertNotEquals(snapshotA, snapshotB);
 
         localize.addProvider(TEST_PROVIDER);
         localize.addProvider(TEST2_PROVIDER);
-        Collection<ResourceBundle> snapshotC = localize.getResourceBundles();
+        Collection<PatternSource> snapshotC = localize.getPatternSources();
 
         assertTrue(snapshotA.isEmpty());
         assertEquals(1, snapshotB.size());
@@ -265,20 +263,16 @@ class LocalizeTest {
     }
 
     @Test void testRefreshUpdatesBundle() {
-        Function<String, ResourceBundle> bundleFactory = value -> new ListResourceBundle() {
-            @Override protected Object[][] getContents() {
-                return new Object[][] {{ TEST_KEY_TEST, value }};
-            }
-        };
+        Function<String, PatternSource> sourceFactory = value -> key -> value;
 
-        AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
+        AtomicReference<PatternSource> currentSource = new AtomicReference<>(sourceFactory.apply("abc"));
         Localize localize = getEmptyLocalizeInstance();
 
-        localize.putProvider(providerKey, locale -> currentBundle.get());
+        localize.putProvider(providerKey, locale -> currentSource.get());
         assertEquals("abc", localize.getValue(TEST_KEY_TEST));
 
         // Realistically, this would be the file changing on disk or similar
-        currentBundle.set(bundleFactory.apply("xyz"));
+        currentSource.set(sourceFactory.apply("xyz"));
         assertEquals("abc", localize.getValue(TEST_KEY_TEST)); // still stale
 
         localize.refreshProvider(providerKey);
@@ -303,7 +297,7 @@ class LocalizeTest {
         setLocaleTask.join();
 
         assertEquals(Locale.CHINESE, localize.getLocale());
-        assertEquals("早上好", localize.getProviderEntry(providerKey).getBundle().getString(TEST_KEY_GREET));
+        assertEquals("早上好", localize.getProviderEntry(providerKey).getPatternSource().getPattern(TEST_KEY_GREET));
         assertEquals(1, insertedDuringSetLocale.calls(Locale.CHINESE));
     }
 
@@ -320,7 +314,7 @@ class LocalizeTest {
         pauser.resume();
         insertTask.join();
 
-        assertEquals("早上好", localize.getProviderEntry(providerKey).getBundle().getString(TEST_KEY_GREET));
+        assertEquals("早上好", localize.getProviderEntry(providerKey).getPatternSource().getPattern(TEST_KEY_GREET));
         assertEquals(1, pauser.calls(Locale.ENGLISH));
         assertEquals(1, pauser.calls(Locale.CHINESE));
     }
@@ -345,7 +339,7 @@ class LocalizeTest {
 
         // Locale remains Japanese since `newOne` threw an exception
         assertEquals(Locale.JAPANESE, localize.getLocale());
-        assertEquals("おはよう", entry.getBundle().getString(TEST_KEY_GREET));
+        assertEquals("おはよう", entry.getPatternSource().getPattern(TEST_KEY_GREET));
     }
 
     @Test void setLocaleOldCallIsSuperseded() {
@@ -363,7 +357,7 @@ class LocalizeTest {
 
         // Locale becomes korean (newer call) despite japanese (older call) finishing after
         assertEquals(Locale.CHINESE, localize.getLocale());
-        assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
+        assertEquals("早上好", entry.getPatternSource().getPattern(TEST_KEY_GREET));
     }
 
     @Test void setLocaleOldCallIsSupersededABA() {
@@ -380,7 +374,7 @@ class LocalizeTest {
         slowTask.join();
 
         assertEquals(Locale.ENGLISH, localize.getLocale());
-        assertEquals("hi",entry.getBundle().getString(TEST_KEY_GREET));
+        assertEquals("hi",entry.getPatternSource().getPattern(TEST_KEY_GREET));
     }
 
     @Test void raceBetweenSetLocaleAndPutProvider() {
@@ -395,7 +389,7 @@ class LocalizeTest {
             Localize.ProviderEntry entry = localize.getProviderEntry(providerKey);
 
             assertEquals(Locale.CHINESE, localize.getLocale());
-            assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
+            assertEquals("早上好", entry.getPatternSource().getPattern(TEST_KEY_GREET));
         }
     }
 
@@ -415,18 +409,15 @@ class LocalizeTest {
         // Despite the refresh task finishing after, the setLocale call has higher precedence
         assertFalse(performedBulkRefresh);
         assertEquals(Locale.CHINESE, localize.getLocale());
-        assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
+        assertEquals("早上好", entry.getPatternSource().getPattern(TEST_KEY_GREET));
     }
 
     @Test void individualRefreshSupersededByBulkRefresh() {
         Localize localize = Localize.of(Locale.ENGLISH);
         AtomicReference<String> output = new AtomicReference<>();
-        var pauser = new ConcurrentProviderProbe(locale -> new ListResourceBundle() {
-            private final String value = output.get();
-
-            @Override protected Object[][] getContents() {
-                return new Object[][] {{ TEST_KEY_TEST, value }};
-            }
+        var pauser = new ConcurrentProviderProbe(locale -> {
+            String value = output.get();
+            return s -> value;
         });
         var entry = localize.addProvider(pauser);
 
@@ -443,7 +434,7 @@ class LocalizeTest {
 
         // Despite the individual refresh finishing later, the bulk refresh takes precedence
         assertFalse(performedIndividualRefresh);
-        assertEquals("bulk", entry.getBundle().getString(TEST_KEY_TEST));
+        assertEquals("bulk", entry.getPatternSource().getPattern(TEST_KEY_TEST));
     }
 
     @Test void setLocaleSupersedesNewerRefreshForOldLocale() {
@@ -460,7 +451,7 @@ class LocalizeTest {
 
         // A newer locale version takes precedence over plain ticket value ordering.
         assertEquals(Locale.CHINESE, localize.getLocale());
-        assertEquals("早上好", entry.getBundle().getString(TEST_KEY_GREET));
+        assertEquals("早上好", entry.getPatternSource().getPattern(TEST_KEY_GREET));
     }
 
     @Test void refreshProvidersAggregatesProviderAndListenerExceptions() {
@@ -475,7 +466,7 @@ class LocalizeTest {
         localize.addProvider(faultyProvider);
         localize.addProvider(locale -> {
             count.incrementAndGet();
-            return TEST_PROVIDER.getBundle(locale);
+            return TEST_PROVIDER.provide(locale);
         });
         localize.addListener(ProviderEvent.Refreshed.class, event -> {
             throw listenerException;

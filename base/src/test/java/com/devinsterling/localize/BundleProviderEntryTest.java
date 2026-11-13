@@ -2,9 +2,6 @@ package com.devinsterling.localize;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,7 +21,7 @@ public class BundleProviderEntryTest {
 
         assertSame(key, entry.getKey());
         assertEquals(TEST_PROVIDER, entry.getProvider());
-        assertEquals(ResourceBundle.getBundle(TEST_PROVIDER_NAME), entry.getBundle());
+        assertEquals(PatternSource.of(ResourceBundle.getBundle(TEST_PROVIDER_NAME)), entry.getPatternSource());
         assertTrue(entry.isActive());
 
         localize.putProvider(key, TEST_PROVIDER);
@@ -45,18 +42,18 @@ public class BundleProviderEntryTest {
         assertTrue(entry1.isActive());
         assertTrue(entry2.isActive());
         assertSame(TEST_PROVIDER, entry1.getProvider());
-        assertEquals(ResourceBundle.getBundle(TEST_PROVIDER_NAME), entry1.getBundle());
+        assertEquals(PatternSource.of(ResourceBundle.getBundle(TEST_PROVIDER_NAME)), entry1.getPatternSource());
     }
 
     @Test void testRemoveProviderEntry() {
         Localize localize = Localize.of(Locale.ENGLISH);
 
         Localize.ProviderEntry entry1 = localize.addProvider(TEST_PROVIDER);
-        assertNotNull(entry1.getBundle());
+        assertNotNull(entry1.getPatternSource());
 
         entry1.remove();
         assertFalse(entry1.isActive());
-        assertNotNull(entry1.getBundle());
+        assertNotNull(entry1.getPatternSource());
         assertNull(localize.getProviderEntry(entry1.getKey()));
 
         entry1.remove();
@@ -69,7 +66,7 @@ public class BundleProviderEntryTest {
         entry2.remove();
 
         assertFalse(entry2.isActive());
-        assertNotNull(entry2.getBundle());
+        assertNotNull(entry2.getPatternSource());
         assertNull(localize.getProviderEntry(entry2.getKey()));
 
         Localize.ProviderEntry entry3 = localize.addProvider(TEST_PROVIDER);
@@ -80,24 +77,15 @@ public class BundleProviderEntryTest {
     }
 
     @Test void testRefreshProviderEntry() {
-        class CountBundleProvider extends ResourceBundle implements ResourceBundleProvider {
-            final AtomicInteger count = new AtomicInteger();
-
-            @Override protected Object handleGetObject(String key) {
-                return String.valueOf(count);
-            }
-            @Override public Enumeration<String> getKeys() {
-                return Collections.enumeration(List.of(TEST_KEY_TEST));
-            }
-            @Override public ResourceBundle getBundle(Locale locale) {
-                count.incrementAndGet();
-                return this;
-            }
-        }
+        AtomicInteger count = new AtomicInteger();
+        PatternSourceProvider countProvider = locale -> {
+            count.incrementAndGet();
+            return key -> String.valueOf(count.get());
+        };
 
         Localize localize = Localize.of(Locale.ENGLISH);
         localize.getConfig().setDefaultMissingValue(null);
-        Localize.ProviderEntry entry = localize.addProvider(new CountBundleProvider());
+        Localize.ProviderEntry entry = localize.addProvider(countProvider);
 
         assertEquals("1", localize.getValue(TEST_KEY_TEST));
 

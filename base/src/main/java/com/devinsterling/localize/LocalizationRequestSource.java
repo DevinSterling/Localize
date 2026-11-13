@@ -14,9 +14,9 @@ import java.util.Objects;
 /// }
 /// ```
 /// @since 2.0
-public sealed interface LocalizationRequestSource permits LocalizationRequestSource.Key, LocalizationRequestSource.Pattern {
+public sealed interface LocalizationRequestSource {
 
-    /// A resource key used to perform lookup from a [`ResourceBundle`][java.util.ResourceBundle].
+    /// A resource key used to perform lookup from a [PatternSource].
     ///
     /// **This is a value-based class**.
     /// Programmers should treat instances that are equal as interchangeable,

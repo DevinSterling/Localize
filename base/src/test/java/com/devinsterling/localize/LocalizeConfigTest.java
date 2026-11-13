@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.devinsterling.localize.TestUtil.*;
@@ -32,18 +31,6 @@ class LocalizeConfigTest {
 
         config.setDefaultMissingValue(missingValue);
         assertEquals(missingValue, localize.getValue("Missing Key"));
-    }
-
-    @Test void testMissingResourceBundle() {
-        Localize localize = Localize.of();
-        LocalizeConfig config = localize.getConfig();
-        ResourceBundleProvider provider = l -> ResourceBundle.getBundle("missing", l);
-
-        // Resource bundles
-        assertThrows(MissingResourceException.class, () -> localize.addProvider(provider));
-
-        config.setIgnoreProviderExceptions(true);
-        assertDoesNotThrow(() -> localize.addProvider(provider));
     }
 
     @Test void testValueNotFound() {
@@ -76,7 +63,7 @@ class LocalizeConfigTest {
         LocalizeConfig config = localize.getConfig();
 
         AtomicBoolean throwTestException = new AtomicBoolean(true);
-        ResourceBundleProvider exceptionProvider = l -> {
+        PatternSourceProvider exceptionProvider = l -> {
             if (throwTestException.get()) throw new TestException();
             return null;
         };

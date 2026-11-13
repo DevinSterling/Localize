@@ -1,18 +1,18 @@
 package com.devinsterling.localize.concurrent;
 
-import com.devinsterling.localize.ResourceBundleProvider;
+import com.devinsterling.localize.PatternSource;
+import com.devinsterling.localize.PatternSourceProvider;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-public class ConcurrentProviderProbe implements ResourceBundleProvider {
-    private final ResourceBundleProvider delegate;
+public class ConcurrentProviderProbe implements PatternSourceProvider {
+    private final PatternSourceProvider delegate;
     private final Map<Locale, Integer> calls = new ConcurrentHashMap<>();
     private final CountDownLatch paused = new CountDownLatch(1);
     private final CountDownLatch resume = new CountDownLatch(1);
@@ -22,7 +22,7 @@ public class ConcurrentProviderProbe implements ResourceBundleProvider {
     private volatile Locale failOn;
     private volatile Supplier<RuntimeException> throwOnFail;
 
-    public ConcurrentProviderProbe(ResourceBundleProvider delegate) {
+    public ConcurrentProviderProbe(PatternSourceProvider delegate) {
         this.delegate = delegate;
     }
 
@@ -33,7 +33,7 @@ public class ConcurrentProviderProbe implements ResourceBundleProvider {
         return this;
     }
 
-    /// Every call to [getBundle] matching the given `locale` throws.
+    /// Every call to [provide] matching the given `locale` throws.
     public ConcurrentProviderProbe failOn(Locale locale) {
         this.failOn = locale;
         return this;
@@ -57,7 +57,7 @@ public class ConcurrentProviderProbe implements ResourceBundleProvider {
         return calls.getOrDefault(locale, 0);
     }
 
-    @Override public ResourceBundle getBundle(Locale locale) {
+    @Override public PatternSource provide(Locale locale) {
         calls.merge(locale, 1, Integer::sum);
 
         if (locale.equals(pauseOn) && armed.compareAndSet(true, false)) {
@@ -70,7 +70,7 @@ public class ConcurrentProviderProbe implements ResourceBundleProvider {
                 : throwOnFail.get();
         }
 
-        return delegate.getBundle(locale);
+        return delegate.provide(locale);
     }
 
     private static void await(CountDownLatch latch, String message) {

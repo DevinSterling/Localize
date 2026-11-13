@@ -35,7 +35,7 @@ public class LocalizeConfig {
     /// [key][LocalizationRequestSource.Key].
     ///
     /// When set to `true`, a [MissingResourceException] is thrown when all the conditions are met:
-    /// 1. **All** bundles contain no value for a specified key.
+    /// 1. **All** pattern sources [return][PatternSource#getPattern] `null` for a specified key.
     /// 2. [LocalizationRequest#getMissingValueHandler] is `null` (Set by [LocalizationValueBuilder#defaultHandler]).
     ///
     /// Default: `false`
@@ -57,8 +57,8 @@ public class LocalizeConfig {
         this.isIgnoreFormatterExceptions = ignore;
     }
 
-    /// Sets whether runtime exceptions from [resource bundle providers][ResourceBundleProvider]
-    /// are ignored while calling [ResourceBundleProvider#getBundle].
+    /// Sets whether runtime exceptions from [pattern source providers][PatternSourceProvider]
+    /// are ignored while calling [PatternSourceProvider#provide].
     ///
     /// When set to `true`, runtime exceptions are ignored.
     /// Otherwise, exceptions are thrown and propagated.
@@ -130,8 +130,8 @@ public class LocalizeConfig {
         return isIgnoreFormatterExceptions;
     }
 
-    /// Returns `true` if runtime exceptions from [resource bundle providers][ResourceBundleProvider]
-    /// are ignored while calling [ResourceBundleProvider#getBundle].
+    /// Returns `true` if runtime exceptions from [pattern source providers][PatternSourceProvider]
+    /// are ignored while calling [PatternSourceProvider#provide].
     ///
     /// Default: `false`
     /// @return `true` if exceptions are ignored, or `false` if thrown.

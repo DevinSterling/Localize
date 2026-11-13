@@ -2,6 +2,7 @@ package com.devinsterling.localize.swing;
 
 import com.devinsterling.localize.LocalizationFormatter;
 import com.devinsterling.localize.Localize;
+import com.devinsterling.localize.PatternSource;
 import com.devinsterling.localize.swing.junit.SwingEdtExtension;
 
 import org.junit.jupiter.api.Test;
@@ -10,12 +11,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
-import java.util.ListResourceBundle;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import static com.devinsterling.localize.swing.TestUtil.*;
 
@@ -193,22 +191,16 @@ public class LocalizeSwingTest {
     }
 
     @Test void testRefreshUpdatesBundle() {
-        Function<String, ResourceBundle> bundleFactory = value -> new ListResourceBundle() {
-            @Override protected Object[][] getContents() {
-                return new Object[][] {{ TEST_KEY_CLICK_ME, value }};
-            }
-        };
-
-        AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
+        AtomicReference<PatternSource> currentSource = new AtomicReference<>(key -> "abc");
         LocalizeSwing localize = TestUtil.getEmptyLocalizeSwingInstance(Locale.JAPANESE);
         JLabel label = new JLabel();
         localize.bind(TEST_KEY_CLICK_ME, label);
 
-        localize.putProvider(providerKey, locale -> currentBundle.get());
+        localize.putProvider(providerKey, locale -> currentSource.get());
         assertEquals("abc", label.getText());
 
         // Realistically, this would be the file changing on disk or similar
-        currentBundle.set(bundleFactory.apply("xyz"));
+        currentSource.set(key -> "xyz");
         assertEquals("abc", label.getText());
 
         localize.refreshProvider(providerKey);

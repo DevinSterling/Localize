@@ -1,7 +1,7 @@
 package com.devinsterling.localize.event;
 
 import com.devinsterling.localize.Localize;
-import com.devinsterling.localize.ResourceBundleProvider;
+import com.devinsterling.localize.PatternSourceProvider;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +14,7 @@ import static com.devinsterling.localize.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ProviderEventTest {
-    private static final ResourceBundleProvider NULL_PROVIDER = locale -> null;
+    private static final PatternSourceProvider NULL_PROVIDER = locale -> null;
 
     @Test void testOnProviderPut() {
         LocalizeEventCapturer<ProviderEvent.Added> localize = new LocalizeEventCapturer<>(ProviderEvent.Added.class);
@@ -124,13 +124,13 @@ public class ProviderEventTest {
         Localize.ProviderEntry entry3 = localize.addProvider(TEST_PROVIDER);
         Localize.ProviderEntry entry4 = localize.addProvider(TEST_PROVIDER);
 
-        // No refreshes occur here because `NULL_PROVIDER` always returns a null bundle (Nothing to refresh)
+        // No refreshes occur here because `NULL_PROVIDER` always returns a null pattern source (Nothing to refresh)
         localize.refreshProvider(entry2.getKey());
         entry2.remove();
         entry2.refresh();
         entry1.refresh();
 
-        // These refreshes occur since the returned bundle is always non-null (Something to refresh)
+        // These refreshes occur since the returned pattern source is always non-null (Something to refresh)
         localize.refreshProvider(entry3.getKey()); // Event 1
         entry3.refresh(); // 2
         entry3.remove();
@@ -146,13 +146,13 @@ public class ProviderEventTest {
     @Test void testOnProviderBulkRefresh() {
         LocalizeEventCapturer<ProviderEvent> localize = new LocalizeEventCapturer<>(ProviderEvent.class);
 
-        // No refreshes occur here because `NULL_PROVIDER` always returns a null bundle (Nothing to refresh)
+        // No refreshes occur here because `NULL_PROVIDER` always returns a null pattern source (Nothing to refresh)
         localize.addProvider(NULL_PROVIDER); // Event 0
         localize.refreshProviders();
         localize.addProvider(NULL_PROVIDER); // 1
         localize.refreshProviders();
 
-        // These refreshes occur since the returned bundle is always non-null (Something to refresh)
+        // These refreshes occur since the returned pattern source is always non-null (Something to refresh)
         Localize.ProviderEntry entry3 = localize.addProvider(TEST_PROVIDER); // 2
         localize.refreshProviders(); // 3
         Localize.ProviderEntry entry4 = localize.addProvider(TEST_PROVIDER); // 4
@@ -209,7 +209,7 @@ public class ProviderEventTest {
 
         AtomicBoolean throwTestException = new AtomicBoolean(true);
         ProviderTestException providerException = new ProviderTestException();
-        ResourceBundleProvider exceptionProvider = l -> {
+        PatternSourceProvider exceptionProvider = l -> {
             if (throwTestException.get()) throw providerException;
             return null;
         };

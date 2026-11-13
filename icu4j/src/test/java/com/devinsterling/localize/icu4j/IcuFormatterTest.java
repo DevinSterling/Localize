@@ -68,7 +68,7 @@ public class IcuFormatterTest {
         assertEquals(IcuMessageFormat.MESSAGE1_FORMAT, formatter.getConfig().getMessageFormat());
         assertEquals("Doe clicked this button 1,337 times!", builder.value());
 
-        // Change the resource bundle provider as the syntax between ICU4J's formatters change
+        // Change the pattern source provider as the syntax between ICU4J's formatters change
         localize.putProvider(key, MESSAGE_FORMAT2);
         formatter.getConfig().setFormatter(IcuMessageFormat.MESSAGE2_FORMAT);
 

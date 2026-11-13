@@ -208,7 +208,7 @@ public class LocalizeFX extends Localize {
     /// button.textProperty().bind(localize.getBinding("MyApp.button"));
     /// ```
     ///
-    /// @param key Resource bundle key associated with the value to bind.
+    /// @param key Resource key associated with the value to bind.
     /// @return    String binding that is updated whenever a refresh occurs or the locale changes.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(String)
@@ -222,7 +222,7 @@ public class LocalizeFX extends Localize {
     ///
     /// **This method is intended to be called on the JavaFX Application thread only.**
     ///
-    /// @param key Resource bundle key associated with the value to bind.
+    /// @param key Resource key associated with the value to bind.
     /// @return    String binding that is updated whenever a refresh occurs or the locale changes.
     /// @throws NullPointerException If `key` is `null`.
     /// @see #getValue(LocalizationKey)

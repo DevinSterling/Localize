@@ -3,6 +3,7 @@ package com.devinsterling.localize.fx;
 import com.devinsterling.localize.LocalizationFormatter;
 import com.devinsterling.localize.Localize;
 import com.devinsterling.localize.LocalizeConfig;
+import com.devinsterling.localize.PatternSource;
 import com.devinsterling.localize.fx.junit.JavaFXExtension;
 
 import javafx.beans.binding.StringBinding;
@@ -11,11 +12,8 @@ import javafx.beans.property.ObjectProperty;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.ListResourceBundle;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import static com.devinsterling.localize.fx.TestUtil.*;
 
@@ -155,21 +153,15 @@ class LocalizeFXTest {
     }
 
     @Test void testRefreshUpdatesBundle() {
-        Function<String, ResourceBundle> bundleFactory = value -> new ListResourceBundle() {
-            @Override protected Object[][] getContents() {
-                return new Object[][] {{ TEST_KEY_CLICK_LABEL, value }};
-            }
-        };
-
-        AtomicReference<ResourceBundle> currentBundle = new AtomicReference<>(bundleFactory.apply("abc"));
+        AtomicReference<PatternSource> currentSource = new AtomicReference<>(key -> "abc");
         LocalizeFX localize = getEmptyLocalizeFXInstance();
         StringBinding binding = localize.getBinding(TEST_KEY_CLICK_LABEL);
 
-        localize.putProvider(providerKey, locale -> currentBundle.get());
+        localize.putProvider(providerKey, locale -> currentSource.get());
         assertEquals("abc", binding.get());
 
         // Realistically, this would be the file changing on disk or similar
-        currentBundle.set(bundleFactory.apply("xyz"));
+        currentSource.set(key -> "xyz");
         assertEquals("abc", binding.get());
 
         localize.refreshProvider(providerKey);
