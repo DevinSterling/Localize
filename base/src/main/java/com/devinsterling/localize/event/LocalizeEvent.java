@@ -10,10 +10,6 @@ import com.devinsterling.localize.Localize;
 /// - [LocaleEvent]
 /// - [ProviderEvent]
 ///
-/// **Events are value-based**.
-/// Programmers should treat instances that are equal as interchangeable and never use instances for synchronization,
-/// or unpredictable behavior may occur. For example, in a future release, synchronization may fail.
-///
 /// ### Event Handling
 /// Events are handled by passing an [EventListener] to [Localize#addListener].
 ///
