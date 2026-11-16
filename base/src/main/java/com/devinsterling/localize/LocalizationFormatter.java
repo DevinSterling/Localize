@@ -25,7 +25,7 @@ public interface LocalizationFormatter {
     /// Processes the given [Request] to retrieve a formatted localized string.
     ///
     /// @param request Formatter request.
-    /// @return Formatted localized string.
+    /// @return **Non-null** formatted localized string.
     /// @throws NullPointerException if `request` is `null`.
     /// @implSpec This method must be thread-safe.
     String format(Request request);

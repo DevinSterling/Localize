@@ -19,15 +19,10 @@ import com.devinsterling.localize.LocalizationRequestSource;
 ///
 /// @since 2.0
 public interface DiagnosticEvent extends LocalizeEvent {
-    /// An event indicating that no corresponding resource value was found for a given [LocalizationRequestSource.Key].
+    /// An event indicating that no corresponding resource value was found for a given [LocalizationRequest].
     ///
     /// @see Localize#get(String)
     interface MissingValue extends DiagnosticEvent {
-        /// Returns the key that has no corresponding resource value.
-        ///
-        /// @return Key associated with the missing value.
-        LocalizationRequestSource.Key getKey();
-
         /// Returns the request the missing key originates from.
         ///
         /// @return Request associated with the missing value.

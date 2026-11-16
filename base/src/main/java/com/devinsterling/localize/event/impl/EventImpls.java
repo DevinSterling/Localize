@@ -23,7 +23,6 @@ public final class EventImpls {
     public interface Diagnostic {
         record MissingValue(
             Localize getSource,
-            LocalizationRequestSource.Key getKey,
             LocalizationRequest getRequest
         ) implements DiagnosticEvent.MissingValue {}
 

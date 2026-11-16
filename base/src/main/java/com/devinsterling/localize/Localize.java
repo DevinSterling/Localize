@@ -17,7 +17,6 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -993,87 +992,84 @@ public class Localize {
     /// @see LocalizeConfig#setIgnoreFormatterExceptions
     /// @since 2.0
     public String formatValue(LocalizationRequest request) {
-        LocalizationRequestSource localizationRequestSource = request.getSource();
-        String value = null;
+        LocalizationRequestSource source = request.getSource();
+        String value = "";
 
         // In Java 21, this will be replaced with a switch
-        if (localizationRequestSource instanceof LocalizationRequestSource.Key key) {
+        if (source instanceof LocalizationRequestSource.Key key) {
             value = formatValue(key, request);
-        } else if (localizationRequestSource instanceof LocalizationRequestSource.Pattern pattern) {
-            value = formatValue(pattern, request);
+        } else if (source instanceof LocalizationRequestSource.Pattern pattern) {
+            value = formatValue(pattern.value(), request);
         }
 
         return value;
     }
 
-    private String formatValue(LocalizationRequestSource.Pattern source, LocalizationRequest request) {
-        // Since a pattern is given, `defaultValue` is not used here as a value will always be present
-        return handleFormatterRequest(
-            LocalizationFormatter.Request.Builder
-                .of(this, source.value())
-                .arguments(request.getArguments())
-                .build()
-        );
-    }
-
     private String formatValue(LocalizationRequestSource.Key source, LocalizationRequest request) {
-        PatternSource patternSource;
         String key = source.value();
-        String value = null;
-        String pattern;
+        String pattern = null;
 
         for (ProviderEntry entry : data.providers) {
-            if ((patternSource = entry.getPatternSource()) == null ||
-                (pattern = patternSource.getPattern(key)) == null) {
-                continue;
-            }
+            PatternSource patternSource = entry.getPatternSource();
 
-            value = handleFormatterRequest(
-                LocalizationFormatter.Request.Builder
-                    .of(this, pattern)
-                    .arguments(request.getArguments())
-                    .build()
-            );
-
-            if (value != null) {
+            if (patternSource != null && (pattern = patternSource.getPattern(key)) != null) {
                 break;
             }
         }
 
-        if (value == null) {
-            fireEvent(new EventImpls.Diagnostic.MissingValue(this, source, request));
-
-            if (request.hasDefaultValue()) {
-                value = request.getMissingValueHandler().handle(this, request, key);
-            } else if (getConfig().isThrowOnMissingValue()) {
-                throw new MissingResourceException(
-                    "Cannot find resource for key `" + key + "` in sources: " + getPatternSources(),
-                    getClass().getName(),
-                    key
-                );
-            } else {
-                value = getConfig().getMissingValueHandler().handle(this, request, key);
-            }
-        }
-
-        return value;
+        return pattern != null
+            ? formatValue(pattern, request)
+            : handleMissing(request, "Cannot find pattern", null);
     }
 
-    private String handleFormatterRequest(LocalizationFormatter.Request request) {
-        LocalizationFormatter formatter = getFormatter();
+    private String formatValue(String pattern, LocalizationRequest request) {
+        String missingValueMessage = "Formatter returned `null`";
+        Throwable cause = null;
+
         String value = null;
+        LocalizationFormatter formatter = getFormatter();
+        LocalizationFormatter.Request formatRequest = LocalizationFormatter.Request.Builder
+            .of(this, pattern)
+            .arguments(request.getArguments())
+            .build();
 
         try {
-            value = formatter.format(request);
+            value = formatter.format(formatRequest);
         } catch (Exception e) {
-            fireEvent(new EventImpls.Formatter.ExceptionCaught(this, formatter, request, e));
+            fireEvent(new EventImpls.Formatter.ExceptionCaught(this, formatter, formatRequest, e));
 
             if (!getConfig().isIgnoreFormatterExceptions()) {
                 throw e;
             }
+
+            missingValueMessage = "Formatter threw an exception";
+            cause = e;
         }
 
-        return value;
+        return value != null ? value : handleMissing(request, missingValueMessage, cause);
+    }
+
+    private String handleMissing(LocalizationRequest request, String message, Throwable cause) {
+        fireEvent(new EventImpls.Diagnostic.MissingValue(this, request));
+
+        if (!request.hasDefaultValue() && getConfig().isThrowOnMissingValue()) {
+            LocalizationRequestSource source = request.getSource();
+
+            // In Java 21, this will be replaced with an exhaustive switch
+            if (source instanceof LocalizationRequestSource.Key key) {
+                message += " for key: " + key.value();
+            } else if (source instanceof LocalizationRequestSource.Pattern) {
+                message += " for pattern";
+            }
+
+            throw new MissingValueException(message, this, request, cause);
+        }
+
+        MissingValueHandler handler = request.hasDefaultValue()
+                ? request.getMissingValueHandler()
+                : getConfig().getMissingValueHandler();
+
+        return handler.handle(this, request);
     }
 
     // Triggered by an external request to refresh an entry

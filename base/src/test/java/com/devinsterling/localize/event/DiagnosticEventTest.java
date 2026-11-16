@@ -2,8 +2,8 @@ package com.devinsterling.localize.event;
 
 import com.devinsterling.localize.LocalizationRequest;
 import com.devinsterling.localize.LocalizationRequestSource;
-
 import com.devinsterling.localize.MissingValueHandler;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
@@ -17,29 +17,32 @@ public class DiagnosticEventTest {
     @Test void testOnMissingValue() {
         LocalizeEventCapturer<DiagnosticEvent.MissingValue> localize
                 = new LocalizeEventCapturer<>(DiagnosticEvent.MissingValue.class);
+        localize.setFormatter(request -> null);
 
-        LocalizationRequestSource.Key key = new LocalizationRequestSource.Key("");
+        LocalizationRequestSource.Key key = new LocalizationRequestSource.Key("abc");
         LocalizationRequest request = LocalizationRequest.Builder.of(key).build();
         MissingValueHandler handler = MissingValueHandler.of("123");
 
+        localize.format("Hi {user}").value();
         localize.getValue(TEST_KEY_GREET); // Event 0
-        localize.addProvider(TEST_PROVIDER);
-        localize.get(TEST_KEY_GREET);
         localize.get("non-existent").defaultHandler(handler).value(); // 1
         localize.formatValue(request); // 2
 
-        assertEquals(3, localize.capturedEventsCount());
+        assertEquals(4, localize.capturedEventsCount());
 
         DiagnosticEvent.MissingValue event0 = localize.getEvent(0);
-        assertEquals(TEST_KEY_GREET, event0.getKey().value());
+        assertEquals(new LocalizationRequestSource.Pattern("Hi {user}"), event0.getRequest().getSource());
 
         DiagnosticEvent.MissingValue event1 = localize.getEvent(1);
-        assertEquals("non-existent", event1.getKey().value());
-        assertEquals(handler, event1.getRequest().getMissingValueHandler());
+        assertEquals(new LocalizationRequestSource.Key(TEST_KEY_GREET), event1.getRequest().getSource());
 
         DiagnosticEvent.MissingValue event2 = localize.getEvent(2);
-        assertSame(key, event2.getKey());
-        assertSame(request, event2.getRequest());
+        assertEquals(new LocalizationRequestSource.Key("non-existent"), event2.getRequest().getSource());
+        assertSame(handler, event2.getRequest().getMissingValueHandler());
+
+        DiagnosticEvent.MissingValue event3 = localize.getEvent(3);
+        assertSame(key, event3.getRequest().getSource());
+        assertSame(request, event3.getRequest());
     }
 
     @Test void testOnListenerException() {

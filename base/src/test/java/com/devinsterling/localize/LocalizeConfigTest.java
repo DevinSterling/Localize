@@ -7,7 +7,6 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
-import java.util.MissingResourceException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.devinsterling.localize.TestUtil.*;
@@ -41,7 +40,7 @@ class LocalizeConfigTest {
         assertDoesNotThrow(() -> localize.getValue("Missing Key"));
 
         config.setThrowOnMissingValue(true);
-        assertThrows(MissingResourceException.class, () -> localize.getValue("Missing Key"));
+        assertThrows(MissingValueException.class, () -> localize.getValue("Missing Key"));
     }
 
     @Test void testIgnoreFormatterExceptions() {
