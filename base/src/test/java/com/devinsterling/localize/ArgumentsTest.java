@@ -156,6 +156,30 @@ class ArgumentsTest {
         assertEquals(Map.of("0", 1337, "1", 1337, "2", 2), resolvedNamed.toNamedMap());
     }
 
+    @Test void resolutionByIdentityInsteadOfEquality() {
+        record Arg(int value, String format) {
+            @Override public String toString() {
+                return String.format(format, value);
+            }
+
+            @Override public boolean equals(Object o) {
+                return o instanceof Arg other && value == other.value;
+            }
+        }
+
+        Arg zero1 = new Arg(0, "%d");
+        Arg zero2 = new Arg(0, "%02d");
+
+        Arguments arguments1 = Arguments.of(zero1);
+        Arguments arguments2 = arguments1.resolve(arg -> zero2);
+
+        assertNotSame(arguments1, arguments2);
+        assertEquals(arguments1, arguments2);
+
+        assertEquals("[0]", arguments1.toString());
+        assertEquals("[00]", arguments2.toString());
+    }
+
     @Test void testResolverReceivesIndexOrName() {
         List<Object> calls = new ArrayList<>();
         Arguments.Resolver recorder = new Arguments.Resolver() {

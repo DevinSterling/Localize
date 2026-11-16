@@ -200,7 +200,7 @@ final class ArgumentsHelper {
                 Object originalValue = entry.getValue();
                 Object resolvedValue = resolve(resolver, i++, key, originalValue);
 
-                if (!Objects.equals(originalValue, resolvedValue)) {
+                if (originalValue != resolvedValue) {
                     if (resolved == null) {
                         resolved = copyArgumentsMap();
                     }
@@ -282,7 +282,7 @@ final class ArgumentsHelper {
             for (Object originalValue : arguments) {
                 Object resolvedValue = resolver.resolve(i, originalValue);
 
-                if (!Objects.equals(originalValue, resolvedValue)) {
+                if (originalValue != resolvedValue) {
                     if (resolved == null) {
                         resolved = new ArrayList<>(arguments);
                     }

@@ -138,8 +138,8 @@ public interface Arguments {
     /// Transforms and returns the resolved arguments using the given resolver.
     ///
     /// If resolution produces no changes, this same instance is returned.
-    /// Changes are identified by comparing the equality of each original and resolved value
-    /// using [`Objects.equals(originalValue, resolvedValue)`][Objects#equals(Object, Object)].
+    /// Changes are identified by comparing the identity of each original and resolved value:
+    /// `originalValue != resolvedValue`.
     ///
     /// If resolution produces changes, an immutable snapshot containing the resolved arguments is returned.
     ///
