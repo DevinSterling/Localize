@@ -546,7 +546,7 @@ public class Localize {
             for (SetLocalePendingSources.FetchedSource entry : pending.refreshed.temp) {
                 ProviderEntry providerEntry = entry.provider;
 
-                if (providerEntry.tryCommit(snapshot.version, ticket, entry.source)) {
+                if (providerEntry.tryCommit(snapshot.version, ticket, entry.source, snapshot.current)) {
                     pending.refreshed.refreshed.add(providerEntry);
                 }
             }
@@ -640,7 +640,8 @@ public class Localize {
         // "refresh" to ensure the pattern source matches the current locale.
         while (true) {
             LocaleState.Snapshot snapshot = data.locale.snapshot();
-            entry.patternSource = getPatternSource(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
+            PatternSource patternSource = getPatternSource(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
+            entry.commit = new ProviderEntry.Commit(patternSource, snapshot.current);
 
             // NOTE: The locale does not change under this lock
             synchronized (data.localeChangeLock) {
@@ -851,7 +852,7 @@ public class Localize {
         for (VersionEntryBundle versionEntryBundle : refreshedProviders.temp) {
             ProviderEntry entry = versionEntryBundle.entry;
 
-            if (entry.tryCommit(snapshot.version, ticket, versionEntryBundle.source)) {
+            if (entry.tryCommit(snapshot.version, ticket, versionEntryBundle.source, snapshot.current)) {
                 refreshedProviders.refreshed.add(entry);
             }
         }
@@ -999,7 +1000,7 @@ public class Localize {
         if (source instanceof LocalizationRequestSource.Key key) {
             value = formatValue(key, request);
         } else if (source instanceof LocalizationRequestSource.Pattern pattern) {
-            value = formatValue(pattern.value(), request);
+            value = formatValue(getLocale(), pattern.value(), request);
         }
 
         return value;
@@ -1008,21 +1009,24 @@ public class Localize {
     private String formatValue(LocalizationRequestSource.Key source, LocalizationRequest request) {
         String key = source.value();
         String pattern = null;
+        Locale locale = null;
 
         for (ProviderEntry entry : data.providers) {
-            PatternSource patternSource = entry.getPatternSource();
+            ProviderEntry.Commit committed = entry.commit;
+            PatternSource committedSource = committed.patternSource;
 
-            if (patternSource != null && (pattern = patternSource.getPattern(key)) != null) {
+            if (committedSource != null && (pattern = committedSource.getPattern(key)) != null) {
+                locale = committed.locale;
                 break;
             }
         }
 
         return pattern != null
-            ? formatValue(pattern, request)
+            ? formatValue(locale, pattern, request)
             : handleMissing(request, "Cannot find pattern", null);
     }
 
-    private String formatValue(String pattern, LocalizationRequest request) {
+    private String formatValue(Locale locale, String pattern, LocalizationRequest request) {
         String missingValueMessage = "Formatter returned `null`";
         Throwable cause = null;
 
@@ -1030,6 +1034,7 @@ public class Localize {
         LocalizationFormatter formatter = getFormatter();
         LocalizationFormatter.Request formatRequest = LocalizationFormatter.Request.Builder
             .of(this, pattern)
+            .locale(locale) // Ensures `pattern` is associated with the correct locale
             .arguments(request.getArguments())
             .build();
 
@@ -1080,7 +1085,7 @@ public class Localize {
         LocaleState.Snapshot snapshot = data.locale.snapshot();
         PatternSource newSource = getPatternSource(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
 
-        return entry.tryCommit(snapshot.version, ticket, newSource);
+        return entry.tryCommit(snapshot.version, ticket, newSource, snapshot.current);
     }
 
     private void removeProvider(ProviderEntry entry) {
@@ -1248,13 +1253,15 @@ public class Localize {
     public static final class ProviderEntry {
         private final ProviderKey key;
         private final PatternSourceProvider provider;
-        private volatile PatternSource patternSource;
         private volatile Localize root;
+        private volatile Commit commit;
 
-        // Concurrency control for `patternSource` updates
-        // `committedLocaleVersion` and `committedTicket` form a composite ticket
-        private long committedLocaleVersion;
-        private long committedTicket;
+        // `localeVersion` and `ticket` form a composite ticket
+        private record Commit(PatternSource patternSource, Locale locale, long localeVersion, long ticket) {
+            Commit(PatternSource patternSource, Locale locale) {
+                this(patternSource, locale, Long.MIN_VALUE, Long.MIN_VALUE);
+            }
+        }
 
         /// @see ofInactive
         private ProviderEntry(ProviderKey key, PatternSourceProvider provider) {
@@ -1292,7 +1299,7 @@ public class Localize {
         ///
         /// @return Most recently computed source, or `null` if not available.
         public PatternSource getPatternSource() {
-            return patternSource;
+            return commit.patternSource;
         }
 
         /// Removes the contained provider from the associated [Localize] instance.
@@ -1344,26 +1351,23 @@ public class Localize {
             root = source;
         }
 
-        private synchronized boolean tryCommit(long localeVersion, long ticket, PatternSource newSource) {
-            if (
-                !isActive() ||
+        private synchronized boolean tryCommit(long localeVersion, long ticket, PatternSource source, Locale locale) {
+            if (!isActive() ||
                 // Reject unchanged `null` pattern sources
-                (patternSource == null && newSource == null) ||
+                (source == null && commit.patternSource == null) ||
                 // Reject superseded composite ticket
-                (localeVersion < committedLocaleVersion ||
-                (localeVersion == committedLocaleVersion && ticket <= committedTicket))
+                (localeVersion < commit.localeVersion ||
+                (localeVersion == commit.localeVersion && ticket <= commit.ticket))
             ) {
                 return false;
             }
 
-            committedLocaleVersion = localeVersion;
-            committedTicket = ticket;
-            patternSource = newSource;
+            commit = new Commit(source, locale, localeVersion, ticket);
             return true;
         }
 
         private synchronized void dispose() {
-            committedLocaleVersion = committedTicket = Long.MAX_VALUE;
+            commit = new Commit(commit.patternSource, commit.locale, Long.MAX_VALUE, Long.MAX_VALUE);
             root = null;
         }
     }

@@ -462,4 +462,20 @@ class LocalizeTest {
         assertSame(caught, providerException);
         assertArrayEquals(new Throwable[] { listenerException }, caught.getSuppressed());
     }
+
+    @Test void retainPatternAndLocalePairDuringLocaleChange() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        localize.setFormatter(request -> request.getPattern() + ":" + request.getLocale().toLanguageTag());
+
+        localize.addProvider(locale -> key -> {
+            if (Locale.ENGLISH.equals(locale)) {
+                // Force a locale change right between pattern lookup and formatting
+                localize.setLocale(Locale.JAPANESE);
+            }
+            return locale.toLanguageTag();
+        });
+
+        assertEquals("en:en", localize.getValue("greeting"));
+        assertEquals("ja:ja", localize.getValue("greeting"));
+    }
 }
