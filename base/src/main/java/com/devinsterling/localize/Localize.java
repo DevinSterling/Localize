@@ -835,9 +835,10 @@ public class Localize {
         RefreshedProviders<VersionEntryBundle> refreshedProviders = new RefreshedProviders<>(sizeHint);
 
         for (ProviderEntry entry : data.providers) {
-            // Stop early if the locale changes mid-way or the thread is interrupted
-            if (!data.locale.isCurrent(snapshot) || Thread.currentThread().isInterrupted()) {
-                return false;
+            // Stop early if the locale changes mid-way
+            if (!data.locale.isCurrent(snapshot)) {
+                ExceptionHelper.throwIfNotNull(aggregate);
+                break;
             }
 
             try {
@@ -865,9 +866,7 @@ public class Localize {
             aggregate = ExceptionHelper.aggregate(aggregate, e);
         }
 
-        if (aggregate != null) {
-            throw aggregate;
-        }
+        ExceptionHelper.throwIfNotNull(aggregate);
 
         return hasRefreshed;
     }

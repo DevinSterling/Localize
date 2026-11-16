@@ -34,4 +34,10 @@ public final class ExceptionHelper {
             throw aggregate;
         }
     }
+
+    public static void throwIfNotNull(RuntimeException exception) {
+        if (exception != null) {
+            throw exception;
+        }
+    }
 }

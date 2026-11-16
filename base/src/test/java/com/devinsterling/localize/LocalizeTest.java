@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -258,6 +259,38 @@ class LocalizeTest {
 
         localize.refreshProvider(providerKey);
         assertEquals("xyz", localize.getValue(TEST_KEY_TEST));
+    }
+
+    @Test void refreshProvidersDoesNotSwallowExceptionsOnEarlyReturn() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        UnsupportedOperationException exception = new UnsupportedOperationException();
+
+        AtomicInteger firstProviderCalls = new AtomicInteger();
+        AtomicInteger lastProviderCalls = new AtomicInteger();
+        AtomicBoolean shouldThrow = new AtomicBoolean();
+
+        Function<AtomicInteger, PatternSourceProvider> createCounter = count -> locale -> {
+            count.incrementAndGet();
+            return null;
+        };
+
+        localize.addProvider(createCounter.apply(firstProviderCalls));
+        localize.addProvider(locale -> {
+            // Defer throwing as calling `addProvider` invokes this method once
+            if (shouldThrow.get() && locale.equals(Locale.ENGLISH)) {
+                localize.setLocale(Locale.CHINESE);
+                throw exception;
+            }
+            return TEST_PROVIDER.provide(locale);
+        });
+        localize.addProvider(createCounter.apply(lastProviderCalls));
+        shouldThrow.set(true);
+
+        var caught = assertThrows(UnsupportedOperationException.class, localize::refreshProviders);
+        assertSame(exception, caught);
+        // An early return occurred because `firstProviderCalls` and `lastProviderCalls` are not equal
+        assertEquals(3, firstProviderCalls.get());
+        assertEquals(2, lastProviderCalls.get());
     }
 
     @Test void setLocaleRefreshesUncoveredProvider() {
