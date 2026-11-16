@@ -33,7 +33,7 @@
 /// @since 1.0
 module com.devinsterling.localize.fx {
     requires transitive com.devinsterling.localize;
-    requires javafx.graphics;
+    requires transitive javafx.graphics;
 
     exports com.devinsterling.localize.fx;
 }

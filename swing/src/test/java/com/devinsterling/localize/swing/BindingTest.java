@@ -15,7 +15,7 @@ import static com.devinsterling.localize.swing.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
-public class BindingTest {
+class BindingTest {
 
     @Test void testActiveBinding() {
         LocalizeSwing localize = getLocalizeSwingInstance();

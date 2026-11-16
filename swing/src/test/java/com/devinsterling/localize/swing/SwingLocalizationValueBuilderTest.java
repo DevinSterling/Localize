@@ -16,7 +16,7 @@ import static com.devinsterling.localize.swing.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
-public class SwingLocalizationValueBuilderTest {
+class SwingLocalizationValueBuilderTest {
 
     @Test void testWeakArguments() {
         LocalizeSwing localize = getLocalizeSwingInstance();

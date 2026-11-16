@@ -14,7 +14,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AttachTest {
+class AttachTest {
 
     @Test void testBasicAttach() {
         Localize localize = Localize.of(Locale.ENGLISH);

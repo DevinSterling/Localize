@@ -21,7 +21,7 @@ import java.util.function.BiConsumer;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
-public class TriggerTest {
+class TriggerTest {
 
     @Test public void testActionTrigger() {
         AtomicInteger count = new AtomicInteger();

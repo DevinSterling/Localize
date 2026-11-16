@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SubscriptionTest {
+class SubscriptionTest {
 
     @Test void testEmptySubscription() {
         Subscription subscription = Subscription.EMPTY;

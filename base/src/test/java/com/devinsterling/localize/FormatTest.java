@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FormatTest {
+class FormatTest {
 
     @Test void testNamedArguments() {
         Localize localize = Localize.of(Locale.ENGLISH);

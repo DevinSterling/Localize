@@ -9,7 +9,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocalizationFormatterTest {
+class LocalizationFormatterTest {
 
     @Test void testFormatter() {
         Localize localize = getEmptyLocalizeInstance();

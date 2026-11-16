@@ -11,7 +11,7 @@ import static com.devinsterling.localize.fx.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class JavaFXDispatchTest {
+class JavaFXDispatchTest {
 
     static {
         startupJavaFXThread();

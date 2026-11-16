@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 
-public class ValueBasedTest {
+class ValueBasedTest {
 
     @Test void testLocalizationRequestEquality() {
         EqualsVerifier.simple()

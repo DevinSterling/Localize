@@ -9,7 +9,7 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocaleEventTest {
+class LocaleEventTest {
 
     @Test void testOnLocaleChange() {
         LocalizeEventTest localize = new  LocalizeEventTest(Locale.ENGLISH);

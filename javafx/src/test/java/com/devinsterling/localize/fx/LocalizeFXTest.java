@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class LocalizeFXTest {
     Localize.ProviderKey providerKey = Localize.ProviderKey.of("provider");
 
-    @Test void testCompositionConstructor() {
+    @Test void testAttach() {
         Localize localize = Localize.of();
         LocalizeFX swingA = localize.attach(LocalizeFX::new);
         LocalizeFX swingB = localize.attach(LocalizeFX::new);

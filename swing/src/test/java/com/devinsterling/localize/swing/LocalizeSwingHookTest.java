@@ -18,7 +18,7 @@ import static com.devinsterling.localize.swing.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
-public class LocalizeSwingHookTest {
+class LocalizeSwingHookTest {
 
     @Test void noProviderDiagnosticEventReceived() {
         class LocalizeTest extends LocalizeSwing {

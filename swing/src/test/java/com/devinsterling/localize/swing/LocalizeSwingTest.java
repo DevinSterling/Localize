@@ -20,10 +20,10 @@ import static com.devinsterling.localize.swing.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
-public class LocalizeSwingTest {
+class LocalizeSwingTest {
     private final Localize.ProviderKey providerKey = Localize.ProviderKey.of("provider");
 
-    @Test void testCompositionConstructor() {
+    @Test void testAttach() {
         Localize localize = Localize.of();
         LocalizeSwing swingA = localize.attach(LocalizeSwing::new);
         LocalizeSwing swingB = localize.attach(LocalizeSwing::new);

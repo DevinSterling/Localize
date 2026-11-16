@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class IcuPropertiesTest {
+class IcuPropertiesTest {
 
     @Test void testAbsentPropertiesFile() {
         IcuProperties properties = new IcuProperties("non/existent/file");

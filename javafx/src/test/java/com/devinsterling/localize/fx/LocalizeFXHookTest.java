@@ -14,7 +14,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(JavaFXExtension.class)
-public class LocalizeFXHookTest {
+class LocalizeFXHookTest {
 
     @Test void noProviderDiagnosticEventReceived() {
         class LocalizeTest extends LocalizeFX {

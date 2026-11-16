@@ -18,7 +18,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocalizeHookTest {
+class LocalizeHookTest {
 
     @Test void testOnLocaleReplaced() {
         AtomicInteger counter = new AtomicInteger(0);

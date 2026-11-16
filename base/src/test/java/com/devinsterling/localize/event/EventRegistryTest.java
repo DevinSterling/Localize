@@ -13,7 +13,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class EventRegistryTest {
+class EventRegistryTest {
 
     @Test void testAddEventListener() {
         AtomicInteger count = new AtomicInteger();

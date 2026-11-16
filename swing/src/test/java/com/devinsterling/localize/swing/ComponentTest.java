@@ -35,7 +35,7 @@ import static com.devinsterling.localize.swing.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
-public class ComponentTest {
+class ComponentTest {
 
     @Test void testUnsupportedBindComponent() {
         LocalizeSwing localize = LocalizeSwing.of();

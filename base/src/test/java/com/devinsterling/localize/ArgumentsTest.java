@@ -11,7 +11,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ArgumentsTest {
+class ArgumentsTest {
 
     @Test void testNoneArguments() {
         Arguments none = Arguments.of();

@@ -1,5 +1,6 @@
 package com.devinsterling.localize.concurrent;
 
+import java.util.ArrayList;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
@@ -39,18 +40,17 @@ public final class ConcurrentTestHelper {
     /// The first failure is rethrown with any subsequent appended as suppressed.
     public static void race(Runnable... runners) {
         CyclicBarrier start = new CyclicBarrier(runners.length);
-        Task<?>[] tasks = new Task[runners.length];
+        ArrayList<Task<?>> tasks = new ArrayList<>(runners.length);
 
-        for (int i = 0; i < runners.length; i++) {
-            Runnable runner = runners[i];
-            tasks[i] = background(() -> {
+        for (Runnable runner : runners) {
+            tasks.add(background(() -> {
                 await(start);
                 runner.run();
-            });
+            }));
         }
 
         RuntimeException exception = null;
-        for (Task task : tasks) {
+        for (Task<?> task : tasks) {
             try {
                 task.join();
             } catch (Exception e) {

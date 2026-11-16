@@ -6,7 +6,7 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class HeadlessTest {
+class HeadlessTest {
     @Test void uninitializedJavaFXDoesNotCrash() {
         LocalizeFX fx = LocalizeFX.of();
 

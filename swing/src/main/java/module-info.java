@@ -34,7 +34,7 @@
 /// @since 2.0
 module com.devinsterling.localize.swing {
     requires transitive com.devinsterling.localize;
-    requires java.desktop;
+    requires transitive java.desktop;
 
     exports com.devinsterling.localize.swing;
 }

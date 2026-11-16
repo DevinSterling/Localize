@@ -10,7 +10,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class BundleProviderEntryTest {
+class BundleProviderEntryTest {
 
     @Test void testPutProviderEntry() {
         Localize localize = Localize.of(Locale.ENGLISH);

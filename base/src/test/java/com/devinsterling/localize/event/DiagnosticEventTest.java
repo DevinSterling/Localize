@@ -12,7 +12,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DiagnosticEventTest {
+class DiagnosticEventTest {
 
     @Test void testOnMissingValue() {
         LocalizeEventCapturer<DiagnosticEvent.MissingValue> localize

@@ -12,7 +12,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LocalizeEventTest {
+class LocalizeEventTest {
     @Test void testCauses() {
         assertNotEquals(LocalizeEvent.Cause.DIRECT, LocalizeEvent.Cause.LOCALE_CHANGE);
         assertEquals("DIRECT", LocalizeEvent.Cause.DIRECT.toString());

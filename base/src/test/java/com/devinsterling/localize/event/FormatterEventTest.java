@@ -12,7 +12,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FormatterEventTest {
+class FormatterEventTest {
 
     @Test void testOnFormatterReplaced() {
         LocalizeEventCapturer<FormatterEvent.Replaced> localize

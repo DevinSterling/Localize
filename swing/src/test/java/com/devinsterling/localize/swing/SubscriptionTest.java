@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SwingEdtExtension.class)
-public class SubscriptionTest {
+class SubscriptionTest {
 
     @Test void testEmptySubscriptionReturned() {
         LocalizeSwing localize = LocalizeSwing.of();

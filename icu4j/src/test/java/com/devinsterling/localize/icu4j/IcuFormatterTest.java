@@ -18,7 +18,7 @@ import static com.devinsterling.localize.icu4j.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class IcuFormatterTest {
+class IcuFormatterTest {
 
     @Test void testDefaultIcuFormatterConfig(){
         IcuFormatter formatter = new IcuFormatter();

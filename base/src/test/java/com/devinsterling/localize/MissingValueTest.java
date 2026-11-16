@@ -6,7 +6,7 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MissingValueTest {
+class MissingValueTest {
 
     @Test void missingValueExceptionFieldAccess() {
         Localize localize = Localize.of(Locale.ENGLISH);

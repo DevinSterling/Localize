@@ -13,7 +13,7 @@ import static com.devinsterling.localize.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ProviderEventTest {
+class ProviderEventTest {
     private static final PatternSourceProvider NULL_PROVIDER = locale -> null;
 
     @Test void testOnProviderPut() {

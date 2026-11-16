@@ -13,8 +13,10 @@
 ///
 /// @see com.devinsterling.localize.icu4j.IcuFormatter
 /// @since 2.0
+// Suppress `requires-automatic` as ICU4J's `com.ibm.icu` is an automatic module
+@SuppressWarnings("requires-automatic")
 module com.devinsterling.localize.icu4j {
-    requires com.devinsterling.localize;
+    requires transitive com.devinsterling.localize;
     requires com.ibm.icu;
 
     exports com.devinsterling.localize.icu4j;

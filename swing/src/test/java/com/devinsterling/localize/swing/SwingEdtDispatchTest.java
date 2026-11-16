@@ -11,7 +11,7 @@ import static com.devinsterling.localize.swing.TestUtil.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SwingEdtDispatchTest {
+class SwingEdtDispatchTest {
 
     @Test public void testLocaleChangeDispatchesToEdt() throws InterruptedException, InvocationTargetException {
         LocalizeSwing localize = getLocalizeSwingInstance();
