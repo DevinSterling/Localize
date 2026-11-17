@@ -319,6 +319,11 @@ public class LocalizeSwing extends Localize {
         }
     }
 
+    // Override as final to allow `LocalizeSwingConfig` in a future non-breaking 2.x release
+    @Override public final LocalizeConfig getConfig() {
+        return super.getConfig();
+    }
+
     @Override public SwingLocalizationValueBuilder<?> format(String pattern) {
         return new SwingLocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this);
     }

@@ -186,6 +186,11 @@ public class LocalizeFX extends Localize {
         }
     }
 
+    // Override as final to allow `LocalizeFXConfig` in a future non-breaking 2.x release
+    @Override public final LocalizeConfig getConfig() {
+        return super.getConfig();
+    }
+
     @Override public FXLocalizationValueBuilder<?> format(String pattern) {
         return new FXLocalizationValueBuilder<>(new LocalizationRequestSource.Pattern(pattern), this);
     }
