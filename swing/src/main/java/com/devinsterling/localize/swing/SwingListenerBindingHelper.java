@@ -15,6 +15,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -51,35 +52,37 @@ final class SwingListenerBindingHelper {
     }
 
     public void installListeners(Binding<?> binding) {
+        // A weak wrapper avoids potentially leaking the
+        // source binding on longer-lived components that are listened to
+        WeakBinding weak = new WeakBinding(binding);
+
         for (SetupListener setupListener : setupListeners) {
-            setupListener.setup(binding);
+            setupListener.setup(weak);
         }
     }
 
     public static void addDocumentListener(JTextComponent component, Binding<?> binding) {
+        WeakBinding weak = new WeakBinding(binding);
+
         component.addPropertyChangeListener("document", new PropertyChangeListener() {
             @Override public void propertyChange(PropertyChangeEvent evt) {
-                if (binding.isActive()) {
-                    binding.update();
-                } else {
-                    component.removePropertyChangeListener(this);
+                if (!weak.updateIfActive()) {
+                    component.removePropertyChangeListener("document", this);
                 }
             }
         });
     }
 
     private interface SetupListener {
-        void setup(Binding<?> binding);
+        void setup(WeakBinding binding);
     }
 
     private record SetupPropertyListener(String property, Component component) implements SetupListener {
-        @Override public void setup(Binding<?> binding) {
+        @Override public void setup(WeakBinding binding) {
             component.addPropertyChangeListener(property, new PropertyChangeListener() {
                 @Override public void propertyChange(PropertyChangeEvent evt) {
-                    if (binding.isActive()) {
-                        binding.update();
-                    } else {
-                        component.removePropertyChangeListener(this);
+                    if (!binding.updateIfActive()) {
+                        component.removePropertyChangeListener(property, this);
                     }
                 }
             });
@@ -91,12 +94,10 @@ final class SwingListenerBindingHelper {
         BiConsumer<T, ChangeListener> addChangeListener,
         BiConsumer<T, ChangeListener> removeChangeListener
     ) implements SetupListener {
-        @Override public void setup(Binding<?> binding) {
+        @Override public void setup(WeakBinding binding) {
             addChangeListener.accept(component, new ChangeListener() {
                 @Override public void stateChanged(ChangeEvent e) {
-                    if (binding.isActive()) {
-                        binding.update();
-                    } else  {
+                    if (!binding.updateIfActive()) {
                         removeChangeListener.accept(component, this);
                     }
                 }
@@ -109,12 +110,10 @@ final class SwingListenerBindingHelper {
         BiConsumer<T, ItemListener> addChangeListener,
         BiConsumer<T, ItemListener> removeChangeListener
     ) implements SetupListener {
-        @Override public void setup(Binding<?> binding) {
+        @Override public void setup(WeakBinding binding) {
             addChangeListener.accept(component, new ItemListener() {
                 @Override public void itemStateChanged(ItemEvent e) {
-                    if (binding.isActive()) {
-                        binding.update();
-                    } else  {
+                    if (!binding.updateIfActive()) {
                         removeChangeListener.accept(component, this);
                     }
                 }
@@ -123,13 +122,11 @@ final class SwingListenerBindingHelper {
     }
 
     private record SetupTriggerListener(Trigger trigger) implements SetupListener {
-        @Override public void setup(Binding<?> binding) {
+        @Override public void setup(WeakBinding binding) {
             Subscription[] subscription = new Subscription[1];
 
             subscription[0] = trigger.subscribe(() -> {
-                if (binding.isActive()) {
-                    binding.update();
-                } else if (subscription[0] != null) {
+                if (!binding.updateIfActive() && subscription[0] != null) {
                     subscription[0].dispose();
                 }
             });
@@ -137,12 +134,10 @@ final class SwingListenerBindingHelper {
     }
 
     private record SetupTextListener(JTextComponent component) implements SetupListener {
-        @Override public void setup(Binding<?> binding) {
+        @Override public void setup(WeakBinding binding) {
             DocumentListener listener = new DocumentListener() {
                 private void update() {
-                    if (binding.isActive()) {
-                        binding.update();
-                    } else  {
+                    if (!binding.updateIfActive()) {
                         component.getDocument().removeDocumentListener(this);
                     }
                 }
@@ -167,16 +162,33 @@ final class SwingListenerBindingHelper {
                     Document newDocument = (Document) evt.getNewValue();
                     oldDocument.removeDocumentListener(listener);
 
-                    if (binding.isActive()) {
+                    if (binding.updateIfActive()) {
                         newDocument.addDocumentListener(listener);
-                        binding.update();
                     } else {
-                        component.removePropertyChangeListener(this);
+                        component.removePropertyChangeListener("document", this);
                     }
                 }
             });
 
             component.getDocument().addDocumentListener(listener);
+        }
+    }
+
+    private static final class WeakBinding extends WeakReference<Binding<?>> {
+        private WeakBinding(Binding<?> binding) {
+            super(binding);
+        }
+
+        /// @return `false` if the binding is GC'd or inactive.
+        private boolean updateIfActive() {
+            Binding<?> binding = get();
+            boolean isActive = binding != null && binding.isActive();
+
+            if (isActive) {
+                binding.update();
+            }
+
+            return isActive;
         }
     }
 }
