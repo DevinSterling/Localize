@@ -186,6 +186,12 @@ public class Localize {
         }
     }
 
+    /// Sentinel to indicate a [PatternSource] that was failed to retrieve
+    /// when [LocalizeConfig#isIgnoreProviderExceptions()] is set to `true`.
+    ///
+    /// This value is returned yet never stored in [ProviderEntry.Commit]
+    private static final PatternSource FETCH_FAILED = key -> null;
+
     private final Data data;
     /// Keeps the wrapped instance from being garbage collected.
     /// Without this, it can lead to subtle bugs:
@@ -843,7 +849,11 @@ public class Localize {
 
             try {
                 PatternSource source = getPatternSource(cause, entry, snapshot.current);
-                refreshedProviders.temp.add(new VersionEntryBundle(entry, source));
+
+                // If fetching failed, skip the entry so it retains its existing state
+                if (source != FETCH_FAILED) {
+                    refreshedProviders.temp.add(new VersionEntryBundle(entry, source));
+                }
             } catch (RuntimeException e) {
                 aggregate = ExceptionHelper.aggregate(aggregate, e);
             }
@@ -1084,7 +1094,8 @@ public class Localize {
         LocaleState.Snapshot snapshot = data.locale.snapshot();
         PatternSource newSource = getPatternSource(LocalizeEvent.Cause.DIRECT, entry, snapshot.current);
 
-        return entry.tryCommit(snapshot.version, ticket, newSource, snapshot.current);
+        // If fetching failed, return early, so the entry retains its existing state
+        return newSource != FETCH_FAILED && entry.tryCommit(snapshot.version, ticket, newSource, snapshot.current);
     }
 
     private void removeProvider(ProviderEntry entry) {
@@ -1093,10 +1104,10 @@ public class Localize {
         }
     }
 
-    /// @return The corresponding [PatternSource], or `null` if it was not found
-    ///         and [LocalizeConfig#isIgnoreProviderExceptions()] is `true`.
+    /// @return The corresponding nullable [PatternSource], or [FETCH_FAILED] if an exception
+    ///         occurred when [LocalizeConfig#isIgnoreProviderExceptions()] is `true`.
     private PatternSource getPatternSource(LocalizeEvent.Cause cause, ProviderEntry entry, Locale locale) {
-        PatternSource patternSource = null;
+        PatternSource patternSource = FETCH_FAILED;
 
         try {
             patternSource = entry.getProvider().provide(locale);
@@ -1257,6 +1268,11 @@ public class Localize {
 
         // `localeVersion` and `ticket` form a composite ticket
         private record Commit(PatternSource patternSource, Locale locale, long localeVersion, long ticket) {
+            Commit {
+                // Normalize `FETCH_FAILED` to `null` as it's only a fetch result sentinel
+                patternSource = patternSource == FETCH_FAILED ? null : patternSource;
+            }
+
             Commit(PatternSource patternSource, Locale locale) {
                 this(patternSource, locale, Long.MIN_VALUE, Long.MIN_VALUE);
             }
@@ -1350,10 +1366,9 @@ public class Localize {
             root = source;
         }
 
+        /// @return `true` if the [PatternSource] has been replaced, and the previous and new one are non-null.
         private synchronized boolean tryCommit(long localeVersion, long ticket, PatternSource source, Locale locale) {
             if (!isActive() ||
-                // Reject unchanged `null` pattern sources
-                (source == null && commit.patternSource == null) ||
                 // Reject superseded composite ticket
                 (localeVersion < commit.localeVersion ||
                 (localeVersion == commit.localeVersion && ticket <= commit.ticket))
@@ -1361,8 +1376,10 @@ public class Localize {
                 return false;
             }
 
+            boolean isEitherNotNull = source != null || commit.patternSource != null;
             commit = new Commit(source, locale, localeVersion, ticket);
-            return true;
+
+            return isEitherNotNull;
         }
 
         private synchronized void dispose() {

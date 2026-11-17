@@ -511,4 +511,65 @@ class LocalizeTest {
         assertEquals("en:en", localize.getValue("greeting"));
         assertEquals("ja:ja", localize.getValue("greeting"));
     }
+
+    @Test void refreshProvidersKeepsPreviousPatternSourceOnExceptionWhenIgnored() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        localize.getConfig().setIgnoreProviderExceptions(true);
+        UnsupportedOperationException exception = new UnsupportedOperationException();
+
+        AtomicBoolean failRefresh = new AtomicBoolean();
+        AtomicReference<Exception> caught = new AtomicReference<>();
+
+        localize.addListener(ProviderEvent.ExceptionCaught.class, e -> caught.set(e.getException()));
+        localize.addProvider(locale -> {
+            if (failRefresh.get()) {
+                throw exception;
+            }
+            return key -> "Hello";
+        });
+
+        failRefresh.set(true);
+        assertFalse(localize.refreshProviders());
+        assertSame(exception, caught.get());
+        assertEquals("Hello", localize.getValue("greeting"));
+    }
+
+    @Test void refreshProviderReplacesPatternSourceOnExplicitNull() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        AtomicBoolean returnNull = new AtomicBoolean();
+
+        var entry = localize.addProvider(locale -> returnNull.get() ? null : key -> "Hello");
+
+        returnNull.set(true);
+        assertTrue(localize.refreshProviders());
+        assertEquals("[greeting]", localize.getValue("greeting"));
+
+        returnNull.set(false);
+        assertTrue(localize.refreshProvider(entry.getKey()));
+        assertEquals("Hello", localize.getValue("greeting"));
+
+        returnNull.set(true);
+        entry.refresh();
+        assertEquals("[greeting]", localize.getValue("greeting"));
+    }
+
+    @Test void setLocaleNullCommitRejectsStaleConcurrentRefresh() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        localize.getConfig().setIgnoreProviderExceptions(true);
+
+        AtomicBoolean triggerConcurrentSetLocale = new AtomicBoolean();
+
+        localize.putProvider(providerKey, locale -> {
+            if (triggerConcurrentSetLocale.get() && locale.equals(Locale.ENGLISH)) {
+                // Concurrent locale change also fails (null -> null). However, advances `commit.localeVersion`
+                localize.setLocale(Locale.JAPANESE);
+                return key -> "stale";
+            }
+            throw new UnsupportedOperationException();
+        });
+
+        triggerConcurrentSetLocale.set(true);
+        assertFalse(localize.refreshProvider(providerKey));
+        assertEquals("[greeting]", localize.getValue("greeting"));
+    }
 }
