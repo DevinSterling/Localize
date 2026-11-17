@@ -65,22 +65,41 @@ public interface LocalizationFormatter {
     /// @see Builder#of
     /// @since 2.0
     final class Request {
+        private final LocalizationRequestSource source;
         private final Localize localize;
         private final Locale locale;
         private final String pattern;
         private final Arguments arguments;
 
-        private Request(Localize localize, Locale locale, String pattern, Arguments arguments) {
+        private Request(
+            LocalizationRequestSource source,
+            Localize localize,
+            Locale locale,
+            String pattern,
+            Arguments arguments
+        ) {
             // A null check is not required here as that's handled by the builder
+            this.source = source;
             this.localize = localize;
             this.locale = locale;
             this.pattern = pattern;
             this.arguments = arguments;
         }
 
+        /// Returns the source where the [`pattern`][getPattern] was obtained:
+        /// - [LocalizationRequestSource.Key]: The pattern was resolved using this key.
+        /// - [LocalizationRequestSource.Pattern]: The pattern was supplied directly without a key.
+        ///
+        /// @return Source of the pattern.
+        /// @see getPattern
+        public LocalizationRequestSource getSource() {
+            return source;
+        }
+
         /// Returns the message pattern to format.
         ///
         /// @return Message pattern to format.
+        /// @see getSource
         public String getPattern() {
             return pattern;
         }
@@ -117,20 +136,22 @@ public interface LocalizationFormatter {
         @Override public boolean equals(Object obj) {
             if (obj == this) return true;
             if (!(obj instanceof Request other)) return false;
-            return localize.equals(other.localize)
+            return source.equals(other.source)
+                    && localize.equals(other.localize)
                     && locale.equals(other.locale)
                     && pattern.equals(other.pattern)
                     && arguments.equals(other.arguments);
         }
 
         @Override public int hashCode() {
-            return Objects.hash(localize, locale, pattern, arguments);
+            return Objects.hash(source, localize, locale, pattern, arguments);
         }
 
         /// Builder to create a [Request] for string formatting.
         ///
         /// @see Builder#of
         public static final class Builder {
+            private LocalizationRequestSource source;
             private Localize localize;
             private Locale locale;
             private String pattern;
@@ -143,14 +164,26 @@ public interface LocalizationFormatter {
             /// By default, the [`locale`][locale(Locale)] is set to [Localize#getLocale].
             ///
             /// @param localize Source Localize instance.
+            /// @param source   Source of the given `pattern`.
             /// @param pattern  Message pattern to format.
             /// @return         Builder instance.
-            /// @throws NullPointerException If `localize` or `pattern` is `null`.
-            public static Builder of(Localize localize, String pattern) {
+            /// @throws NullPointerException If `localize`, `source`, or `pattern` is `null`.
+            public static Builder of(Localize localize, LocalizationRequestSource source, String pattern) {
                 return new Builder()
                     .localize(localize)
                     .locale(localize.getLocale())
+                    .source(source)
                     .pattern(pattern);
+            }
+
+            /// Sets the source where the [`pattern`][pattern(String)] was derived from.
+            ///
+            /// @param source Source of the pattern.
+            /// @return       Builder instance.
+            /// @throws NullPointerException If `source` is `null`.
+            public Builder source(LocalizationRequestSource source) {
+                this.source = Objects.requireNonNull(source, "source must not be null");
+                return this;
             }
 
             /// Sets the message pattern to format.
@@ -197,7 +230,7 @@ public interface LocalizationFormatter {
             ///
             /// @return Formatter request.
             public Request build() {
-                return new Request(localize, locale, pattern, arguments);
+                return new Request(source, localize, locale, pattern, arguments);
             }
         }
     }

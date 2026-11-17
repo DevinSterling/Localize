@@ -18,7 +18,7 @@ class ValueBasedTest {
     @Test void testLocalizationFormatterRequestEquality() {
         EqualsVerifier.simple()
                       .forClass(LocalizationFormatter.Request.class)
-                      .withNonnullFields("localize", "pattern", "arguments", "locale")
+                      .withNonnullFields("source", "localize", "pattern", "arguments", "locale")
                       .withPrefabValues(Localize.class, Localize.of(Locale.ENGLISH), Localize.of(Locale.JAPANESE))
                       .verify();
     }

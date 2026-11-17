@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.devinsterling.localize.TestUtil.*;
 
@@ -100,5 +101,28 @@ class LocalizationFormatterTest {
         });
 
         assertEquals("Hello world!", localize.getValue("$outer$"));
+    }
+
+    @Test void formatterRequestPreservesOriginalSource() {
+        Localize localize = Localize.of(Locale.ENGLISH);
+        AtomicReference<LocalizationFormatter.Request> request = new AtomicReference<>();
+
+        localize.addProvider(locale -> key -> "");
+        localize.setFormatter(req -> {
+            request.set(req);
+            return LocalizationFormatter.STANDARD.format(req);
+        });
+
+        localize.getValue("A");
+        assertEquals(
+            new LocalizationRequestSource.Key("A"),
+            request.get().getSource()
+        );
+
+        localize.format("Hi {user}!").value();
+        assertEquals(
+            new LocalizationRequestSource.Pattern("Hi {user}!"),
+            request.get().getSource()
+        );
     }
 }

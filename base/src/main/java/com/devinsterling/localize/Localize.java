@@ -1042,7 +1042,7 @@ public class Localize {
         String value = null;
         LocalizationFormatter formatter = getFormatter();
         LocalizationFormatter.Request formatRequest = LocalizationFormatter.Request.Builder
-            .of(this, pattern)
+            .of(this, request.getSource(), pattern)
             .locale(locale) // Ensures `pattern` is associated with the correct locale
             .arguments(request.getArguments())
             .build();
